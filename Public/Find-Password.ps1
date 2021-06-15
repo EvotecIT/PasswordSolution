@@ -5,13 +5,15 @@
         [string[]] $ExcludeDomains,
         [alias('Domain', 'Domains')][string[]] $IncludeDomains,
         [System.Collections.IDictionary] $ExtendedForestInformation,
-        [string] $AdditionalProperties,
+        [string] $OverwriteEmailProperty,
         [Array] $ConditionProperties,
         [System.Collections.IDictionary] $WriteParameters,
-        [System.Collections.IDictionary] $CachedUsers,
-        [System.Collections.IDictionary] $CachedUsersPrepared,
-        [System.Collections.IDictionary] $CachedManagers
+        #[System.Collections.IDictionary] $CachedUsers,
+        #[System.Collections.IDictionary] $CachedUsersPrepared,
+        #[System.Collections.IDictionary] $CachedManagers
+        [switch] $AsHashTable
     )
+    $Today = Get-Date
     if ($null -eq $WriteParameters) {
         $WriteParameters = @{
             ShowTime   = $true
@@ -22,9 +24,9 @@
 
 
     $Properties = @(
-        'Manager', 'DisplayName', 'GivenName', 'Surname', 'SamAccountName', 'EmailAddress', 'msDS-UserPasswordExpiryTimeComputed', 'PasswordExpired', 'PasswordLastSet', 'PasswordNotRequired', 'Enabled', 'PasswordNeverExpires', 'Mail', 'MemberOf'
-        if ($AdditionalProperties) {
-            $AdditionalProperties
+        'Manager', 'DisplayName', 'GivenName', 'Surname', 'SamAccountName', 'EmailAddress', 'msDS-UserPasswordExpiryTimeComputed', 'PasswordExpired', 'PasswordLastSet', 'PasswordNotRequired', 'Enabled', 'PasswordNeverExpires', 'Mail', 'MemberOf', 'LastLogonDate'
+        if ($OverwriteEmailProperty) {
+            $OverwriteEmailProperty
         }
         if ($ConditionProperties) {
             $ConditionProperties
@@ -34,11 +36,8 @@
     if (-not $CachedUsers) {
         $CachedUsers = [ordered] @{ }
     }
-    if (-not $CachedUsersPrepared) {
-        $CachedUsersPrepared = [ordered] @{ }
-    }
-    if (-not $CachedManagers) {
-        $CachedManagers = [ordered] @{}
+    if (-not $Cache) {
+        $Cache = [ordered] @{ }
     }
     Write-Color @WriteParameters -Text "[i] Discovering forest information" -Color White, Yellow, White, Yellow, White, Yellow, White
     $ForestInformation = Get-WinADForestDetails -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
@@ -49,32 +48,33 @@
 
         Write-Color @WriteParameters -Text "[i] Getting users from ", "$($Domain)", " using ", $Server -Color White, Yellow, White, Yellow, White, Yellow, White
         # We query all users instead of using filter. Since we need manager field and manager data this way it should be faster (query once - get it all)
-        $DomainUsers = Get-ADUser -Server $Server -Filter '*' -Properties $Properties -ErrorAction Stop
-        foreach ($_ in $DomainUsers) {
-            Add-Member -InputObject $_ -Value $Domain -Name 'Domain' -Force -Type NoteProperty
-            $CachedUsers["$($_.DistinguishedName)"] = $_
-            # We reuse filtering, account is enabled, password is required and password is not set to change on next logon
-            if ($_.Enabled -eq $true -and $_.PasswordNotRequired -ne $true -and $null -ne $_.PasswordLastSet) {
-                #if ($_.Enabled -eq $true -and $_.PasswordNeverExpires -eq $false -and $null -ne $_.PasswordLastSet -and $_.PasswordNotRequired -ne $true) {
-                $_
-            }
-        }
+        #$DomainUsers = Get-ADUser -Server $Server -Filter '*' -Properties $Properties -ErrorAction Stop
+        #foreach ($_ in $DomainUsers) {
+        #$CachedUsers["$($_.DistinguishedName)"] = $_
+        # We reuse filtering, account is enabled, password is required and password is not set to change on next logon
+        #if ($_.Enabled -eq $true -and $_.PasswordNotRequired -ne $true -and $null -ne $_.PasswordLastSet) {
+        #    $_
+        #}
+        #}
         try {
-
+            Get-ADUser -Server $Server -Filter '*' -Properties $Properties -ErrorAction Stop
         } catch {
             $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
             Write-Color @WriteParameters '[e] Error: ', $ErrorMessage -Color White, Red
         }
     }
+    foreach ($User in $Users) {
+        $Cache[$User.DistinguishedName] = $User
+    }
     Write-Color @WriteParameters -Text "[i] Preparing all users for password expirations in forest ", $Forest.Name -Color White, Yellow, White, Yellow, White, Yellow, White
     $ProcessedUsers = foreach ($User in $Users) {
-        $UserManager = $CachedUsers["$($User.Manager)"]
+        #$UserManager = $Cache["$($User.Manager)"]
         if ($User.Manager) {
-            $Manager = $CachedUsers[$User.Manager].DisplayName
-            $ManagerSamAccountName = $CachedUsers[$User.Manager].SamAccountName
-            $ManagerEmail = $CachedUsers[$User.Manager].Mail
-            $ManagerEnabled = $CachedUsers[$User.Manager].Enabled
-            $ManagerLastLogon = $CachedUsers[$User.Manager].LastLogonDate
+            $Manager = $Cache[$User.Manager].DisplayName
+            $ManagerSamAccountName = $Cache[$User.Manager].SamAccountName
+            $ManagerEmail = $Cache[$User.Manager].Mail
+            $ManagerEnabled = $Cache[$User.Manager].Enabled
+            $ManagerLastLogon = $Cache[$User.Manager].LastLogonDate
             if ($ManagerLastLogon) {
                 $ManagerLastLogonDays = $( - $($ManagerLastLogon - $Today).Days)
             } else {
@@ -96,18 +96,19 @@
         }
 
 
-        if ($AdditionalProperties) {
+        if ($OverwriteEmailProperty) {
             # fix this for a user
-            $EmailTemp = $User.$AdditionalProperties
+            $EmailTemp = $User.$OverwriteEmailProperty
             if ($EmailTemp -like '*@*') {
                 $EmailAddress = $EmailTemp
             } else {
                 $EmailAddress = $User.EmailAddress
             }
             # Fix this for manager as well
-            if ($UserManager) {
-                if ($UserManager.$AdditionalProperties -like '*@*') {
-                    $UserManager.Mail = $UserManager.$AdditionalProperties
+            if ($Cache["$($User.Manager)"]) {
+                if ($Cache["$($User.Manager)"].$OverwriteEmailProperty -like '*@*') {
+                    # $UserManager.Mail = $UserManager.$OverwriteEmailProperty
+                    $ManagerEmail = $Cache["$($User.Manager)"].$OverwriteEmailProperty
                 }
             }
         } else {
@@ -140,7 +141,7 @@
         $MyUser = [ordered] @{
             UserPrincipalName     = $User.UserPrincipalName
             SamAccountName        = $User.SamAccountName
-            Domain                = $User.Domain
+            Domain                = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToDomainCN
             EmailAddress          = $EmailAddress
             DateExpiry            = $DateExpiry
             DaysToExpire          = $DaysToExpire
@@ -159,37 +160,20 @@
             Surname               = $User.Surname
             OrganizationalUnit    = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToOrganizationalUnit
             MemberOf              = $User.MemberOf
+            DistinguishedName     = $User.DistinguishedName
+            ManagerDN             = $User.Manager
+            Enabled               = $User.Enabled
         }
         foreach ($Property in $ConditionProperties) {
             $MyUser["$Property"] = $User.$Property
         }
-        [PSCustomObject] $MyUser
-        $CachedUsersPrepared["$($User.DistinguishedName)"] = $MyUser
+        #[PSCustomObject] $MyUser
+
+        $CachedUsers["$($User.DistinguishedName)"] = [PSCustomObject] $MyUser
     }
-    foreach ($User in $CachedUsersPrepared.Keys) {
-        $ManagerDN = $CachedUsersPrepared[$User]['ManagerDN']
-        if ($ManagerDN) {
-            $Manager = $CachedUsers[$ManagerDN]
-
-            $MyUser = [ordered] @{
-                UserPrincipalName = $Manager.UserPrincipalName
-                Domain            = $Manager.Domain
-                SamAccountName    = $Manager.SamAccountName
-                DisplayName       = $Manager.DisplayName
-                GivenName         = $Manager.GivenName
-                Surname           = $Manager.Surname
-                DistinguishedName = $ManagerDN
-            }
-            foreach ($Property in $ConditionProperties) {
-                $MyUser["$Property"] = $User.$Property
-            }
-            $CachedManagers[$ManagerDN] = $MyUser
-        }
+    if ($AsHashTable) {
+        $CachedUsers
+    } else {
+        $CachedUsers.Values
     }
-
-
-    $ProcessedUsers
 }
-
-#$Test = Find-PasswordExpiryCheck -AdditionalProperties 'extensionAttribute13'
-#$Test | Format-Table -AutoSize *
