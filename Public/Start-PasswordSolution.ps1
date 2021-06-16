@@ -20,7 +20,8 @@
         [string] $TemplateManagerDisabledSubject,
         [scriptblock] $TemplateManagerNoEmail,
         [string] $TemplateManagerNoEmailSubject,
-
+        [scriptblock] $TemplateManagerNotCompliant,
+        [string] $TemplateManagerNotCompliantSubject,
         [System.Collections.IDictionary] $DisplayConsole,
         [System.Collections.IDictionary] $HTMLOptions,
         [string] $FilePath
@@ -103,58 +104,61 @@
                     if ($Rule.SendToManager -and $Rule.SendToManager.Enable -eq $true) {
                         if ($User.ManagerStatus -eq 'Enabled' -and $User.ManagerEmail -like "*@*") {
                             # Manager is enabled and has an email
-                            if (-not $Summary['NotifyManager'][$User.ManagerDN]) {
-                                $Summary['NotifyManager'][$User.ManagerDN] = [ordered] @{}
+                            $Splat = [ordered] @{
+                                SummaryDictionary = $Summary['NotifyManager']
+                                Type              = 'ManagerDefault'
+                                Key               = $User.ManagerDN
+                                User              = $User
+                                Rule              = $Rule
+                                Enabled           = $true
                             }
-                            $Summary['NotifyManager'][$User.ManagerDN][$User.DistinguishedName] = [ordered] @{
-                                Manager       = $User.ManagerDN
-                                User          = $User
-                                Rule          = $Rule
-                                ManagerOption = 'ManagerEnabledWithEmail'
-                            }
-                        } elseif ($User.ManagerStatus -eq 'Enabled') {
-                            # Manager is enabled but missing email
-                            if ($Rule.SendToManager.ManagerMissingEmail.Enable) {
-
-                                if ($Rule.SendToManager.ManagerMissingEmail.Email) {
-                                    if (-not $Summary['NotifyManager'][$User.ManagerDN]) {
-                                        $Summary['NotifyManager'][$Rule.SendToManager.ManagerMissingEmail.Email] = [ordered] @{}
-                                    }
-                                    $Summary['NotifyManager'][$Rule.SendToManager.ManagerMissingEmail.Email][$User.DistinguishedName] = [ordered] @{
-                                        Manager       = $User.ManagerDN
-                                        User          = $User
-                                        Rule          = $Rule
-                                        ManagerOption = 'ManagerEnabledNoEmail'
-                                    }
-                                }
-                            }
-                        } elseif ($User.ManagerStatus -eq 'Disabled') {
-                            # Manager is disabled, regardless if he/she has email
-                            if ($Rule.SendToManager.ManagerDisable.Enable) {
-                                if ($Rule.SendToManager.ManagerDisable.Email) {
-                                    if (-not $Summary['NotifyManager'][$User.ManagerDN]) {
-                                        $Summary['NotifyManager'][$Rule.SendToManager.ManagerDisable.Email] = [ordered] @{}
-                                    }
-                                    $Summary['NotifyManager'][$Rule.SendToManager.ManagerDisable.Email][$User.DistinguishedName] = [ordered] @{
-                                        Manager       = $User.ManagerDN
-                                        User          = $User
-                                        Rule          = $Rule
-                                        ManagerOption = 'ManagerDisabled'
-                                    }
-                                }
-                            }
+                            Add-ManagerInformation @Splat
                         } else {
-                            # Manager is missing
-                            if ($Rule.SendToManager.ManagerMissing.Enable) {
-                                if (-not $Summary['NotifyManager'][$User.ManagerDN]) {
-                                    $Summary['NotifyManager'][$User.ManagerDN] = [ordered] @{}
+                            # Not compliant (missing, disabled, no email), covers all the below options
+                            $Splat = [ordered] @{
+                                SummaryDictionary = $Summary['NotifyManager']
+                                Type              = 'ManagerNotCompliant'
+                                Key               = $Rule.SendToManager.ManagerNotCompliant.Email
+                                User              = $User
+                                Rule              = $Rule
+                                Enabled           = $Rule.SendToManager.ManagerNotCompliant.Enable
+                            }
+                            Add-ManagerInformation @Splat
+
+                            if ($User.ManagerStatus -eq 'Enabled') {
+                                # Manager is enabled but missing email
+                                $Splat = [ordered] @{
+                                    SummaryDictionary = $Summary['NotifyManager']
+                                    Type              = 'ManagerMissingEmail'
+                                    Key               = $Rule.SendToManager.ManagerMissingEmail.Email
+                                    User              = $User
+                                    Rule              = $Rule
+                                    Enabled           = $Rule.SendToManager.ManagerMissingEmail.Enable
                                 }
-                                $Summary['NotifyManager'][$User.ManagerDN][$User.DistinguishedName] = [ordered] @{
-                                    Manager       = $User.ManagerDN
-                                    User          = $User
-                                    Rule          = $Rule
-                                    ManagerOption = 'ManagerMissing'
+                                Add-ManagerInformation @Splat
+                            } elseif ($User.ManagerStatus -eq 'Disabled') {
+                                # Manager is disabled, regardless if he/she has email
+                                $Splat = [ordered] @{
+                                    SummaryDictionary = $Summary['NotifyManager']
+                                    Type              = 'ManagerDisabled'
+                                    Key               = $Rule.SendToManager.ManagerDisabled.Email
+                                    User              = $User
+                                    Rule              = $Rule
+                                    Enabled           = $Rule.SendToManager.ManagerDisabled.Enable
                                 }
+                                Add-ManagerInformation @Splat
+                                # }
+                            } else {
+                                # Manager is missing
+                                $Splat = [ordered] @{
+                                    SummaryDictionary = $Summary['NotifyManager']
+                                    Type              = 'ManagerMissing'
+                                    Key               = $Rule.SendToManager.ManagerMissing.Email
+                                    User              = $User
+                                    Rule              = $Rule
+                                    Enabled           = $Rule.SendToManager.ManagerMissing.Enable
+                                }
+                                Add-ManagerInformation @Splat
                             }
                         }
                     }
@@ -242,26 +246,56 @@
         [Array] $SummaryManagersEmails = foreach ($Manager in $Summary['NotifyManager'].Keys) {
             $CountManagers++
             $ManagerUser = $CachedUsers[$Manager]
-            [Array] $ManagerAccounts = $Summary['NotifyManager'][$Manager].Values.User | Select-Object -Property DisplayName, Enabled, SamAccountName, Domain, DateExpiry, DaysToExpire, PasswordLastSet, PasswordExpired
+            #[Array] $ManagerAccounts = $Summary['NotifyManager'][$Manager].Values.User | Select-Object -Property DisplayName, Enabled, SamAccountName, Domain, DateExpiry, DaysToExpire, PasswordLastSet, PasswordExpired
+            [Array] $ManagedUsers = $Summary['NotifyManager'][$Manager]['ManagerDefault'].Values.Output
+            [Array] $ManagedUsersManagerNotCompliant = $Summary['NotifyManager'][$Manager]['ManagerNotCompliant'].Values.Output
+            [Array] $ManagedUsersManagerDisabled = $Summary['NotifyManager'][$Manager]['ManagerDisabled'].Values.Output
+            [Array] $ManagedUsersManagerMissing = $Summary['NotifyManager'][$Manager]['ManagerMissing'].Values.Output
+            [Array] $ManagedUsersManagerMissingEmail = $Summary['NotifyManager'][$Manager]['ManagerMissingEmail'].Values.Output
+
+            #.User | Select-Object -Property DisplayName, Enabled, SamAccountName, Domain, DateExpiry, DaysToExpire, PasswordLastSet, PasswordExpired
 
             $EmailSplat = [ordered] @{}
-            if ($TemplateManager) {
-                # User uses global template
-                $EmailSplat.Template = $TemplateManager
-            } else {
-                # User uses built-in template
-                $EmailSplat.Template = {
 
+            if ($Summary['NotifyManager'][$Manager].ManagerDefault.Count -gt 0) {
+
+                if ($TemplateManager) {
+                    # User uses global template
+                    $EmailSplat.Template = $TemplateManager
+                } else {
+                    # User uses built-in template
+                    $EmailSplat.Template = {
+
+                    }
                 }
-            }
-            if ($TemplateManagerSubject) {
-                $EmailSplat.Subject = $TemplateManagerSubject
-            } else {
-                $EmailSplat.Subject = "[Password Expiring] Dear Manager - Your accounts are expiring!"
+                if ($TemplateManagerSubject) {
+                    $EmailSplat.Subject = $TemplateManagerSubject
+                } else {
+                    $EmailSplat.Subject = "[Password Expiring] Dear Manager - Your accounts are expiring!"
+                }
+            } elseif ($Summary['NotifyManager'][$Manager].ManagerNotCompliant.Count -gt 0) {
+                if ($TemplateManagerNotCompliant) {
+                    # User uses global template
+                    $EmailSplat.Template = $TemplateManagerNotCompliant
+                } else {
+                    # User uses built-in template
+                    $EmailSplat.Template = {
+
+                    }
+                }
+                if ($TemplateManagerNotCompliantSubject) {
+                    $EmailSplat.Subject = $TemplateManagerNotCompliantSubject
+                } else {
+                    $EmailSplat.Subject = "[Password Escalation] Accounts are expiring with non-compliant manager"
+                }
             }
 
             $EmailSplat.User = $ManagerUser
-            $EmailSplat.ManagedUsers = $ManagerAccounts
+            $EmailSplat.ManagedUsers = $ManagedUsers
+            $EmailSplat.ManagedUsersManagerNotCompliant = $ManagedUsersManagerNotCompliant
+            $EmailSplat.ManagedUsersManagerDisabled = $ManagedUsersManagerDisabled
+            $EmailSplat.ManagedUsersManagerMissing = $ManagedUsersManagerMissing
+            $EmailSplat.ManagedUsersManagerMissingEmail = $ManagedUsersManagerMissingEmail
             $EmailSplat.EmailParameters = $EmailParameters
 
             $EmailResult = Send-PasswordEmail @EmailSplat
@@ -272,8 +306,8 @@
                 Status               = $EmailResult.Status
                 StatusError          = $EmailResult.Error
                 SentTo               = $EmailResult.SentTo
-                ManagedAccounts      = $ManagerAccounts.SamAccountName
-                ManagedAccountsCount = $ManagerAccounts.Count
+                ManagedAccounts      = $ManagedUsers.SamAccountName
+                ManagedAccountsCount = $ManagedUsers.Count
             }
             if ($Managers.SendCountMaxium -gt 0) {
                 if ($UserSection.SendCountMaximum -ge $CountUsers) {
