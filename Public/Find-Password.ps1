@@ -25,6 +25,7 @@
 
     $Properties = @(
         'Manager', 'DisplayName', 'GivenName', 'Surname', 'SamAccountName', 'EmailAddress', 'msDS-UserPasswordExpiryTimeComputed', 'PasswordExpired', 'PasswordLastSet', 'PasswordNotRequired', 'Enabled', 'PasswordNeverExpires', 'Mail', 'MemberOf', 'LastLogonDate'
+        'userAccountControl'
         if ($OverwriteEmailProperty) {
             $OverwriteEmailProperty
         }
@@ -115,6 +116,10 @@
             $EmailAddress = $User.EmailAddress
         }
 
+        if ($User.PasswordLastSet) {
+            $PasswordDays = (New-TimeSpan -Start ($User.PasswordLastSet) -End ($Today)).Days
+        }
+
         if ($User."msDS-UserPasswordExpiryTimeComputed" -ne 9223372036854775807) {
             # This is standard situation where users password is expiring as needed
             try {
@@ -123,7 +128,7 @@
                 $DateExpiry = $User."msDS-UserPasswordExpiryTimeComputed"
             }
             try {
-                $DaysToExpire = (New-TimeSpan -Start (Get-Date) -End ([datetime]::FromFileTime($User."msDS-UserPasswordExpiryTimeComputed"))).Days
+                $DaysToExpire = (New-TimeSpan -Start ($Today) -End ([datetime]::FromFileTime($User."msDS-UserPasswordExpiryTimeComputed"))).Days
             } catch {
                 $DaysToExpire = $null
             }
@@ -138,6 +143,11 @@
             $DaysToExpire = $null
         }
 
+        $UserAccountControl = Convert-UserAccountControl -UserAccountControl $User.UserAccountControl
+        if ($UserAccountControl -contains 'INTERDOMAIN_TRUST_ACCOUNT') {
+            continue
+        }
+
         $MyUser = [ordered] @{
             UserPrincipalName     = $User.UserPrincipalName
             SamAccountName        = $User.SamAccountName
@@ -146,6 +156,7 @@
             DateExpiry            = $DateExpiry
             DaysToExpire          = $DaysToExpire
             PasswordExpired       = $User.PasswordExpired
+            PasswordDays          = $PasswordDays
             PasswordLastSet       = $User.PasswordLastSet
             PasswordNotRequired   = $User.PasswordNotRequired
             PasswordNeverExpires  = $PasswordNeverExpires

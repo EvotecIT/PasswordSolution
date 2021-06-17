@@ -3,7 +3,7 @@
     param(
         [System.Collections.IDictionary] $SummaryDictionary,
         [string] $Type,
-        [string] $Key,
+        [Object] $Key,
         [PSCustomObject] $User,
         [PSCustomObject] $Rule,
         [bool] $Enabled
