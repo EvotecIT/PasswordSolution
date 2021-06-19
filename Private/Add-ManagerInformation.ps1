@@ -10,8 +10,15 @@
     )
     if ($Enabled) {
         if ($Key) {
-            if (-not $SummaryDictionary[$Key]) {
-                $SummaryDictionary[$Key] = [ordered] @{
+            if ($Key -is [string]) {
+                $KeyDN = $Key
+            } else {
+                $KeyDN = $Key.EmailAddress
+            }
+
+            if (-not $SummaryDictionary[$KeyDN]) {
+                $SummaryDictionary[$KeyDN] = [ordered] @{
+                    Manager             = $Key
                     ManagerDefault      = [ordered] @{}
                     ManagerNotCompliant = [ordered] @{}
                     ManagerMissingEmail = [ordered] @{}
@@ -19,7 +26,7 @@
                     ManagerMissing      = [ordered] @{}
                 }
             }
-            $SummaryDictionary[$Key][$Type][$User.DistinguishedName] = [ordered] @{
+            $SummaryDictionary[$KeyDN][$Type][$User.DistinguishedName] = [ordered] @{
                 Manager       = $User.ManagerDN
                 User          = $User
                 Rule          = $Rule
@@ -44,9 +51,9 @@
                     #RuleName       = $Rule.Name
                     #Type           = $Type
                 }
-                $SummaryDictionary[$Key][$Type][$User.DistinguishedName]['Output'] = [PSCustomObject] ( $Extended + $Default)
+                $SummaryDictionary[$KeyDN][$Type][$User.DistinguishedName]['Output'] = [PSCustomObject] ( $Extended + $Default)
             } else {
-                $SummaryDictionary[$Key][$Type][$User.DistinguishedName]['Output'] = [PSCustomObject] $Default
+                $SummaryDictionary[$KeyDN][$Type][$User.DistinguishedName]['Output'] = [PSCustomObject] $Default
             }
         }
     }

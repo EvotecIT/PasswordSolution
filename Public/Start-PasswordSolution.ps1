@@ -65,7 +65,6 @@
     $Summary['NotifyManager'] = [ordered] @{}
     $Summary['Rules'] = [ordered] @{}
 
-
     $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty
     foreach ($Rule in $Rules) {
         # Go for each rule and check if the user is in any of those rules
@@ -323,12 +322,12 @@
         $CountManagers = 0
         [Array] $SummaryManagersEmails = foreach ($Manager in $Summary['NotifyManager'].Keys) {
             $CountManagers++
-            if ($Manager -is [System.Collections.IDictionary]) {
-                # This user is provided by user in config file
-                $ManagerUser = $Manager
-            } else {
+            if ($CachedUsers[$Manager]) {
                 # This user is "findable" in AD
                 $ManagerUser = $CachedUsers[$Manager]
+            } else {
+                # This user is provided by user in config file
+                $ManagerUser = $Summary['NotifyManager'][$Manager]['Manager']
             }
             #[Array] $ManagerAccounts = $Summary['NotifyManager'][$Manager].Values.User | Select-Object -Property DisplayName, Enabled, SamAccountName, Domain, DateExpiry, DaysToExpire, PasswordLastSet, PasswordExpired
             [Array] $ManagedUsers = $Summary['NotifyManager'][$Manager]['ManagerDefault'].Values.Output
