@@ -24,14 +24,11 @@
         [string] $TemplateManagerNotCompliantSubject,
         [System.Collections.IDictionary] $DisplayConsole,
         [System.Collections.IDictionary] $HTMLOptions,
-        [string] $FilePath
+        [string] $FilePath,
+        [string] $SearchPath
     )
-
-    $SummarySearch = [ordred] @{
-        EmailSent        = [ordered] @{}
-        EmailEscalations = [orderd] @{}
-    }
-
+    $Today = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    # Lets define Write-Color rules
     if ($null -eq $DisplayConsole) {
         $WriteParameters = @{
             ShowTime   = $true
@@ -42,6 +39,26 @@
         $WriteParameters = $DisplayConsole
     }
 
+    if ($SearchPath) {
+        if (Test-Path -LiteralPath $SearchPath) {
+            try {
+                $SummarySearch = Import-Clixml -LiteralPath $SearchPath -ErrorAction Stop
+                #$SummarySearch = Get-Content -LiteralPath $SearchPath -Raw | ConvertFrom-Json
+            } catch {
+                Write-Color @WriteParameters -Text "[e]", " Couldn't load the file $SearchPath", ". Skipping...", $_.Exception.Message -Color White, Yellow, White, Yellow, White, Yellow, White
+            }
+        }
+    }
+    if (-not $SummarySearch) {
+        $SummarySearch = [ordered] @{
+            EmailSent        = [ordered] @{
+
+            }
+            EmailEscalations = [ordered] @{
+
+            }
+        }
+    }
 
     $Summary = [ordered] @{}
     $Summary['Notify'] = [ordered] @{}
@@ -52,7 +69,10 @@
     $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty
     foreach ($Rule in $Rules) {
         # Go for each rule and check if the user is in any of those rules
+
+
         if ($Rule.Enable -eq $true) {
+            Write-Color @WriteParameters -Text "[i]", " Processing rule ", $Rule.Name, ' status: ', $Rule.Enable -Color Yellow, White, Green, White, Green, White, Green, White
             # Lets create summary for the rule
             if (-not $Summary['Rules'][$Rule.Name] ) {
                 $Summary['Rules'][$Rule.Name] = [ordered] @{}
@@ -60,8 +80,6 @@
             # this will make sure to expand array of multiple arrays of ints if provided
             # for example: (-150..-100),(-60..0), 1, 2, 3
             $Rule.Reminders = $Rule.Reminders | ForEach-Object { $_ }
-
-            Write-Color @WriteParameters -Text "[i] Processing rule ", $Rule.Name -Color White, Yellow, White, Yellow, White, Yellow, White
             foreach ($User in $CachedUsers.Values) {
                 if ($User.Enabled -eq $false) {
                     # We don't want to have disabled users
@@ -107,7 +125,7 @@
 
                 # Lets find users that expire
                 if ($User.DaysToExpire -in $Rule.Reminders) {
-                    Write-Color $User.DistinguishedName -Color Red
+                    Write-Color @WriteParameters -Text "[i]", " User ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
                     $Summary['Notify'][$User.DistinguishedName] = [ordered] @{
                         User = $User
                         Rule = $Rule
@@ -118,8 +136,8 @@
                     }
 
                     if ($Rule.SendToManager -and $Rule.SendToManager.Enable -eq $true) {
-                        if ($User.ManagerStatus -eq 'Enabled' -and $User.ManagerEmail -like "*@*") {
-                            # Manager is enabled and has an email
+                        if ($Rule.SendToManager.Manager -and $Rule.SendToManager.Manager.Enable -eq $true -and $User.ManagerStatus -eq 'Enabled' -and $User.ManagerEmail -like "*@*") {
+                            # Manager is enabled and has an email, this is standard situation for manager in AD
                             $Splat = [ordered] @{
                                 SummaryDictionary = $Summary['NotifyManager']
                                 Type              = 'ManagerDefault'
@@ -185,10 +203,10 @@
                             }
                         }
                     }
-                } else {
-                    #Write-Color $User.DistinguishedName -Color Yellow
                 }
             }
+        } else {
+            Write-Color @WriteParameters -Text "[i]", " Processing rule ", $Rule.Name, ' status: ', $Rule.Enable -Color Red, White, Red, White, Red, White, Red, White
         }
     }
 
@@ -245,13 +263,14 @@
             }
             if ($Notify.User.EmailAddress -like "*@*") {
                 # Regardless if we send email to default email or to user, if user doesn't have email address we shouldn't send an email
-
                 $EmailResult = Send-PasswordEmail @EmailSplat
                 [PSCustomObject] @{
                     UserPrincipalName    = $EmailSplat.User.UserPrincipalName
                     SamAccountName       = $EmailSplat.User.SamAccountName
                     Domain               = $EmailSplat.User.Domain
+                    Rule                 = $Notify.Rule.Name
                     Status               = $EmailResult.Status
+                    StatusWhen           = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
                     StatusError          = $EmailResult.Error
                     SentTo               = $EmailResult.SentTo
                     DateExpiry           = $EmailSplat.User.DateExpiry
@@ -266,9 +285,36 @@
                         break
                     }
                 }
+            } else {
+                # Email not sent
+                $EmailResult = @{
+                    Status = $false
+                    Error  = 'No email address for user'
+                    SentTo = ''
+                }
+                [PSCustomObject] @{
+                    UserPrincipalName    = $EmailSplat.User.UserPrincipalName
+                    SamAccountName       = $EmailSplat.User.SamAccountName
+                    Domain               = $EmailSplat.User.Domain
+                    Rule                 = $Notify.Rule.Name
+                    Status               = $EmailResult.Status
+                    StatusWhen           = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+                    StatusError          = $EmailResult.Error
+                    SentTo               = $EmailResult.SentTo
+                    DateExpiry           = $EmailSplat.User.DateExpiry
+                    DaysToExpire         = $EmailSplat.User.DaysToExpire
+                    PasswordExpired      = $EmailSplat.User.PasswordExpired
+                    PasswordNeverExpires = $EmailSplat.User.PasswordNeverExpires
+                    PasswordLastSet      = $EmailSplat.User.PasswordLastSet
+                }
+            }
+            if ($EmailResult.Status -eq $true) {
+                Write-Color @WriteParameters -Text "[i]", " Sending ", $Notify.User.DisplayName, " (", $Notify.User.UserPrincipalName, ")", " status: ", $EmailResult.Status, ", details: ", $EmailResult.Error -Color Yellow, White, Yellow, White, Yellow, White, White, Blue, White, Blue
+            } else {
+                Write-Color @WriteParameters -Text "[i]", " Sending ", $Notify.User.DisplayName, " (", $Notify.User.UserPrincipalName, ")", " status: ", $EmailResult.Status, ", details: ", $EmailResult.Error -Color Yellow, White, Yellow, White, Yellow, White, White, Red, White, Red
             }
         }
-        Write-Color @WriteParameters -Text "[i] Sending notifications to users (sent: ", $SummaryUsersEmails.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
+        Write-Color @WriteParameters -Text "[i] Sending notifications to users (sent: ", $SummaryUsersEmails.Count, " out of ", $Summary['Notify'].Values.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
     } else {
         Write-Color @WriteParameters -Text "[i] Sending notifications to users is ", "disabled!" -Color White, Yellow, DarkMagenta
     }
@@ -345,6 +391,7 @@
                 SamAccountName           = $ManagerUser.SamAccountName
                 Domain                   = $ManagerUser.Domain
                 Status                   = $EmailResult.Status
+                StatusWhen               = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
                 SentTo                   = $EmailResult.SentTo
                 StatusError              = $EmailResult.Error
                 Accounts                 = $ManagedUsers.SamAccountName
@@ -374,24 +421,46 @@
     New-HTML {
         New-TableOption -DataStore JavaScript -ArrayJoin -BoolAsString
         New-HTMLTab -Name 'All Users' {
-            New-HTMLTable -DataTable $CachedUsers.Values -Filtering -SearchBuilder {
-
+            New-HTMLTable -DataTable $CachedUsers.Values -Filtering {
+                New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string
+                New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
             }
         }
         foreach ($Rule in  $Summary['Rules'].Keys) {
             New-HTMLTab -Name $Rule {
-                New-HTMLTable -DataTable $Summary['Rules'][$Rule].Values.User -SearchBuilder -Filtering {
-
+                New-HTMLTable -DataTable $Summary['Rules'][$Rule].Values.User -Filtering {
+                    New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string
+                    New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                    New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
                 }
             }
         }
         New-HTMLTab -Name 'Email sent to users' {
             New-HTMLTable -DataTable $SummaryUsersEmails {
-                New-TableHeader -Names 'Status', 'StatusError', 'SentTo' -Title 'Email Summary'
+                New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+                New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
             }
         }
         New-HTMLTab -Name 'Email sent to manager' {
-            New-HTMLTable -DataTable $SummaryManagersEmails
+            New-HTMLTable -DataTable $SummaryManagersEmails {
+                New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+            }
         }
     } -ShowHTML:$HTMLOptions.ShowHTML -FilePath $FilePath -Online:$HTMLOptions.Online
+
+    if ($SearchPath) {
+
+        $SummarySearch['EmailSent'][$Today] = $SummaryUsersEmails
+        $SummarySearch['EmailEscalations'][$Today] = $SummaryManagersEmails
+
+        try {
+            $SummarySearch | Export-Clixml -LiteralPath $SearchPath
+            #$SummarySearch | ConvertTo-Json | Out-File -LiteralPath $SearchPath
+        } catch {
+            Write-Color @WriteParameters -Text "[e]", " Couldn't save to file $SearchPath", ". Error: ", $_.Exception.Message -Color White, Yellow, White, Yellow, White, Yellow, White
+        }
+    }
 }

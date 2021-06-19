@@ -152,6 +152,7 @@
             UserPrincipalName     = $User.UserPrincipalName
             SamAccountName        = $User.SamAccountName
             Domain                = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToDomainCN
+            Enabled               = $User.Enabled
             EmailAddress          = $EmailAddress
             DateExpiry            = $DateExpiry
             DaysToExpire          = $DaysToExpire
@@ -173,7 +174,6 @@
             MemberOf              = $User.MemberOf
             DistinguishedName     = $User.DistinguishedName
             ManagerDN             = $User.Manager
-            Enabled               = $User.Enabled
         }
         foreach ($Property in $ConditionProperties) {
             $MyUser["$Property"] = $User.$Property
