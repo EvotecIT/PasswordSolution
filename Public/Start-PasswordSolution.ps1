@@ -129,6 +129,33 @@
                     if ($Rule.SendToManager) {
                         if ($Rule.SendToManager.Manager -and $Rule.SendToManager.Manager.Enable -eq $true -and $User.ManagerStatus -eq 'Enabled' -and $User.ManagerEmail -like "*@*") {
                             # Manager is enabled and has an email, this is standard situation for manager in AD
+                            # But before we go and do that, maybe user wants to send emails to managers if those users are in specific group or OU
+                            if ($Rule.SendToManager.Manager.LimitOU.Count -gt 0) {
+                                # Rule defined that only user withi specific OU has to be found
+                                $FoundOU = $false
+                                foreach ($OU in $Rule.SendToManager.Manager.LimitOU) {
+                                    if ($User.OrganizationalUnit -like $OU) {
+                                        $FoundOU = $true
+                                        break
+                                    }
+                                }
+                                if (-not $FoundOU) {
+                                    continue
+                                }
+                            }
+                            if ($Rule.SendToManager.Manager.LimitGroup.Count -gt 0) {
+                                # Rule defined that only user withi specific group has to be found
+                                $FoundGroup = $false
+                                foreach ($Group in $Rule.SendToManager.Manager.LimitGroup) {
+                                    if ($User.MemberOf -contains $Group) {
+                                        $FoundGroup = $true
+                                        break
+                                    }
+                                }
+                                if (-not $FoundGroup) {
+                                    continue
+                                }
+                            }
                             $Splat = [ordered] @{
                                 SummaryDictionary = $Summary['NotifyManager']
                                 Type              = 'ManagerDefault'
@@ -141,8 +168,37 @@
                             Add-ManagerInformation @Splat
                         } else {
                             # Not compliant (missing, disabled, no email), covers all the below options
-
                             if ($Rule.SendToManager.ManagerNotCompliant -and $Rule.SendToManager.ManagerNotCompliant.Enable -and $Rule.SendToManager.ManagerNotCompliant.Manager) {
+
+                                # But before we go and do that, maybe user wants to send emails to managers if those users are in specific group or OU
+                                if ($Rule.SendToManager.ManagerNotCompliant.LimitOU.Count -gt 0) {
+                                    # Rule defined that only user withi specific OU has to be found
+                                    $FoundOU = $false
+                                    foreach ($OU in $Rule.SendToManager.Manager.LimitOU) {
+                                        if ($User.OrganizationalUnit -like $OU) {
+                                            $FoundOU = $true
+                                            break
+                                        }
+                                    }
+                                    if (-not $FoundOU) {
+                                        continue
+                                    }
+                                }
+                                if ($Rule.SendToManager.ManagerNotCompliant.LimitGroup.Count -gt 0) {
+                                    # Rule defined that only user withi specific group has to be found
+                                    $FoundGroup = $false
+                                    foreach ($Group in $Rule.SendToManager.Manager.LimitGroup) {
+                                        if ($User.MemberOf -contains $Group) {
+                                            $FoundGroup = $true
+                                            break
+                                        }
+                                    }
+                                    if (-not $FoundGroup) {
+                                        continue
+                                    }
+                                }
+
+
                                 if ($Rule.SendToManager.ManagerNotCompliant.MissingEmail -and $User.ManagerStatus -eq 'Enabled') {
                                     # Manager is enabled but missing email
                                     $Splat = [ordered] @{
@@ -394,12 +450,14 @@
                 #ManagerMissingEmailCount = $ManagedUsersManagerMissingEmail.Count
             }
             if ($ManagerSection.SendCountMaximum -gt 0) {
-                if ($ManagerSection.SendCountMaximum -le $CountUsers) {
+                if ($ManagerSection.SendCountMaximum -le $CountManagers) {
+                    Write-Color @WriteParameters -Text "[i]", " Send count maximum reached. There may be more managers that match the rule." -Color Red, DarkMagenta
                     break
                 }
             }
         }
-        Write-Color @WriteParameters -Text "[i] Sending notifications to managers (sent: ", $SummaryManagersEmails.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
+        Write-Color @WriteParameters -Text "[i] Sending notifications to managers (sent: ", $SummaryManagersEmails.Count, " out of ", $Summary['NotifyManager'].Values.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
+        #Write-Color @WriteParameters -Text "[i] Sending notifications to managers (sent: ", $SummaryManagersEmails.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
     } else {
         Write-Color @WriteParameters -Text "[i] Sending notifications to managers is ", "disabled!" -Color White, Yellow, DarkMagenta
     }

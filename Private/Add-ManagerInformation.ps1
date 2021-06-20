@@ -22,9 +22,6 @@
                 Manager             = $Key
                 ManagerDefault      = [ordered] @{}
                 ManagerNotCompliant = [ordered] @{}
-                #ManagerMissingEmail = [ordered] @{}
-                #ManagerDisabled     = [ordered] @{}
-                #ManagerMissing      = [ordered] @{}
             }
         }
         $SummaryDictionary[$KeyDN][$Type][$User.DistinguishedName] = [ordered] @{
