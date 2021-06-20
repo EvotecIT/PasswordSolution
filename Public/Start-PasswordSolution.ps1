@@ -14,12 +14,6 @@
         [string] $TemplatePostExpirySubject,
         [scriptblock] $TemplateManager,
         [string] $TemplateManagerSubject,
-        #[scriptblock] $TemplateManagerMissing,
-        #[string] $TemplateManagerMissingSubject,
-        #[scriptblock] $TemplateManagerDisabled,
-        #[string] $TemplateManagerDisabledSubject,
-        #[scriptblock] $TemplateManagerNoEmail,
-        #[string] $TemplateManagerNoEmailSubject,
         [scriptblock] $TemplateManagerNotCompliant,
         [string] $TemplateManagerNotCompliantSubject,
         [System.Collections.IDictionary] $DisplayConsole,
@@ -68,8 +62,6 @@
     $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty
     foreach ($Rule in $Rules) {
         # Go for each rule and check if the user is in any of those rules
-
-
         if ($Rule.Enable -eq $true) {
             Write-Color @WriteParameters -Text "[i]", " Processing rule ", $Rule.Name, ' status: ', $Rule.Enable -Color Yellow, White, Green, White, Green, White, Green, White
             # Lets create summary for the rule
@@ -151,19 +143,6 @@
                             # Not compliant (missing, disabled, no email), covers all the below options
 
                             if ($Rule.SendToManager.ManagerNotCompliant -and $Rule.SendToManager.ManagerNotCompliant.Enable -and $Rule.SendToManager.ManagerNotCompliant.Manager) {
-
-                                <#
-                                $Splat = [ordered] @{
-                                    SummaryDictionary = $Summary['NotifyManager']
-                                    Type              = 'ManagerNotCompliant'
-                                    Key               = $Rule.SendToManager.ManagerNotCompliant.Manager
-                                    User              = $User
-                                    Rule              = $Rule
-                                    Enabled           = $Rule.SendToManager.ManagerNotCompliant.Enable
-                                }
-                                Add-ManagerInformation @Splat
-                                #>
-
                                 if ($Rule.SendToManager.ManagerNotCompliant.MissingEmail -and $User.ManagerStatus -eq 'Enabled') {
                                     # Manager is enabled but missing email
                                     $Splat = [ordered] @{
@@ -174,7 +153,7 @@
                                         Key               = $Rule.SendToManager.ManagerNotCompliant.Manager
                                         User              = $User
                                         Rule              = $Rule
-                                        #Enabled           = $Rule.SendToManager.ManagerMissingEmail.Enable
+
                                     }
                                     Add-ManagerInformation @Splat
                                 } elseif ($Rule.SendToManager.ManagerNotCompliant.Disabled -and $User.ManagerStatus -eq 'Disabled') {
@@ -186,7 +165,7 @@
                                         Key               = $Rule.SendToManager.ManagerNotCompliant.Manager
                                         User              = $User
                                         Rule              = $Rule
-                                        #Enabled           = $Rule.SendToManager.ManagerDisabled.Enable
+
                                     }
                                     Add-ManagerInformation @Splat
                                 } elseif ($Rule.SendToManager.ManagerNotCompliant.LastLogon -and $User.ManagerLastLogonDays -ge $Rule.SendToManager.ManagerNotCompliant.LastLogonDays) {
@@ -198,7 +177,7 @@
                                         Key               = $Rule.SendToManager.ManagerNotCompliant.Manager
                                         User              = $User
                                         Rule              = $Rule
-                                        #Enabled           = $Rule.SendToManager.ManagerDisabled.Enable
+
                                     }
                                     Add-ManagerInformation @Splat
                                 } elseif ($Rule.SendToManager.ManagerNotCompliant.Missing -and $User.ManagerStatus -eq 'Missing') {
@@ -210,23 +189,9 @@
                                         Key               = $Rule.SendToManager.ManagerNotCompliant.Manager
                                         User              = $User
                                         Rule              = $Rule
-                                        #Enabled           = $Rule.SendToManager.ManagerDisabled.Enable
+
                                     }
                                     Add-ManagerInformation @Splat
-                                } else {
-                                    # Manager is missing
-                                    <#
-                                        $Splat = [ordered] @{
-                                            SummaryDictionary = $Summary['NotifyManager']
-                                            Type              = 'ManagerMissing'
-                                            Key               = $Rule.SendToManager.ManagerMissing.Manager
-                                            User              = $User
-                                            Rule              = $Rule
-                                            Enabled           = $Rule.SendToManager.ManagerMissing.Enable
-                                        }
-                                        Add-ManagerInformation @Splat
-                                    }
-                                    #>
                                 }
                             }
                         }
@@ -358,14 +323,8 @@
                 # This user is provided by user in config file
                 $ManagerUser = $Summary['NotifyManager'][$Manager]['Manager']
             }
-            #[Array] $ManagerAccounts = $Summary['NotifyManager'][$Manager].Values.User | Select-Object -Property DisplayName, Enabled, SamAccountName, Domain, DateExpiry, DaysToExpire, PasswordLastSet, PasswordExpired
             [Array] $ManagedUsers = $Summary['NotifyManager'][$Manager]['ManagerDefault'].Values.Output
             [Array] $ManagedUsersManagerNotCompliant = $Summary['NotifyManager'][$Manager]['ManagerNotCompliant'].Values.Output
-            #[Array] $ManagedUsersManagerDisabled = $Summary['NotifyManager'][$Manager]['ManagerDisabled'].Values.Output
-            #[Array] $ManagedUsersManagerMissing = $Summary['NotifyManager'][$Manager]['ManagerMissing'].Values.Output
-            #[Array] $ManagedUsersManagerMissingEmail = $Summary['NotifyManager'][$Manager]['ManagerMissingEmail'].Values.Output
-
-            #.User | Select-Object -Property DisplayName, Enabled, SamAccountName, Domain, DateExpiry, DaysToExpire, PasswordLastSet, PasswordExpired
 
             $EmailSplat = [ordered] @{}
 
