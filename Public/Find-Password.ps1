@@ -6,7 +6,7 @@
         [alias('Domain', 'Domains')][string[]] $IncludeDomains,
         [System.Collections.IDictionary] $ExtendedForestInformation,
         [string] $OverwriteEmailProperty,
-        [Array] $ConditionProperties,
+        #[Array] $ConditionProperties,
         [System.Collections.IDictionary] $WriteParameters,
         #[System.Collections.IDictionary] $CachedUsers,
         #[System.Collections.IDictionary] $CachedUsersPrepared,

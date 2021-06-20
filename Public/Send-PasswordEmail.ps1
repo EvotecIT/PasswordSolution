@@ -5,9 +5,9 @@
         [PSCustomObject] $User,
         [Array] $ManagedUsers,
         [Array] $ManagedUsersManagerNotCompliant,
-        [Array] $ManagedUsersManagerDisabled,
-        [Array] $ManagedUsersManagerMissing,
-        [Array] $ManagedUsersManagerMissingEmail,
+        #[Array] $ManagedUsersManagerDisabled,
+        #[Array] $ManagedUsersManagerMissing,
+        #[Array] $ManagedUsersManagerMissingEmail,
         [System.Collections.IDictionary] $EmailParameters,
         [string] $Subject
     )
@@ -17,9 +17,9 @@
             ManagerDisplayName                   = $User.DisplayName
             ManagerUsersTable                    = $ManagedUsers
             ManagerUsersTableManagerNotCompliant = $ManagedUsersManagerNotCompliant
-            ManagerUsersTableManagerDisabled     = $ManagedUsersManagerDisabled
-            ManagerUsersTableManagerMissing      = $ManagedUsersManagerMissing
-            ManagerUsersTableManagerNoEmail      = $ManagedUsersManagerMissingEmail
+            #ManagerUsersTableManagerDisabled     = $ManagedUsersManagerDisabled
+            #ManagerUsersTableManagerMissing      = $ManagedUsersManagerMissing
+            #ManagerUsersTableManagerNoEmail      = $ManagedUsersManagerMissingEmail
             UserPrincipalName                    = $User.UserPrincipalName     # : adm.pklys@ad.evotec.xyz
             SamAccountName                       = $User.SamAccountName        # : adm.pklys
             Domain                               = $User.Domain                # : ad.evotec.xyz
