@@ -76,10 +76,23 @@
                     # We don't want to have disabled users
                     continue
                 }
-                if ($Rule.LimitOU.Count -gt 0) {
+                if ($Rule.ExcludeOU.Count -gt 0) {
+                    $FoundOU = $false
+                    foreach ($OU in $Rule.ExcludeOU) {
+                        if ($User.OrganizationalUnit -like $OU) {
+                            $FoundOU = $true
+                            break
+                        }
+                    }
+                    # if OU is found we need to exclude the user
+                    if ($FoundOU) {
+                        continue
+                    }
+                }
+                if ($Rule.IncludeOU.Count -gt 0) {
                     # Rule defined that only user withi specific OU has to be found
                     $FoundOU = $false
-                    foreach ($OU in $Rule.LimitOU) {
+                    foreach ($OU in $Rule.IncludeOU) {
                         if ($User.OrganizationalUnit -like $OU) {
                             $FoundOU = $true
                             break
@@ -89,10 +102,24 @@
                         continue
                     }
                 }
-                if ($Rule.LimitGroup.Count -gt 0) {
+                if ($Rule.ExcludeGroup.Count -gt 0) {
                     # Rule defined that only user withi specific group has to be found
                     $FoundGroup = $false
-                    foreach ($Group in $Rule.LimitGroup) {
+                    foreach ($Group in $Rule.ExcludeGroup) {
+                        if ($User.MemberOf -contains $Group) {
+                            $FoundGroup = $true
+                            break
+                        }
+                    }
+                    # If found, we need to skip user
+                    if ($FoundGroup) {
+                        continue
+                    }
+                }
+                if ($Rule.IncludeGroup.Count -gt 0) {
+                    # Rule defined that only user withi specific group has to be found
+                    $FoundGroup = $false
+                    foreach ($Group in $Rule.IncludeGroup) {
                         if ($User.MemberOf -contains $Group) {
                             $FoundGroup = $true
                             break
@@ -103,8 +130,9 @@
                     }
                 }
 
-                if ($Summary['Notify'][$User.DistinguishedName]) {
+                if ($Summary['Notify'][$User.DistinguishedName] -and $Summary['Notify'][$User.DistinguishedName].ProcessManagersOnly -ne $true) {
                     # User already exists in the notifications - rules are overlapping, we only take the first one
+                    # We also check for ProcessManagersOnly because we don't want first rule to ignore any other rules for users
                     continue
                 }
 
@@ -118,22 +146,23 @@
                 if ($User.DaysToExpire -in $Rule.Reminders) {
                     Write-Color @WriteParameters -Text "[i]", " User ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
                     $Summary['Notify'][$User.DistinguishedName] = [ordered] @{
-                        User = $User
-                        Rule = $Rule
+                        User                = $User
+                        Rule                = $Rule
+                        ProcessManagersOnly = $Rule.ProcessManagersOnly
                     }
                     $Summary['Rules'][$Rule.Name][$User.DistinguishedName] = [ordered] @{
-                        User = $User
-                        Rule = $Rule
+                        User                = $User
+                        Rule                = $Rule
+                        ProcessManagersOnly = $Rule.ProcessManagersOnly
                     }
-
                     if ($Rule.SendToManager) {
                         if ($Rule.SendToManager.Manager -and $Rule.SendToManager.Manager.Enable -eq $true -and $User.ManagerStatus -eq 'Enabled' -and $User.ManagerEmail -like "*@*") {
                             # Manager is enabled and has an email, this is standard situation for manager in AD
                             # But before we go and do that, maybe user wants to send emails to managers if those users are in specific group or OU
-                            if ($Rule.SendToManager.Manager.LimitOU.Count -gt 0) {
+                            if ($Rule.SendToManager.Manager.IncludeOU.Count -gt 0) {
                                 # Rule defined that only user withi specific OU has to be found
                                 $FoundOU = $false
-                                foreach ($OU in $Rule.SendToManager.Manager.LimitOU) {
+                                foreach ($OU in $Rule.SendToManager.Manager.IncludeOU) {
                                     if ($User.OrganizationalUnit -like $OU) {
                                         $FoundOU = $true
                                         break
@@ -143,10 +172,37 @@
                                     continue
                                 }
                             }
-                            if ($Rule.SendToManager.Manager.LimitGroup.Count -gt 0) {
+                            if ($Rule.SendToManager.Manager.ExcludeOU.Count -gt 0) {
+                                $FoundOU = $false
+                                foreach ($OU in $Rule.SendToManager.Manager.ExcludeOU) {
+                                    if ($User.OrganizationalUnit -like $OU) {
+                                        $FoundOU = $true
+                                        break
+                                    }
+                                }
+                                # if OU is found we need to exclude the user
+                                if ($FoundOU) {
+                                    continue
+                                }
+                            }
+                            if ($Rule.SendToManager.Manager.ExcludeGroup.Count -gt 0) {
                                 # Rule defined that only user withi specific group has to be found
                                 $FoundGroup = $false
-                                foreach ($Group in $Rule.SendToManager.Manager.LimitGroup) {
+                                foreach ($Group in $Rule.SendToManager.Manager.ExcludeGroup) {
+                                    if ($User.MemberOf -contains $Group) {
+                                        $FoundGroup = $true
+                                        break
+                                    }
+                                }
+                                # if Group found, we need to skip this user
+                                if ($FoundGroup) {
+                                    continue
+                                }
+                            }
+                            if ($Rule.SendToManager.Manager.IncludeGroup.Count -gt 0) {
+                                # Rule defined that only user withi specific group has to be found
+                                $FoundGroup = $false
+                                foreach ($Group in $Rule.SendToManager.Manager.IncludeGroup) {
                                     if ($User.MemberOf -contains $Group) {
                                         $FoundGroup = $true
                                         break
@@ -171,10 +227,10 @@
                             if ($Rule.SendToManager.ManagerNotCompliant -and $Rule.SendToManager.ManagerNotCompliant.Enable -and $Rule.SendToManager.ManagerNotCompliant.Manager) {
 
                                 # But before we go and do that, maybe user wants to send emails to managers if those users are in specific group or OU
-                                if ($Rule.SendToManager.ManagerNotCompliant.LimitOU.Count -gt 0) {
+                                if ($Rule.SendToManager.ManagerNotCompliant.IncludeOU.Count -gt 0) {
                                     # Rule defined that only user withi specific OU has to be found
                                     $FoundOU = $false
-                                    foreach ($OU in $Rule.SendToManager.Manager.LimitOU) {
+                                    foreach ($OU in $Rule.SendToManager.Manager.IncludeOU) {
                                         if ($User.OrganizationalUnit -like $OU) {
                                             $FoundOU = $true
                                             break
@@ -184,10 +240,10 @@
                                         continue
                                     }
                                 }
-                                if ($Rule.SendToManager.ManagerNotCompliant.LimitGroup.Count -gt 0) {
+                                if ($Rule.SendToManager.ManagerNotCompliant.IncludeGroup.Count -gt 0) {
                                     # Rule defined that only user withi specific group has to be found
                                     $FoundGroup = $false
-                                    foreach ($Group in $Rule.SendToManager.Manager.LimitGroup) {
+                                    foreach ($Group in $Rule.SendToManager.Manager.IncludeGroup) {
                                         if ($User.MemberOf -contains $Group) {
                                             $FoundGroup = $true
                                             break
@@ -264,6 +320,14 @@
         $CountUsers = 0
         [Array] $SummaryUsersEmails = foreach ($Notify in $Summary['Notify'].Values) {
             $CountUsers++
+            $User = $Notify.User
+            $Rule = $Notify.Rule
+
+            if ($Notify.ProcessManagersOnly -eq $true) {
+                Write-Color @WriteParameters -Text "[i]", " Skipping User (Manager Only - $($Rule.Name)) ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Magenta, White, Magenta, White, White, Blue
+                continue
+            }
+
             $EmailSplat = [ordered] @{}
 
             if ($Notify.User.DaysToExpire -ge 0) {
