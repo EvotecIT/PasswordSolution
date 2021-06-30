@@ -16,30 +16,51 @@
         [string] $TemplateManagerSubject,
         [scriptblock] $TemplateManagerNotCompliant,
         [string] $TemplateManagerNotCompliantSubject,
-        [System.Collections.IDictionary] $DisplayConsole,
+        [System.Collections.IDictionary] $Logging,
         [System.Collections.IDictionary] $HTMLOptions,
         [string] $FilePath,
         [string] $SearchPath
     )
     $Today = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    # Lets define Write-Color rules
-    if ($null -eq $DisplayConsole) {
-        $WriteParameters = @{
+    if (-not $Logging) {
+        $Logging = @{
             ShowTime   = $true
             LogFile    = ""
             TimeFormat = "yyyy-MM-dd HH:mm:ss"
         }
-    } else {
-        $WriteParameters = $DisplayConsole
+    }
+    $PSDefaultParameterValues = @{
+        "Write-Color:LogFile"    = $Logging.LogFile
+        "Write-Color:ShowTime"   = $Logging.ShowTime
+        "Write-Color:TimeFormat" = $Logging.TimeFormat
+    }
+
+    if ($Logging.LogFile) {
+        $FolderPath = [io.path]::GetDirectoryName($Logging.LogFile)
+        if (-not (Test-Path -LiteralPath $FolderPath)) {
+            $null = New-Item -Path $FolderPath -ItemType Directory -Force
+        }
+        $CurrentLogs = Get-ChildItem -LiteralPath $FolderPath | Sort-Object -Property CreationTime -Descending | Select-Object -Skip $Logging.LogMaximum
+        if ($CurrentLogs) {
+            Write-Color -Text '[i] ', "Logs directory has more than ", $Logging.LogMaximum, " log files. Cleanup required..." -Color Yellow, DarkCyan, Red, DarkCyan
+            foreach ($Log in $CurrentLogs) {
+                try {
+                    Remove-Item -LiteralPath $Log.FullName -Confirm:$false
+                    Write-Color -Text '[+] ', "Deleted ", "$($Log.FullName)" -Color Yellow, White, Green
+                } catch {
+                    Write-Color -Text '[-] ', "Couldn't delete log file $($Log.FullName). Error: ', "$($_.Exception.Message) -Color Yellow, White, Red
+                }
+            }
+        }
     }
 
     if ($SearchPath) {
         if (Test-Path -LiteralPath $SearchPath) {
             try {
+                Write-Color -Text "[i]", " Loading file ", $SearchPath -Color White, Yellow, White, Yellow, White, Yellow, White
                 $SummarySearch = Import-Clixml -LiteralPath $SearchPath -ErrorAction Stop
-                #$SummarySearch = Get-Content -LiteralPath $SearchPath -Raw | ConvertFrom-Json
             } catch {
-                Write-Color @WriteParameters -Text "[e]", " Couldn't load the file $SearchPath", ". Skipping...", $_.Exception.Message -Color White, Yellow, White, Yellow, White, Yellow, White
+                Write-Color -Text "[e]", " Couldn't load the file $SearchPath", ". Skipping...", $_.Exception.Message -Color White, Yellow, White, Yellow, White, Yellow, White
             }
         }
     }
@@ -48,22 +69,29 @@
             EmailSent        = [ordered] @{
 
             }
+            EmailManagers    = [ordered] @{
+
+            }
             EmailEscalations = [ordered] @{
 
             }
+
         }
     }
 
     $Summary = [ordered] @{}
     $Summary['Notify'] = [ordered] @{}
     $Summary['NotifyManager'] = [ordered] @{}
+    $Summary['NotifySecurity'] = [ordered] @{}
     $Summary['Rules'] = [ordered] @{}
 
+
+    Write-Color -Text "[i]", " Starting process to find expiring users" -Color Yellow, White, Green, White, Green, White, Green, White
     $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty
     foreach ($Rule in $Rules) {
         # Go for each rule and check if the user is in any of those rules
         if ($Rule.Enable -eq $true) {
-            Write-Color @WriteParameters -Text "[i]", " Processing rule ", $Rule.Name, ' status: ', $Rule.Enable -Color Yellow, White, Green, White, Green, White, Green, White
+            Write-Color -Text "[i]", " Processing rule ", $Rule.Name, ' status: ', $Rule.Enable -Color Yellow, White, Green, White, Green, White, Green, White
             # Lets create summary for the rule
             if (-not $Summary['Rules'][$Rule.Name] ) {
                 $Summary['Rules'][$Rule.Name] = [ordered] @{}
@@ -144,7 +172,7 @@
 
                 # Lets find users that expire
                 if ($User.DaysToExpire -in $Rule.Reminders) {
-                    Write-Color @WriteParameters -Text "[i]", " User ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
+                    Write-Color -Text "[i]", " User ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
                     $Summary['Notify'][$User.DistinguishedName] = [ordered] @{
                         User                = $User
                         Rule                = $Rule
@@ -311,12 +339,12 @@
                 }
             }
         } else {
-            Write-Color @WriteParameters -Text "[i]", " Processing rule ", $Rule.Name, ' status: ', $Rule.Enable -Color Red, White, Red, White, Red, White, Red, White
+            Write-Color -Text "[i]", " Processing rule ", $Rule.Name, ' status: ', $Rule.Enable -Color Red, White, Red, White, Red, White, Red, White
         }
     }
 
     if ($UserSection.Enable) {
-        Write-Color @WriteParameters -Text "[i] Sending notifications to users " -Color White, Yellow, White, Yellow, White, Yellow, White
+        Write-Color -Text "[i] Sending notifications to users " -Color White, Yellow, White, Yellow, White, Yellow, White
         $CountUsers = 0
         [Array] $SummaryUsersEmails = foreach ($Notify in $Summary['Notify'].Values) {
             $CountUsers++
@@ -324,7 +352,7 @@
             $Rule = $Notify.Rule
 
             if ($Notify.ProcessManagersOnly -eq $true) {
-                Write-Color @WriteParameters -Text "[i]", " Skipping User (Manager Only - $($Rule.Name)) ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Magenta, White, Magenta, White, White, Blue
+                Write-Color -Text "[i]", " Skipping User (Manager Only - $($Rule.Name)) ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Magenta, White, Magenta, White, White, Blue
                 continue
             }
 
@@ -394,7 +422,7 @@
                 }
                 if ($UserSection.SendCountMaximum -gt 0) {
                     if ($UserSection.SendCountMaximum -le $CountUsers) {
-                        Write-Color @WriteParameters -Text "[i]", " Send count maximum reached. There may be more accounts that match the rule." -Color Red, DarkMagenta
+                        Write-Color -Text "[i]", " Send count maximum reached. There may be more accounts that match the rule." -Color Red, DarkMagenta
                         break
                     }
                 }
@@ -422,17 +450,17 @@
                 }
             }
             if ($EmailResult.Status -eq $true) {
-                Write-Color @WriteParameters -Text "[i]", " Sending ", $Notify.User.DisplayName, " (", $Notify.User.UserPrincipalName, ")", " status: ", $EmailResult.Status, ", details: ", $EmailResult.Error -Color Yellow, White, Yellow, White, Yellow, White, White, Blue, White, Blue
+                Write-Color -Text "[i]", " Sending ", $Notify.User.DisplayName, " (", $Notify.User.UserPrincipalName, ")", " status: ", $EmailResult.Status, ", details: ", $EmailResult.Error -Color Yellow, White, Yellow, White, Yellow, White, White, Blue, White, Blue
             } else {
-                Write-Color @WriteParameters -Text "[i]", " Sending ", $Notify.User.DisplayName, " (", $Notify.User.UserPrincipalName, ")", " status: ", $EmailResult.Status, ", details: ", $EmailResult.Error -Color Yellow, White, Yellow, White, Yellow, White, White, Red, White, Red
+                Write-Color -Text "[i]", " Sending ", $Notify.User.DisplayName, " (", $Notify.User.UserPrincipalName, ")", " status: ", $EmailResult.Status, ", details: ", $EmailResult.Error -Color Yellow, White, Yellow, White, Yellow, White, White, Red, White, Red
             }
         }
-        Write-Color @WriteParameters -Text "[i] Sending notifications to users (sent: ", $SummaryUsersEmails.Count, " out of ", $Summary['Notify'].Values.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
+        Write-Color -Text "[i] Sending notifications to users (sent: ", $SummaryUsersEmails.Count, " out of ", $Summary['Notify'].Values.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
     } else {
-        Write-Color @WriteParameters -Text "[i] Sending notifications to users is ", "disabled!" -Color White, Yellow, DarkMagenta
+        Write-Color -Text "[i] Sending notifications to users is ", "disabled!" -Color White, Yellow, DarkMagenta
     }
     if ($ManagerSection.Enable) {
-        Write-Color @WriteParameters -Text "[i] Sending notifications to managers " -Color White, Yellow, White, Yellow, White, Yellow, White
+        Write-Color -Text "[i] Sending notifications to managers " -Color White, Yellow, White, Yellow, White, Yellow, White
         $CountManagers = 0
         [Array] $SummaryManagersEmails = foreach ($Manager in $Summary['NotifyManager'].Keys) {
             $CountManagers++
@@ -515,15 +543,15 @@
             }
             if ($ManagerSection.SendCountMaximum -gt 0) {
                 if ($ManagerSection.SendCountMaximum -le $CountManagers) {
-                    Write-Color @WriteParameters -Text "[i]", " Send count maximum reached. There may be more managers that match the rule." -Color Red, DarkMagenta
+                    Write-Color -Text "[i]", " Send count maximum reached. There may be more managers that match the rule." -Color Red, DarkMagenta
                     break
                 }
             }
         }
-        Write-Color @WriteParameters -Text "[i] Sending notifications to managers (sent: ", $SummaryManagersEmails.Count, " out of ", $Summary['NotifyManager'].Values.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
-        #Write-Color @WriteParameters -Text "[i] Sending notifications to managers (sent: ", $SummaryManagersEmails.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
+        Write-Color -Text "[i] Sending notifications to managers (sent: ", $SummaryManagersEmails.Count, " out of ", $Summary['NotifyManager'].Values.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
+        #Write-Color -Text "[i] Sending notifications to managers (sent: ", $SummaryManagersEmails.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
     } else {
-        Write-Color @WriteParameters -Text "[i] Sending notifications to managers is ", "disabled!" -Color White, Yellow, DarkMagenta
+        Write-Color -Text "[i] Sending notifications to managers is ", "disabled!" -Color White, Yellow, DarkMagenta
     }
 
     # Create report
@@ -563,13 +591,14 @@
     if ($SearchPath) {
 
         $SummarySearch['EmailSent'][$Today] = $SummaryUsersEmails
-        $SummarySearch['EmailEscalations'][$Today] = $SummaryManagersEmails
+        $SummarySearch['EmailEscalations'][$Today] = $SummaryEscalationEmails
+        $SummarySearch['EmailManagers'][$Today] = $SummaryManagersEmails
 
         try {
             $SummarySearch | Export-Clixml -LiteralPath $SearchPath
             #$SummarySearch | ConvertTo-Json | Out-File -LiteralPath $SearchPath
         } catch {
-            Write-Color @WriteParameters -Text "[e]", " Couldn't save to file $SearchPath", ". Error: ", $_.Exception.Message -Color White, Yellow, White, Yellow, White, Yellow, White
+            Write-Color -Text "[e]", " Couldn't save to file $SearchPath", ". Error: ", $_.Exception.Message -Color White, Yellow, White, Yellow, White, Yellow, White
         }
     }
 }

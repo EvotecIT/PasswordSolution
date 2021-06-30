@@ -7,21 +7,12 @@
         [System.Collections.IDictionary] $ExtendedForestInformation,
         [string] $OverwriteEmailProperty,
         #[Array] $ConditionProperties,
-        [System.Collections.IDictionary] $WriteParameters,
         #[System.Collections.IDictionary] $CachedUsers,
         #[System.Collections.IDictionary] $CachedUsersPrepared,
         #[System.Collections.IDictionary] $CachedManagers
         [switch] $AsHashTable
     )
     $Today = Get-Date
-    if ($null -eq $WriteParameters) {
-        $WriteParameters = @{
-            ShowTime   = $true
-            LogFile    = ""
-            TimeFormat = "yyyy-MM-dd HH:mm:ss"
-        }
-    }
-
 
     $Properties = @(
         'Manager', 'DisplayName', 'GivenName', 'Surname', 'SamAccountName', 'EmailAddress', 'msDS-UserPasswordExpiryTimeComputed', 'PasswordExpired', 'PasswordLastSet', 'PasswordNotRequired', 'Enabled', 'PasswordNeverExpires', 'Mail', 'MemberOf', 'LastLogonDate'
@@ -40,14 +31,14 @@
     if (-not $Cache) {
         $Cache = [ordered] @{ }
     }
-    Write-Color @WriteParameters -Text "[i] Discovering forest information" -Color White, Yellow, White, Yellow, White, Yellow, White
+    Write-Color -Text "[i] Discovering forest information" -Color White, Yellow, White, Yellow, White, Yellow, White
     $ForestInformation = Get-WinADForestDetails -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
 
     [Array] $Users = foreach ($Domain in $ForestInformation.Domains) {
-        Write-Color @WriteParameters -Text "[i] Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color White, Yellow, White, Yellow, White, Yellow, White
+        Write-Color -Text "[i] Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color White, Yellow, White, Yellow, White, Yellow, White
         $Server = $ForestInformation['QueryServers'][$Domain]['HostName'][0]
 
-        Write-Color @WriteParameters -Text "[i] Getting users from ", "$($Domain)", " using ", $Server -Color White, Yellow, White, Yellow, White, Yellow, White
+        Write-Color -Text "[i] Getting users from ", "$($Domain)", " using ", $Server -Color White, Yellow, White, Yellow, White, Yellow, White
         # We query all users instead of using filter. Since we need manager field and manager data this way it should be faster (query once - get it all)
         #$DomainUsers = Get-ADUser -Server $Server -Filter '*' -Properties $Properties -ErrorAction Stop
         #foreach ($_ in $DomainUsers) {
@@ -61,13 +52,13 @@
             Get-ADUser -Server $Server -Filter '*' -Properties $Properties -ErrorAction Stop
         } catch {
             $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
-            Write-Color @WriteParameters '[e] Error: ', $ErrorMessage -Color White, Red
+            Write-Color '[e] Error: ', $ErrorMessage -Color White, Red
         }
     }
     foreach ($User in $Users) {
         $Cache[$User.DistinguishedName] = $User
     }
-    Write-Color @WriteParameters -Text "[i] Preparing all users for password expirations in forest ", $Forest.Name -Color White, Yellow, White, Yellow, White, Yellow, White
+    Write-Color -Text "[i] Preparing all users for password expirations in forest ", $Forest.Name -Color White, Yellow, White, Yellow, White, Yellow, White
     $ProcessedUsers = foreach ($User in $Users) {
         #$UserManager = $Cache["$($User.Manager)"]
         if ($User.Manager) {
