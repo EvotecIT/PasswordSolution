@@ -6,6 +6,7 @@
         [string] $OverwriteEmailProperty,
         [System.Collections.IDictionary] $UserSection,
         [System.Collections.IDictionary] $ManagerSection,
+        [System.Collections.IDictionary] $SecuritySection,
         [System.Collections.IDictionary] $AdminSection,
         [Array] $Rules,
         [scriptblock] $TemplatePreExpiry,
@@ -14,6 +15,8 @@
         [string] $TemplatePostExpirySubject,
         [scriptblock] $TemplateManager,
         [string] $TemplateManagerSubject,
+        [scriptblock] $TemplateSecurity,
+        [string] $TemplateSecuritySubject,
         [scriptblock] $TemplateManagerNotCompliant,
         [string] $TemplateManagerNotCompliantSubject,
         [System.Collections.IDictionary] $Logging,
@@ -250,90 +253,184 @@
                                 #Enabled           = $true
                             }
                             Add-ManagerInformation @Splat
-                        } else {
-                            # Not compliant (missing, disabled, no email), covers all the below options
-                            if ($Rule.SendToManager.ManagerNotCompliant -and $Rule.SendToManager.ManagerNotCompliant.Enable -and $Rule.SendToManager.ManagerNotCompliant.Manager) {
-
-                                # But before we go and do that, maybe user wants to send emails to managers if those users are in specific group or OU
-                                if ($Rule.SendToManager.ManagerNotCompliant.IncludeOU.Count -gt 0) {
-                                    # Rule defined that only user withi specific OU has to be found
-                                    $FoundOU = $false
-                                    foreach ($OU in $Rule.SendToManager.Manager.IncludeOU) {
-                                        if ($User.OrganizationalUnit -like $OU) {
-                                            $FoundOU = $true
-                                            break
-                                        }
-                                    }
-                                    if (-not $FoundOU) {
-                                        continue
+                        }
+                        # Not compliant (missing, disabled, no email), covers all the below options
+                        if ($Rule.SendToManager.ManagerNotCompliant -and $Rule.SendToManager.ManagerNotCompliant.Enable -and $Rule.SendToManager.ManagerNotCompliant.Manager) {
+                            # But before we go and do that, maybe user wants to send emails to managers if those users are in specific group or OU
+                            if ($Rule.SendToManager.ManagerNotCompliant.IncludeOU.Count -gt 0) {
+                                # Rule defined that only user withi specific OU has to be found
+                                $FoundOU = $false
+                                foreach ($OU in $Rule.SendToManager.ManagerNotCompliant.IncludeOU) {
+                                    if ($User.OrganizationalUnit -like $OU) {
+                                        $FoundOU = $true
+                                        break
                                     }
                                 }
-                                if ($Rule.SendToManager.ManagerNotCompliant.IncludeGroup.Count -gt 0) {
-                                    # Rule defined that only user withi specific group has to be found
-                                    $FoundGroup = $false
-                                    foreach ($Group in $Rule.SendToManager.Manager.IncludeGroup) {
-                                        if ($User.MemberOf -contains $Group) {
-                                            $FoundGroup = $true
-                                            break
-                                        }
-                                    }
-                                    if (-not $FoundGroup) {
-                                        continue
-                                    }
-                                }
-
-
-                                if ($Rule.SendToManager.ManagerNotCompliant.MissingEmail -and $User.ManagerStatus -eq 'Enabled') {
-                                    # Manager is enabled but missing email
-                                    $Splat = [ordered] @{
-                                        SummaryDictionary = $Summary['NotifyManager']
-                                        Type              = 'ManagerNotCompliant'
-                                        ManagerType       = 'No email'
-
-                                        Key               = $Rule.SendToManager.ManagerNotCompliant.Manager
-                                        User              = $User
-                                        Rule              = $Rule
-
-                                    }
-                                    Add-ManagerInformation @Splat
-                                } elseif ($Rule.SendToManager.ManagerNotCompliant.Disabled -and $User.ManagerStatus -eq 'Disabled') {
-                                    # Manager is disabled, regardless if he/she has email
-                                    $Splat = [ordered] @{
-                                        SummaryDictionary = $Summary['NotifyManager']
-                                        Type              = 'ManagerNotCompliant'
-                                        ManagerType       = 'Manager disabled'
-                                        Key               = $Rule.SendToManager.ManagerNotCompliant.Manager
-                                        User              = $User
-                                        Rule              = $Rule
-
-                                    }
-                                    Add-ManagerInformation @Splat
-                                } elseif ($Rule.SendToManager.ManagerNotCompliant.LastLogon -and $User.ManagerLastLogonDays -ge $Rule.SendToManager.ManagerNotCompliant.LastLogonDays) {
-                                    # Manager Last Logon over X days
-                                    $Splat = [ordered] @{
-                                        SummaryDictionary = $Summary['NotifyManager']
-                                        Type              = 'ManagerNotCompliant'
-                                        ManagerType       = 'Manager not logging in'
-                                        Key               = $Rule.SendToManager.ManagerNotCompliant.Manager
-                                        User              = $User
-                                        Rule              = $Rule
-
-                                    }
-                                    Add-ManagerInformation @Splat
-                                } elseif ($Rule.SendToManager.ManagerNotCompliant.Missing -and $User.ManagerStatus -eq 'Missing') {
-                                    # Manager is missing
-                                    $Splat = [ordered] @{
-                                        SummaryDictionary = $Summary['NotifyManager']
-                                        Type              = 'ManagerNotCompliant'
-                                        ManagerType       = 'Manager not set'
-                                        Key               = $Rule.SendToManager.ManagerNotCompliant.Manager
-                                        User              = $User
-                                        Rule              = $Rule
-
-                                    }
-                                    Add-ManagerInformation @Splat
+                                if (-not $FoundOU) {
+                                    continue
                                 }
                             }
+                            if ($Rule.SendToManager.ManagerNotCompliant.ExcludeOU.Count -gt 0) {
+                                $FoundOU = $false
+                                foreach ($OU in $Rule.SendToManager.ManagerNotCompliant.ExcludeOU) {
+                                    if ($User.OrganizationalUnit -like $OU) {
+                                        $FoundOU = $true
+                                        break
+                                    }
+                                }
+                                # if OU is found we need to exclude the user
+                                if ($FoundOU) {
+                                    continue
+                                }
+                            }
+                            if ($Rule.SendToManager.ManagerNotCompliant.ExcludeGroup.Count -gt 0) {
+                                # Rule defined that only user withi specific group has to be found
+                                $FoundGroup = $false
+                                foreach ($Group in $Rule.SendToManager.ManagerNotCompliant.ExcludeGroup) {
+                                    if ($User.MemberOf -contains $Group) {
+                                        $FoundGroup = $true
+                                        break
+                                    }
+                                }
+                                # if Group found, we need to skip this user
+                                if ($FoundGroup) {
+                                    continue
+                                }
+                            }
+                            if ($Rule.SendToManager.ManagerNotCompliant.IncludeGroup.Count -gt 0) {
+                                # Rule defined that only user withi specific group has to be found
+                                $FoundGroup = $false
+                                foreach ($Group in $Rule.SendToManager.ManagerNotCompliant.IncludeGroup) {
+                                    if ($User.MemberOf -contains $Group) {
+                                        $FoundGroup = $true
+                                        break
+                                    }
+                                }
+                                if (-not $FoundGroup) {
+                                    continue
+                                }
+                            }
+                            if ($Rule.SendToManager.ManagerNotCompliant.MissingEmail -and $User.ManagerStatus -eq 'Enabled') {
+                                # Manager is enabled but missing email
+                                $Splat = [ordered] @{
+                                    SummaryDictionary = $Summary['NotifyManager']
+                                    Type              = 'ManagerNotCompliant'
+                                    ManagerType       = 'No email'
+
+                                    Key               = $Rule.SendToManager.ManagerNotCompliant.Manager
+                                    User              = $User
+                                    Rule              = $Rule
+
+                                }
+                                Add-ManagerInformation @Splat
+                            } elseif ($Rule.SendToManager.ManagerNotCompliant.Disabled -and $User.ManagerStatus -eq 'Disabled') {
+                                # Manager is disabled, regardless if he/she has email
+                                $Splat = [ordered] @{
+                                    SummaryDictionary = $Summary['NotifyManager']
+                                    Type              = 'ManagerNotCompliant'
+                                    ManagerType       = 'Manager disabled'
+                                    Key               = $Rule.SendToManager.ManagerNotCompliant.Manager
+                                    User              = $User
+                                    Rule              = $Rule
+
+                                }
+                                Add-ManagerInformation @Splat
+                            } elseif ($Rule.SendToManager.ManagerNotCompliant.LastLogon -and $User.ManagerLastLogonDays -ge $Rule.SendToManager.ManagerNotCompliant.LastLogonDays) {
+                                # Manager Last Logon over X days
+                                $Splat = [ordered] @{
+                                    SummaryDictionary = $Summary['NotifyManager']
+                                    Type              = 'ManagerNotCompliant'
+                                    ManagerType       = 'Manager not logging in'
+                                    Key               = $Rule.SendToManager.ManagerNotCompliant.Manager
+                                    User              = $User
+                                    Rule              = $Rule
+
+                                }
+                                Add-ManagerInformation @Splat
+                            } elseif ($Rule.SendToManager.ManagerNotCompliant.Missing -and $User.ManagerStatus -eq 'Missing') {
+                                # Manager is missing
+                                $Splat = [ordered] @{
+                                    SummaryDictionary = $Summary['NotifyManager']
+                                    Type              = 'ManagerNotCompliant'
+                                    ManagerType       = 'Manager not set'
+                                    Key               = $Rule.SendToManager.ManagerNotCompliant.Manager
+                                    User              = $User
+                                    Rule              = $Rule
+
+                                }
+                                Add-ManagerInformation @Splat
+                            }
+                        }
+
+                    }
+                }
+                if ($Rule.SendToManager) {
+                    if ($Rule.SendToManager.SecurityEscalation -and $Rule.SendToManager.SecurityEscalation.Enable -eq $true -and $Rule.SendToManager.SecurityEscalation.Manager) {
+                        $Rule.SendToManager.SecurityEscalation.Reminders = $Rule.SendToManager.SecurityEscalation.Reminders | ForEach-Object { $_ }
+                        if ($User.DaysToExpire -in $Rule.SendToManager.SecurityEscalation.Reminders) {
+                            if ($Rule.SendToManager.SecurityEscalation.IncludeOU.Count -gt 0) {
+                                # Rule defined that only user withi specific OU has to be found
+                                $FoundOU = $false
+                                foreach ($OU in $Rule.SendToManager.SecurityEscalation.IncludeOU) {
+                                    if ($User.OrganizationalUnit -like $OU) {
+                                        $FoundOU = $true
+                                        break
+                                    }
+                                }
+                                if (-not $FoundOU) {
+                                    continue
+                                }
+                            }
+                            if ($Rule.SendToManager.SecurityEscalation.ExcludeOU.Count -gt 0) {
+                                $FoundOU = $false
+                                foreach ($OU in $Rule.SendToManager.SecurityEscalation.ExcludeOU) {
+                                    if ($User.OrganizationalUnit -like $OU) {
+                                        $FoundOU = $true
+                                        break
+                                    }
+                                }
+                                # if OU is found we need to exclude the user
+                                if ($FoundOU) {
+                                    continue
+                                }
+                            }
+                            if ($Rule.SendToManager.SecurityEscalation.ExcludeGroup.Count -gt 0) {
+                                # Rule defined that only user withi specific group has to be found
+                                $FoundGroup = $false
+                                foreach ($Group in $Rule.SendToManager.SecurityEscalation.ExcludeGroup) {
+                                    if ($User.MemberOf -contains $Group) {
+                                        $FoundGroup = $true
+                                        break
+                                    }
+                                }
+                                # if Group found, we need to skip this user
+                                if ($FoundGroup) {
+                                    continue
+                                }
+                            }
+                            if ($Rule.SendToManager.SecurityEscalation.IncludeGroup.Count -gt 0) {
+                                # Rule defined that only user withi specific group has to be found
+                                $FoundGroup = $false
+                                foreach ($Group in $Rule.SendToManager.SecurityEscalation.IncludeGroup) {
+                                    if ($User.MemberOf -contains $Group) {
+                                        $FoundGroup = $true
+                                        break
+                                    }
+                                }
+                                if (-not $FoundGroup) {
+                                    continue
+                                }
+                            }
+
+                            $Splat = [ordered] @{
+                                SummaryDictionary = $Summary['NotifySecurity']
+                                Type              = 'Security'
+                                ManagerType       = 'Escalation'
+                                Key               = $Rule.SendToManager.SecurityEscalation.Manager
+                                User              = $User
+                                Rule              = $Rule
+                            }
+                            Add-ManagerInformation @Splat
                         }
                     }
                 }
@@ -401,6 +498,8 @@
 
             if ($UserSection.SendToDefaultEmail -ne $true) {
                 $EmailSplat.EmailParameters.To = $Notify.User.EmailAddress
+            } else {
+                $EmailSplat.EmailParameters.To = $UserSection.DefaultEmail
             }
             if ($Notify.User.EmailAddress -like "*@*") {
                 # Regardless if we send email to default email or to user, if user doesn't have email address we shouldn't send an email
@@ -511,13 +610,12 @@
             $EmailSplat.User = $ManagerUser
             $EmailSplat.ManagedUsers = $ManagedUsers
             $EmailSplat.ManagedUsersManagerNotCompliant = $ManagedUsersManagerNotCompliant
-            #$EmailSplat.ManagedUsersManagerDisabled = $ManagedUsersManagerDisabled
-            #$EmailSplat.ManagedUsersManagerMissing = $ManagedUsersManagerMissing
-            #$EmailSplat.ManagedUsersManagerMissingEmail = $ManagedUsersManagerMissingEmail
             $EmailSplat.EmailParameters = $EmailParameters
 
             if ($ManagerSection.SendToDefaultEmail -ne $true) {
                 $EmailSplat.EmailParameters.To = $ManagerUser.EmailAddress
+            } else {
+                $EmailSplat.EmailParameters.To = $ManagerSection.DefaultEmail
             }
 
             $EmailResult = Send-PasswordEmail @EmailSplat
@@ -553,6 +651,83 @@
     } else {
         Write-Color -Text "[i] Sending notifications to managers is ", "disabled!" -Color White, Yellow, DarkMagenta
     }
+    if ($SecuritySection.Enable) {
+        Write-Color -Text "[i] Sending notifications to security " -Color White, Yellow, White, Yellow, White, Yellow, White
+        $CountSecurity = 0
+        [Array] $SummaryEscalationEmails = foreach ($Manager in $Summary['NotifySecurity'].Keys) {
+            $CountSecurity++
+            # This user is provided by user in config file
+            $ManagerUser = $Summary['NotifySecurity'][$Manager]['Manager']
+
+            [Array] $ManagedUsers = $Summary['NotifySecurity'][$Manager]['Security'].Values.Output
+
+            $EmailSplat = [ordered] @{}
+
+            if ($Summary['NotifySecurity'][$Manager].Security.Count -gt 0) {
+                if ($TemplateSecurity) {
+                    # User uses global template
+                    $EmailSplat.Template = $TemplateSecurity
+                } else {
+                    # User uses built-in template
+                    $EmailSplat.Template = {
+
+                    }
+                }
+                if ($TemplateSecuritySubject) {
+                    $EmailSplat.Subject = $TemplateSecuritySubject
+                } else {
+                    $EmailSplat.Subject = "[Password Expiring] Dear Security - Accounts expired"
+                }
+            } else {
+                continue
+            }
+
+            $EmailSplat.User = $ManagerUser
+            $EmailSplat.ManagedUsers = $ManagedUsers | Select-Object -Property 'Status', 'DisplayName', 'Enabled', 'SamAccountName', 'Domain', 'DateExpiry', 'DaysToExpire', 'PasswordLastSet', 'PasswordExpired'
+            #$EmailSplat.ManagedUsersManagerNotCompliant = $ManagedUsersManagerNotCompliant
+            #$EmailSplat.ManagedUsersManagerDisabled = $ManagedUsersManagerDisabled
+            #$EmailSplat.ManagedUsersManagerMissing = $ManagedUsersManagerMissing
+            #$EmailSplat.ManagedUsersManagerMissingEmail = $ManagedUsersManagerMissingEmail
+            $EmailSplat.EmailParameters = $EmailParameters
+
+            if ($ManagerSection.SendToDefaultEmail -ne $true) {
+                $EmailSplat.EmailParameters.To = $ManagerUser.EmailAddress
+            } else {
+                $EmailSplat.EmailParameters.To = $SecuritySection.DefaultEmail
+            }
+
+            $EmailResult = Send-PasswordEmail @EmailSplat
+            [PSCustomObject] @{
+                DisplayName    = $ManagerUser.DisplayName
+                SamAccountName = $ManagerUser.SamAccountName
+                Domain         = $ManagerUser.Domain
+                Status         = $EmailResult.Status
+                StatusWhen     = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+                SentTo         = $EmailResult.SentTo
+                StatusError    = $EmailResult.Error
+                Accounts       = $ManagedUsers.SamAccountName
+                AccountsCount  = $ManagedUsers.Count
+                Template       = 'Unknown'
+                # ManagerNotCompliant      = $ManagedUsersManagerNotCompliant.SamAccountName
+                # ManagerNotCompliantCount = $ManagedUsersManagerNotCompliant.Count
+                #ManagerDisabled          = $ManagedUsersManagerDisabled.SamAccountName
+                #ManagerDisabledCount     = $ManagedUsersManagerDisabled.Count
+                #ManagerMissing           = $ManagedUsersManagerMissing.SamAccountName
+                #ManagerMissingCount      = $ManagedUsersManagerMissing.Count
+                #ManagerMissingEmail      = $ManagedUsersManagerMissingEmail.SamAccountName
+                #ManagerMissingEmailCount = $ManagedUsersManagerMissingEmail.Count
+            }
+            if ($ManagerSection.SendCountMaximum -gt 0) {
+                if ($ManagerSection.SendCountMaximum -le $CountSecurity) {
+                    Write-Color -Text "[i]", " Send count maximum reached. There may be more managers that match the rule." -Color Red, DarkMagenta
+                    break
+                }
+            }
+        }
+        Write-Color -Text "[i] Sending notifications to security (sent: ", $SummaryEscalationEmails.Count, " out of ", $Summary['NotifySecurity'].Values.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
+    } else {
+        Write-Color -Text "[i] Sending notifications to security is ", "disabled!" -Color White, Yellow, DarkMagenta
+    }
 
     # Create report
     New-HTML {
@@ -586,10 +761,15 @@
                 New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
             }
         }
+        New-HTMLTab -Name 'Email sent to Security' {
+            New-HTMLTable -DataTable $SummaryEscalationEmails {
+                New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+            }
+        }
     } -ShowHTML:$HTMLOptions.ShowHTML -FilePath $FilePath -Online:$HTMLOptions.Online
 
     if ($SearchPath) {
-
         $SummarySearch['EmailSent'][$Today] = $SummaryUsersEmails
         $SummarySearch['EmailEscalations'][$Today] = $SummaryEscalationEmails
         $SummarySearch['EmailManagers'][$Today] = $SummaryManagersEmails
