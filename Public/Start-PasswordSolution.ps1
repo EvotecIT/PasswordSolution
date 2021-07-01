@@ -23,6 +23,10 @@
         [string] $FilePath,
         [string] $SearchPath
     )
+
+    $Script:Reporting = [ordered] @{}
+    $Script:Reporting['Version'] = Get-GitHubVersion -Cmdlet 'Start-PasswordSolution' -RepositoryOwner 'evotecit' -RepositoryName 'PasswordSolution'
+
     $Today = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     if (-not $Logging) {
         $Logging = @{
@@ -160,17 +164,63 @@
                     }
                 }
 
+                if ($Rule.IncludeName.Count -gt 0) {
+                    $IncludeName = $false
+                    foreach ($Name in $Rule.IncludeName) {
+                        foreach ($Property in $Rule.IncludeNameProperties) {
+                            if ($User.$Property -like $Name) {
+                                $IncludeName = $true
+                                break
+                            }
+                        }
+                        if ($IncludeName) {
+                            break
+                        }
+                    }
+                    if (-not $IncludeName) {
+                        continue
+                    }
+                }
+
                 if ($Summary['Notify'][$User.DistinguishedName] -and $Summary['Notify'][$User.DistinguishedName].ProcessManagersOnly -ne $true) {
                     # User already exists in the notifications - rules are overlapping, we only take the first one
                     # We also check for ProcessManagersOnly because we don't want first rule to ignore any other rules for users
                     continue
                 }
 
-
-                if ($Rule.PasswordNeverExpires -eq $true) {
-                    $DaysToPasswordExpiry = $Rule.PasswordNeverExpiresDays - $User.PasswordDays
-                    $User.DaysToExpire = $DaysToPasswordExpiry
+                if ($Rule.IncludePasswordNeverExpires -and $Rule.IncludeExpiring) {
+                    if ($User.PasswordNeverExpire -eq $true) {
+                        $DaysToPasswordExpiry = $Rule.PasswordNeverExpiresDays - $User.PasswordDays
+                        $User.DaysToExpire = $DaysToPasswordExpiry
+                    }
+                } elseif ($Rule.IncludeExpiring) {
+                    if ($User.PasswordNeverExpire -eq $true) {
+                        # we skip those that expire
+                        continue
+                    }
+                } elseif ($Rule.IncludePasswordNeverExpires) {
+                    if ($User.PasswordNeverExpire -eq $true) {
+                        $DaysToPasswordExpiry = $Rule.PasswordNeverExpiresDays - $User.PasswordDays
+                        $User.DaysToExpire = $DaysToPasswordExpiry
+                    } else {
+                        # we skip users who expire
+                        continue
+                    }
+                } else {
+                    Write-Color -Text "[i]", " Processing rule ", $Rule.Name, " doesn't include IncludePasswordNeverExpires nor IncludeExpiring so skipping." -Color Yellow, White, Green, White, Green, White, Green, White
+                    continue
                 }
+
+                <#
+                if ($Rule.IncludePasswordNeverExpires -eq $true -and $Rule.OnlyPasswordNeverExpiresOnly) {
+                    if ($User.PasswordNeverExpire -eq $true) {
+                        $DaysToPasswordExpiry = $Rule.PasswordNeverExpiresDays - $User.PasswordDays
+                        $User.DaysToExpire = $DaysToPasswordExpiry
+                    }
+                } elseif ($null -eq $Rule.PasswordNeverExpires) {
+
+                }
+                #>
 
                 # Lets find users that expire
                 if ($User.DaysToExpire -in $Rule.Reminders) {
@@ -742,6 +792,16 @@
 
     # Create report
     New-HTML {
+        New-HTMLHeader {
+            New-HTMLSection -Invisible {
+                New-HTMLSection {
+                    New-HTMLText -Text "Report generated on $(Get-Date)" -Color Blue
+                } -JustifyContent flex-start -Invisible
+                New-HTMLSection {
+                    New-HTMLText -Text "Password Solution - $($Script:Reporting['Version'])" -Color Blue
+                } -JustifyContent flex-end -Invisible
+            }
+        }
         New-TableOption -DataStore JavaScript -ArrayJoin -BoolAsString
         New-HTMLTab -Name 'All Users' {
             New-HTMLTable -DataTable $CachedUsers.Values -Filtering {
