@@ -1,26 +1,25 @@
 ﻿function Start-PasswordSolution {
     [CmdletBinding()]
     param(
-        [System.Collections.IDictionary] $EmailParameters,
-        [System.Collections.IDictionary] $ConfigurationParameters,
+        [Parameter(Mandatory)][System.Collections.IDictionary] $EmailParameters,
         [string] $OverwriteEmailProperty,
-        [System.Collections.IDictionary] $UserSection,
-        [System.Collections.IDictionary] $ManagerSection,
-        [System.Collections.IDictionary] $SecuritySection,
-        [System.Collections.IDictionary] $AdminSection,
-        [Array] $Rules,
+        [Parameter(Mandatory)][System.Collections.IDictionary] $UserSection,
+        [Parameter(Mandatory)][System.Collections.IDictionary] $ManagerSection,
+        [Parameter(Mandatory)][System.Collections.IDictionary] $SecuritySection,
+        [Parameter(Mandatory)][System.Collections.IDictionary] $AdminSection,
+        [Parameter(Mandatory)][Array] $Rules,
         [scriptblock] $TemplatePreExpiry,
         [string] $TemplatePreExpirySubject,
         [scriptblock] $TemplatePostExpiry,
         [string] $TemplatePostExpirySubject,
-        [scriptblock] $TemplateManager,
-        [string] $TemplateManagerSubject,
-        [scriptblock] $TemplateSecurity,
-        [string] $TemplateSecuritySubject,
-        [scriptblock] $TemplateManagerNotCompliant,
-        [string] $TemplateManagerNotCompliantSubject,
-        [System.Collections.IDictionary] $Logging,
-        [System.Collections.IDictionary] $HTMLOptions,
+        [Parameter(Mandatory)][scriptblock] $TemplateManager,
+        [Parameter(Mandatory)][string] $TemplateManagerSubject,
+        [Parameter(Mandatory)][scriptblock] $TemplateSecurity,
+        [Parameter(Mandatory)][string] $TemplateSecuritySubject,
+        [Parameter(Mandatory)][scriptblock] $TemplateManagerNotCompliant,
+        [Parameter(Mandatory)][string] $TemplateManagerNotCompliantSubject,
+        [Parameter(Mandatory)][System.Collections.IDictionary] $Logging,
+        [Parameter(Mandatory)][System.Collections.IDictionary] $HTMLOptions,
         [string] $FilePath,
         [string] $SearchPath
     )
@@ -664,15 +663,8 @@
             $EmailSplat = [ordered] @{}
 
             if ($Summary['NotifySecurity'][$Manager].Security.Count -gt 0) {
-                if ($TemplateSecurity) {
-                    # User uses global template
-                    $EmailSplat.Template = $TemplateSecurity
-                } else {
-                    # User uses built-in template
-                    $EmailSplat.Template = {
-
-                    }
-                }
+                # User uses global template
+                $EmailSplat.Template = $TemplateSecurity
                 if ($TemplateSecuritySubject) {
                     $EmailSplat.Subject = $TemplateSecuritySubject
                 } else {
