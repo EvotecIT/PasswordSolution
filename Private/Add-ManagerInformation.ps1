@@ -22,6 +22,7 @@
                 Manager             = $Key
                 ManagerDefault      = [ordered] @{}
                 ManagerNotCompliant = [ordered] @{}
+                Security            = [ordered] @{}
             }
         }
         $SummaryDictionary[$KeyDN][$Type][$User.DistinguishedName] = [ordered] @{
@@ -43,12 +44,9 @@
         }
         if ($Type -ne 'ManagerDefault') {
             $Extended = [ordered] @{
-                'Manager Status' = $ManagerType
-                #ManagerStatus = $User.ManagerStatus
-                Manager          = $User.Manager
-                'Manager Email'  = $User.ManagerEmail
-                #RuleName       = $Rule.Name
-                #Type           = $Type
+                'Status'        = $ManagerType
+                'Manager'       = $User.Manager
+                'Manager Email' = $User.ManagerEmail
             }
             $SummaryDictionary[$KeyDN][$Type][$User.DistinguishedName]['Output'] = [PSCustomObject] ( $Extended + $Default)
         } else {

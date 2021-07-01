@@ -174,7 +174,9 @@
 
                 # Lets find users that expire
                 if ($User.DaysToExpire -in $Rule.Reminders) {
-                    Write-Color -Text "[i]", " User ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
+                    if ($Logging.NotifyOnUserMatchingRule) {
+                        Write-Color -Text "[i]", " User ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
+                    }
                     $Summary['Notify'][$User.DistinguishedName] = [ordered] @{
                         User                = $User
                         Rule                = $Rule
@@ -448,7 +450,9 @@
             $Rule = $Notify.Rule
 
             if ($Notify.ProcessManagersOnly -eq $true) {
-                Write-Color -Text "[i]", " Skipping User (Manager Only - $($Rule.Name)) ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Magenta, White, Magenta, White, White, Blue
+                if ($Logging.NotifyOnSkipUserManagerOnly) {
+                    Write-Color -Text "[i]", " Skipping User (Manager Only - $($Rule.Name)) ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Magenta, White, Magenta, White, White, Blue
+                }
                 continue
             }
 
@@ -518,12 +522,6 @@
                     PasswordNeverExpires = $EmailSplat.User.PasswordNeverExpires
                     PasswordLastSet      = $EmailSplat.User.PasswordLastSet
                 }
-                if ($UserSection.SendCountMaximum -gt 0) {
-                    if ($UserSection.SendCountMaximum -le $CountUsers) {
-                        Write-Color -Text "[i]", " Send count maximum reached. There may be more accounts that match the rule." -Color Red, DarkMagenta
-                        break
-                    }
-                }
             } else {
                 # Email not sent
                 $EmailResult = @{
@@ -547,10 +545,14 @@
                     PasswordLastSet      = $EmailSplat.User.PasswordLastSet
                 }
             }
-            if ($EmailResult.Status -eq $true) {
-                Write-Color -Text "[i]", " Sending ", $Notify.User.DisplayName, " (", $Notify.User.UserPrincipalName, ")", " status: ", $EmailResult.Status, ", details: ", $EmailResult.Error -Color Yellow, White, Yellow, White, Yellow, White, White, Blue, White, Blue
-            } else {
-                Write-Color -Text "[i]", " Sending ", $Notify.User.DisplayName, " (", $Notify.User.UserPrincipalName, ")", " status: ", $EmailResult.Status, ", details: ", $EmailResult.Error -Color Yellow, White, Yellow, White, Yellow, White, White, Red, White, Red
+            if ($Logging.NotifyOnUserSend) {
+                Write-Color -Text "[i]", " Sending notifications to users ", $Notify.User.DisplayName, " (", $Notify.User.EmailAddress, ")", " status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ", details: ", $EmailResult.Error -Color Yellow, White, Yellow, White, Yellow, White, White, Blue, White, Blue
+            }
+            if ($UserSection.SendCountMaximum -gt 0) {
+                if ($UserSection.SendCountMaximum -le $CountUsers) {
+                    Write-Color -Text "[i]", " Send count maximum reached. There may be more accounts that match the rule." -Color Red, DarkMagenta
+                    break
+                }
             }
         }
         Write-Color -Text "[i] Sending notifications to users (sent: ", $SummaryUsersEmails.Count, " out of ", $Summary['Notify'].Values.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
@@ -616,8 +618,14 @@
             } else {
                 $EmailSplat.EmailParameters.To = $ManagerSection.DefaultEmail
             }
-
+            if ($Logging.NotifyOnManagerSend) {
+                Write-Color -Text "[i] Sending notifications to managers ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+            }
             $EmailResult = Send-PasswordEmail @EmailSplat
+            if ($Logging.NotifyOnManagerSend) {
+                Write-Color -Text "[r] Sending notifications to managers ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+            }
+
             [PSCustomObject] @{
                 DisplayName              = $ManagerUser.DisplayName
                 SamAccountName           = $ManagerUser.SamAccountName
@@ -687,8 +695,13 @@
             } else {
                 $EmailSplat.EmailParameters.To = $SecuritySection.DefaultEmail
             }
-
+            if ($Logging.NotifyOnSecuritySend) {
+                Write-Color -Text "[i] Sending notifications to security ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+            }
             $EmailResult = Send-PasswordEmail @EmailSplat
+            if ($Logging.NotifyOnSecuritySend) {
+                Write-Color -Text "[r] Sending notifications to security ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+            }
             [PSCustomObject] @{
                 DisplayName    = $ManagerUser.DisplayName
                 SamAccountName = $ManagerUser.SamAccountName
@@ -719,6 +732,12 @@
         Write-Color -Text "[i] Sending notifications to security (sent: ", $SummaryEscalationEmails.Count, " out of ", $Summary['NotifySecurity'].Values.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
     } else {
         Write-Color -Text "[i] Sending notifications to security is ", "disabled!" -Color White, Yellow, DarkMagenta
+    }
+
+    if ($HTMLOptions.DisableWarnings -eq $true) {
+        $WarningAction = 'SilentlyContinue'
+    } else {
+        $WarningAction = 'Continue'
     }
 
     # Create report
@@ -759,7 +778,7 @@
                 New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
             }
         }
-    } -ShowHTML:$HTMLOptions.ShowHTML -FilePath $FilePath -Online:$HTMLOptions.Online
+    } -ShowHTML:$HTMLOptions.ShowHTML -FilePath $FilePath -Online:$HTMLOptions.Online -WarningAction $WarningAction
 
     if ($SearchPath) {
         $SummarySearch['EmailSent'][$Today] = $SummaryUsersEmails
