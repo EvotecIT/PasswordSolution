@@ -189,17 +189,17 @@
                 }
 
                 if ($Rule.IncludePasswordNeverExpires -and $Rule.IncludeExpiring) {
-                    if ($User.PasswordNeverExpire -eq $true) {
+                    if ($User.PasswordNeverExpires -eq $true) {
                         $DaysToPasswordExpiry = $Rule.PasswordNeverExpiresDays - $User.PasswordDays
                         $User.DaysToExpire = $DaysToPasswordExpiry
                     }
                 } elseif ($Rule.IncludeExpiring) {
-                    if ($User.PasswordNeverExpire -eq $true) {
-                        # we skip those that expire
+                    if ($User.PasswordNeverExpires -eq $true) {
+                        # we skip those that never expire
                         continue
                     }
                 } elseif ($Rule.IncludePasswordNeverExpires) {
-                    if ($User.PasswordNeverExpire -eq $true) {
+                    if ($User.PasswordNeverExpires -eq $true) {
                         $DaysToPasswordExpiry = $Rule.PasswordNeverExpiresDays - $User.PasswordDays
                         $User.DaysToExpire = $DaysToPasswordExpiry
                     } else {

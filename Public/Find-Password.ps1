@@ -15,14 +15,14 @@
     $Today = Get-Date
 
     $Properties = @(
-        'Manager', 'DisplayName', 'GivenName', 'Surname', 'SamAccountName', 'EmailAddress', 'msDS-UserPasswordExpiryTimeComputed', 'PasswordExpired', 'PasswordLastSet', 'PasswordNotRequired', 'Enabled', 'PasswordNeverExpires', 'Mail', 'MemberOf', 'LastLogonDate'
+        'Manager', 'DisplayName', 'GivenName', 'Surname', 'SamAccountName', 'EmailAddress', 'msDS-UserPasswordExpiryTimeComputed', 'PasswordExpired', 'PasswordLastSet', 'PasswordNotRequired', 'Enabled', 'PasswordNeverExpires', 'Mail', 'MemberOf', 'LastLogonDate', 'Name'
         'userAccountControl'
         if ($OverwriteEmailProperty) {
             $OverwriteEmailProperty
         }
-        if ($ConditionProperties) {
-            $ConditionProperties
-        }
+        #if ($ConditionProperties) {
+        #    $ConditionProperties
+        #}
     )
     # We're caching all users to make sure it's speedy gonzales when querying for Managers
     if (-not $CachedUsers) {
@@ -59,7 +59,7 @@
         $Cache[$User.DistinguishedName] = $User
     }
     Write-Color -Text "[i] Preparing all users for password expirations in forest ", $Forest.Name -Color White, Yellow, White, Yellow, White, Yellow, White
-    $ProcessedUsers = foreach ($User in $Users) {
+    foreach ($User in $Users) {
         #$UserManager = $Cache["$($User.Manager)"]
         if ($User.Manager) {
             $Manager = $Cache[$User.Manager].DisplayName
@@ -159,6 +159,7 @@
             ManagerStatus         = $ManagerStatus
             ManagerLastLogonDays  = $ManagerLastLogonDays
             DisplayName           = $User.DisplayName
+            Name                  = $User.Name
             GivenName             = $User.GivenName
             Surname               = $User.Surname
             OrganizationalUnit    = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToOrganizationalUnit
