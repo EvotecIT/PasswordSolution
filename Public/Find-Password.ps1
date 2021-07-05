@@ -73,7 +73,17 @@
             } else {
                 $ManagerLastLogonDays = $null
             }
-            $ManagerStatus = if ($ManagerEnabled) { 'Enabled' } else { 'Disabled' }
+            if ($ManagerEnabled -and $ManagerEmail) {
+                if ((Test-EmailAddress -Address $ManagerEmail).IsValid -eq $true) {
+                    $ManagerStatus = 'Enabled'
+                } else {
+                    $ManagerStatus = 'Enabled, bad email'
+                }
+            } elseif ($ManagerEnabled) {
+                $ManagerStatus = 'No email'
+            } else {
+                $ManagerStatus = 'Disabled'
+            }
         } else {
             if ($User.ObjectClass -eq 'user') {
                 $ManagerStatus = 'Missing'
@@ -150,7 +160,7 @@
             SamAccountName        = $User.SamAccountName
             Domain                = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToDomainCN
             Enabled               = $User.Enabled
-            HasMailbox             = $HasMailbox
+            HasMailbox            = $HasMailbox
             EmailAddress          = $EmailAddress
             DateExpiry            = $DateExpiry
             DaysToExpire          = $DaysToExpire

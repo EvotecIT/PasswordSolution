@@ -361,13 +361,12 @@
                                     continue
                                 }
                             }
-                            if ($Rule.SendToManager.ManagerNotCompliant.MissingEmail -and $User.ManagerStatus -eq 'Enabled') {
+                            if ($Rule.SendToManager.ManagerNotCompliant.MissingEmail -and $User.ManagerStatus -in 'Enabled, bad email', 'No email') {
                                 # Manager is enabled but missing email
                                 $Splat = [ordered] @{
                                     SummaryDictionary = $Summary['NotifyManager']
                                     Type              = 'ManagerNotCompliant'
-                                    ManagerType       = 'No email'
-
+                                    ManagerType       = if ($User.ManagerStatus -eq 'Enabled, bad email') { 'Manager has bad email' } else { 'Manager has no email' }
                                     Key               = $Rule.SendToManager.ManagerNotCompliant.Manager
                                     User              = $User
                                     Rule              = $Rule
