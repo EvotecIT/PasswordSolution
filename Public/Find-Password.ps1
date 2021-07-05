@@ -74,7 +74,7 @@
                 $ManagerLastLogonDays = $null
             }
             if ($ManagerEnabled -and $ManagerEmail) {
-                if ((Test-EmailAddress -Address $ManagerEmail).IsValid -eq $true) {
+                if ((Test-EmailAddress -EmailAddress $ManagerEmail).IsValid -eq $true) {
                     $ManagerStatus = 'Enabled'
                 } else {
                     $ManagerStatus = 'Enabled, bad email'
