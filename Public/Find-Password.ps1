@@ -17,6 +17,7 @@
     $Properties = @(
         'Manager', 'DisplayName', 'GivenName', 'Surname', 'SamAccountName', 'EmailAddress', 'msDS-UserPasswordExpiryTimeComputed', 'PasswordExpired', 'PasswordLastSet', 'PasswordNotRequired', 'Enabled', 'PasswordNeverExpires', 'Mail', 'MemberOf', 'LastLogonDate', 'Name'
         'userAccountControl'
+        'msExchMailboxGuid'
         if ($OverwriteEmailProperty) {
             $OverwriteEmailProperty
         }
@@ -138,12 +139,18 @@
         if ($UserAccountControl -contains 'INTERDOMAIN_TRUST_ACCOUNT') {
             continue
         }
+        if ($User.'msExchMailboxGuid') {
+            $HasMailbox = $true
+        } else {
+            $HasMailbox = $false
+        }
 
         $MyUser = [ordered] @{
             UserPrincipalName     = $User.UserPrincipalName
             SamAccountName        = $User.SamAccountName
             Domain                = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToDomainCN
             Enabled               = $User.Enabled
+            HasMailbox             = $HasMailbox
             EmailAddress          = $EmailAddress
             DateExpiry            = $DateExpiry
             DaysToExpire          = $DaysToExpire
