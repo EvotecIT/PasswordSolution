@@ -18,6 +18,8 @@
         [Parameter(Mandatory)][string] $TemplateSecuritySubject,
         [Parameter(Mandatory)][scriptblock] $TemplateManagerNotCompliant,
         [Parameter(Mandatory)][string] $TemplateManagerNotCompliantSubject,
+        [Parameter(Mandatory)][scriptblock] $TemplateAdmin,
+        [Parameter(Mandatory)][string] $TemplateAdminSubject,
         [Parameter(Mandatory)][System.Collections.IDictionary] $Logging,
         [Parameter(Mandatory)][System.Collections.IDictionary] $HTMLOptions,
         [string] $FilePath,
@@ -789,6 +791,51 @@
         $WarningAction = 'Continue'
     }
 
+    if ($AdminSection.Enable) {
+        Write-Color -Text "[i] Sending summary information " -Color White, Yellow, White, Yellow, White, Yellow, White
+        $CountSecurity = 0
+        [Array] $SummaryEmail = @(
+            $CountSecurity++
+            # This user is provided by user in config file
+            $ManagerUser = $AdminSection.Manager
+
+            $EmailSplat = [ordered] @{}
+            # User uses global template
+            $EmailSplat.Template = $TemplateAdmin
+            $EmailSplat.Subject = $TemplateAdminSubject
+            $EmailSplat.User = $ManagerUser
+
+            $EmailSplat.SummaryUsersEmails = $SummaryUsersEmails
+            $EmailSplat.SummaryManagersEmails = $SummaryManagersEmails
+            $EmailSplat.SummaryEscalationEmails = $SummaryEscalationEmails
+
+            $EmailSplat.EmailParameters = $EmailParameters
+
+            $EmailSplat.EmailParameters.To = $AdminSection.Manager.EmailAddress
+
+            Write-Color -Text "[i] Sending summary information ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+
+            $EmailResult = Send-PasswordEmail @EmailSplat
+
+            Write-Color -Text "[r] Sending summary information ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+
+            [PSCustomObject] @{
+                DisplayName    = $ManagerUser.DisplayName
+                SamAccountName = $ManagerUser.SamAccountName
+                Domain         = $ManagerUser.Domain
+                Status         = $EmailResult.Status
+                StatusWhen     = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+                SentTo         = $EmailResult.SentTo
+                StatusError    = $EmailResult.Error
+                Template       = 'Unknown'
+            }
+        )
+        Write-Color -Text "[i] Sending summary information (sent: ", $SummaryEmail.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
+    } else {
+        Write-Color -Text "[i] Sending summary information is ", "disabled!" -Color White, Yellow, DarkMagenta
+    }
+
+    Write-Color -Text "[i]", " Generating HTML report " -Color White, Yellow, Green
     # Create report
     New-HTML {
         New-HTMLHeader {
@@ -802,23 +849,12 @@
             }
         }
         New-TableOption -DataStore JavaScript -ArrayJoin -BoolAsString
-        New-HTMLTab -Name 'All Users' {
-            New-HTMLTable -DataTable $CachedUsers.Values -Filtering {
-                New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
-                New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
-                New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string
-                New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
-                New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
-                New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Not available' -BackgroundColor BlueSmoke
-            }
-        }
-        foreach ($Rule in  $Summary['Rules'].Keys) {
-            New-HTMLTab -Name $Rule {
-                New-HTMLTable -DataTable $Summary['Rules'][$Rule].Values.User -Filtering {
-                    New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string
+        if ($HTMLOptions.ShowAllUsers) {
+            New-HTMLTab -Name 'All Users' {
+                New-HTMLTable -DataTable $CachedUsers.Values -Filtering {
+                    New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
                     New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
-                    New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                    New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string
                     New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
                     New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
                     New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
@@ -826,38 +862,62 @@
                 }
             }
         }
-        New-HTMLTab -Name 'Email sent to users' {
-            New-HTMLTable -DataTable $SummaryUsersEmails {
-                New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
-                New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+        if ($HTMLOptions.ShowRules) {
+            foreach ($Rule in  $Summary['Rules'].Keys) {
+                New-HTMLTab -Name $Rule {
+                    New-HTMLTable -DataTable $Summary['Rules'][$Rule].Values.User -Filtering {
+                        New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string
+                        New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
+                        New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                        New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
+                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
+                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Not available' -BackgroundColor BlueSmoke
+                    }
+                }
             }
         }
-        New-HTMLTab -Name 'Email sent to manager' {
-            New-HTMLTable -DataTable $SummaryManagersEmails {
-                New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
-                New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+        if ($HTMLOptions.ShowUsersSent) {
+            New-HTMLTab -Name 'Email sent to users' {
+                New-HTMLTable -DataTable $SummaryUsersEmails {
+                    New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                    New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+                    New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                    New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                }
             }
         }
-        New-HTMLTab -Name 'Email sent to Security' {
-            New-HTMLTable -DataTable $SummaryEscalationEmails {
-                New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
-                New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+        if ($HTMLOptions.ShowManagersSent) {
+            New-HTMLTab -Name 'Email sent to manager' {
+                New-HTMLTable -DataTable $SummaryManagersEmails {
+                    New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                    New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+                }
+            }
+        }
+        if ($HTMLOptions.ShowEscalationSent) {
+            New-HTMLTab -Name 'Email sent to Security' {
+                New-HTMLTable -DataTable $SummaryEscalationEmails {
+                    New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                    New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+                }
             }
         }
     } -ShowHTML:$HTMLOptions.ShowHTML -FilePath $FilePath -Online:$HTMLOptions.Online -WarningAction $WarningAction
 
+    Write-Color -Text "[i]" , " Generating HTML report ", "Done" -Color White, Yellow, Green
+
     if ($SearchPath) {
+        Write-Color -Text "[i]" , " Saving Search report " -Color White, Yellow, Green
         $SummarySearch['EmailSent'][$Today] = $SummaryUsersEmails
         $SummarySearch['EmailEscalations'][$Today] = $SummaryEscalationEmails
         $SummarySearch['EmailManagers'][$Today] = $SummaryManagersEmails
 
         try {
             $SummarySearch | Export-Clixml -LiteralPath $SearchPath
-            #$SummarySearch | ConvertTo-Json | Out-File -LiteralPath $SearchPath
         } catch {
             Write-Color -Text "[e]", " Couldn't save to file $SearchPath", ". Error: ", $_.Exception.Message -Color White, Yellow, White, Yellow, White, Yellow, White
         }
+        Write-Color -Text "[i]" , " Saving Search report ", "Done" -Color White, Yellow, Green
     }
 }
