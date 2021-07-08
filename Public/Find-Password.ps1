@@ -18,6 +18,7 @@
         'Manager', 'DisplayName', 'GivenName', 'Surname', 'SamAccountName', 'EmailAddress', 'msDS-UserPasswordExpiryTimeComputed', 'PasswordExpired', 'PasswordLastSet', 'PasswordNotRequired', 'Enabled', 'PasswordNeverExpires', 'Mail', 'MemberOf', 'LastLogonDate', 'Name'
         'userAccountControl'
         'msExchMailboxGuid'
+        'pwdLastSet'
         if ($OverwriteEmailProperty) {
             $OverwriteEmailProperty
         }
@@ -141,8 +142,14 @@
             $PasswordNeverExpires = $true
         }
         if ($PasswordNeverExpires -or $null -eq $User.PasswordLastSet) {
+            # If password last set is null or password never expires is set to true, then date of expiry and days to expire is not applicable
             $DateExpiry = $null
             $DaysToExpire = $null
+        }
+        if ($User.pwdLastSet -eq 0 -and $DateExpiry.Year -eq 1601) {
+            $PasswordAtNextLogon = $true
+        } else {
+            $PasswordAtNextLogon = $false
         }
 
         $UserAccountControl = Convert-UserAccountControl -UserAccountControl $User.UserAccountControl
@@ -169,7 +176,7 @@
             PasswordLastSet       = $User.PasswordLastSet
             PasswordNotRequired   = $User.PasswordNotRequired
             PasswordNeverExpires  = $PasswordNeverExpires
-            #PasswordAtNextLogon  = $null -eq $User.PasswordLastSet
+            PasswordAtNextLogon   = $PasswordAtNextLogon
             Manager               = $Manager
             ManagerSamAccountName = $ManagerSamAccountName
             ManagerEmail          = $ManagerEmail

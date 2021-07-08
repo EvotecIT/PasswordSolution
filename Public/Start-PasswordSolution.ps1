@@ -28,7 +28,7 @@
 
     $Script:Reporting = [ordered] @{}
     $Script:Reporting['Version'] = Get-GitHubVersion -Cmdlet 'Start-PasswordSolution' -RepositoryOwner 'evotecit' -RepositoryName 'PasswordSolution'
-
+    $TodayDate = Get-Date
     $Today = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     if (-not $Logging) {
         $Logging = @{
@@ -212,19 +212,7 @@
                     Write-Color -Text "[i]", " Processing rule ", $Rule.Name, " doesn't include IncludePasswordNeverExpires nor IncludeExpiring so skipping." -Color Yellow, White, Green, White, Green, White, Green, White
                     continue
                 }
-
-                <#
-                if ($Rule.IncludePasswordNeverExpires -eq $true -and $Rule.OnlyPasswordNeverExpiresOnly) {
-                    if ($User.PasswordNeverExpire -eq $true) {
-                        $DaysToPasswordExpiry = $Rule.PasswordNeverExpiresDays - $User.PasswordDays
-                        $User.DaysToExpire = $DaysToPasswordExpiry
-                    }
-                } elseif ($null -eq $Rule.PasswordNeverExpires) {
-
-                }
-                #>
-
-                # Lets find users that expire
+                # Lets find users that expire, and match our rule
                 if ($User.DaysToExpire -in $Rule.Reminders) {
                     if ($Logging.NotifyOnUserMatchingRule) {
                         Write-Color -Text "[i]", " User ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
@@ -307,9 +295,77 @@
                             }
                             Add-ManagerInformation @Splat
                         }
-                        # Not compliant (missing, disabled, no email), covers all the below options
-                        if ($Rule.SendToManager.ManagerNotCompliant -and $Rule.SendToManager.ManagerNotCompliant.Enable -and $Rule.SendToManager.ManagerNotCompliant.Manager) {
-                            # But before we go and do that, maybe user wants to send emails to managers if those users are in specific group or OU
+                    }
+                }
+                # Lets find users that have no manager, manager is not enabled or manager has no email
+                if ($Rule.SendToManager -and $Rule.SendToManager.ManagerNotCompliant -and $Rule.SendToManager.ManagerNotCompliant.Enable -eq $true -and $Rule.SendToManager.ManagerNotCompliant.Manager) {
+                    # Not compliant (missing, disabled, no email), covers all the below options
+                    if ($Rule.SendToManager.ManagerNotCompliant -and $Rule.SendToManager.ManagerNotCompliant.Enable -and $Rule.SendToManager.ManagerNotCompliant.Manager) {
+                        $ManagerNotCompliant = $false
+                        if ($Rule.SendToManager.ManagerNotCompliant.Reminders) {
+                            if ($Rule.SendToManager.ManagerNotCompliant.Reminders.Default -and $Rule.SendToManager.ManagerNotCompliant.Reminders.Default.Enable -eq $true) {
+                                $Rule.SendToManager.ManagerNotCompliant.Reminders.Default.Reminder = $Rule.SendToManager.ManagerNotCompliant.Reminders.Default.Reminder | ForEach-Object { $_ }
+                                if ($User.DaysToExpire -in $Rule.SendToManager.ManagerNotCompliant.Reminders.Default.Reminder) {
+                                    $ManagerNotCompliant = $true
+                                }
+                            }
+                            if ($Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay -and $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.Enable -eq $true) {
+                                foreach ($Day in $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.Days) {
+                                    if ($Day -eq "$($TodayDate.DayOfWeek)") {
+                                        if ($Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.ComparisonType -eq 'lt') {
+                                            if ($User.DaysToExpire -lt $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.Reminder) {
+                                                $ManagerNotCompliant = $true
+                                                break
+                                            }
+                                        } elseif ($Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.ComparisonType -eq 'gt') {
+                                            if ($User.DaysToExpire -gt $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.Reminder) {
+                                                $ManagerNotCompliant = $true
+                                                break
+                                            }
+                                        } elseif ($Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.ComparisonType -eq 'eq') {
+                                            if ($User.DaysToExpire -eq $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.Reminder) {
+                                                $ManagerNotCompliant = $true
+                                                break
+                                            }
+                                        } elseif ($Rule.SendtoManager.ManagerNotCompliant.Reminders.OnDay.ComparisonType -eq 'in') {
+                                            if ($User.DaysToExpire -in $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.Reminder) {
+                                                $ManagerNotCompliant = $true
+                                                break
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if ($Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth -and $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.Enable -eq $true) {
+                                foreach ($Day in $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.Days) {
+                                    if ($Day -eq $TodayDate.Day) {
+                                        if ($Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.ComparisonType -eq 'lt') {
+                                            if ($User.DaysToExpire -lt $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.Reminder) {
+                                                $ManagerNotCompliant = $true
+                                                break
+                                            }
+                                        } elseif ($Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.ComparisonType -eq 'gt') {
+                                            if ($User.DaysToExpire -gt $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.Reminder) {
+                                                $ManagerNotCompliant = $true
+                                                break
+                                            }
+                                        } elseif ($Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.ComparisonType -eq 'eq') {
+                                            if ($User.DaysToExpire -eq $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.Reminder) {
+                                                $ManagerNotCompliant = $true
+                                                break
+                                            }
+                                        } elseif ($Rule.SendtoManager.ManagerNotCompliant.Reminders.OnDayOfMonth.ComparisonType -eq 'in') {
+                                            if ($User.DaysToExpire -in $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.Reminder) {
+                                                $ManagerNotCompliant = $true
+                                                break
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if ($ManagerNotCompliant -eq $true) {
+                            # But before we go and do that, maybe user wants to send emails to managers only if those users are in specific group or OU
                             if ($Rule.SendToManager.ManagerNotCompliant.IncludeOU.Count -gt 0) {
                                 # Rule defined that only user withi specific OU has to be found
                                 $FoundOU = $false
@@ -413,77 +469,136 @@
                                 Add-ManagerInformation @Splat
                             }
                         }
-
                     }
                 }
-                if ($Rule.SendToManager) {
-                    if ($Rule.SendToManager.SecurityEscalation -and $Rule.SendToManager.SecurityEscalation.Enable -eq $true -and $Rule.SendToManager.SecurityEscalation.Manager) {
-                        $Rule.SendToManager.SecurityEscalation.Reminders = $Rule.SendToManager.SecurityEscalation.Reminders | ForEach-Object { $_ }
-                        if ($User.DaysToExpire -in $Rule.SendToManager.SecurityEscalation.Reminders) {
-                            if ($Rule.SendToManager.SecurityEscalation.IncludeOU.Count -gt 0) {
-                                # Rule defined that only user withi specific OU has to be found
-                                $FoundOU = $false
-                                foreach ($OU in $Rule.SendToManager.SecurityEscalation.IncludeOU) {
-                                    if ($User.OrganizationalUnit -like $OU) {
-                                        $FoundOU = $true
-                                        break
-                                    }
-                                }
-                                if (-not $FoundOU) {
-                                    continue
-                                }
+                # Lets find users that require escalation
+                if ($Rule.SendToManager -and $Rule.SendToManager.SecurityEscalation -and $Rule.SendToManager.SecurityEscalation.Enable -eq $true -and $Rule.SendToManager.SecurityEscalation.Manager) {
+                    $SecurityEscalation = $false
+                    if ($Rule.SendToManager.SecurityEscalation.Reminders) {
+                        if ($Rule.SendToManager.SecurityEscalation.Reminders.Default -and $Rule.SendToManager.SecurityEscalation.Reminders.Default.Enable -eq $true) {
+                            $Rule.SendToManager.SecurityEscalation.Reminders.Default.Reminder = $Rule.SendToManager.SecurityEscalation.Reminders.Default.Reminder | ForEach-Object { $_ }
+                            if ($User.DaysToExpire -in $Rule.SendToManager.SecurityEscalation.Reminders.Default.Reminder) {
+                                $SecurityEscalation = $true
                             }
-                            if ($Rule.SendToManager.SecurityEscalation.ExcludeOU.Count -gt 0) {
-                                $FoundOU = $false
-                                foreach ($OU in $Rule.SendToManager.SecurityEscalation.ExcludeOU) {
-                                    if ($User.OrganizationalUnit -like $OU) {
-                                        $FoundOU = $true
-                                        break
-                                    }
-                                }
-                                # if OU is found we need to exclude the user
-                                if ($FoundOU) {
-                                    continue
-                                }
-                            }
-                            if ($Rule.SendToManager.SecurityEscalation.ExcludeGroup.Count -gt 0) {
-                                # Rule defined that only user withi specific group has to be found
-                                $FoundGroup = $false
-                                foreach ($Group in $Rule.SendToManager.SecurityEscalation.ExcludeGroup) {
-                                    if ($User.MemberOf -contains $Group) {
-                                        $FoundGroup = $true
-                                        break
-                                    }
-                                }
-                                # if Group found, we need to skip this user
-                                if ($FoundGroup) {
-                                    continue
-                                }
-                            }
-                            if ($Rule.SendToManager.SecurityEscalation.IncludeGroup.Count -gt 0) {
-                                # Rule defined that only user withi specific group has to be found
-                                $FoundGroup = $false
-                                foreach ($Group in $Rule.SendToManager.SecurityEscalation.IncludeGroup) {
-                                    if ($User.MemberOf -contains $Group) {
-                                        $FoundGroup = $true
-                                        break
-                                    }
-                                }
-                                if (-not $FoundGroup) {
-                                    continue
-                                }
-                            }
-
-                            $Splat = [ordered] @{
-                                SummaryDictionary = $Summary['NotifySecurity']
-                                Type              = 'Security'
-                                ManagerType       = 'Escalation'
-                                Key               = $Rule.SendToManager.SecurityEscalation.Manager
-                                User              = $User
-                                Rule              = $Rule
-                            }
-                            Add-ManagerInformation @Splat
                         }
+                        if ($Rule.SendToManager.SecurityEscalation.Reminders.OnDay -and $Rule.SendToManager.SecurityEscalation.Reminders.OnDay.Enable -eq $true) {
+                            foreach ($Day in $Rule.SendToManager.SecurityEscalation.Reminders.OnDay.Days) {
+                                if ($Day -eq "$($TodayDate.DayOfWeek)") {
+                                    if ($Rule.SendToManager.SecurityEscalation.Reminders.OnDay.ComparisonType -eq 'lt') {
+                                        if ($User.DaysToExpire -lt $Rule.SendToManager.SecurityEscalation.Reminders.OnDay.Reminder) {
+                                            $SecurityEscalation = $true
+                                            break
+                                        }
+                                    } elseif ($Rule.SendToManager.SecurityEscalation.Reminders.OnDay.ComparisonType -eq 'gt') {
+                                        if ($User.DaysToExpire -gt $Rule.SendToManager.SecurityEscalation.Reminders.OnDay.Reminder) {
+                                            $SecurityEscalation = $true
+                                            break
+                                        }
+                                    } elseif ($Rule.SendToManager.SecurityEscalation.Reminders.OnDay.ComparisonType -eq 'eq') {
+                                        if ($User.DaysToExpire -eq $Rule.SendToManager.SecurityEscalation.Reminders.OnDay.Reminder) {
+                                            $SecurityEscalation = $true
+                                            break
+                                        }
+                                    } elseif ($Rule.SendtoManager.SecurityEscalation.Reminders.OnDay.ComparisonType -eq 'in') {
+                                        if ($User.DaysToExpire -in $Rule.SendToManager.SecurityEscalation.Reminders.OnDay.Reminder) {
+                                            $SecurityEscalation = $true
+                                            break
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if ($Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth -and $Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.Enable -eq $true) {
+                            foreach ($Day in $Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.Days) {
+                                if ($Day -eq $TodayDate.Day) {
+                                    if ($Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.ComparisonType -eq 'lt') {
+                                        if ($User.DaysToExpire -lt $Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.Reminder) {
+                                            $SecurityEscalation = $true
+                                            break
+                                        }
+                                    } elseif ($Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.ComparisonType -eq 'gt') {
+                                        if ($User.DaysToExpire -gt $Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.Reminder) {
+                                            $SecurityEscalation = $true
+                                            break
+                                        }
+                                    } elseif ($Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.ComparisonType -eq 'eq') {
+                                        if ($User.DaysToExpire -eq $Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.Reminder) {
+                                            $SecurityEscalation = $true
+                                            break
+                                        }
+                                    } elseif ($Rule.SendtoManager.SecurityEscalation.Reminders.OnDayOfMonth.ComparisonType -eq 'in') {
+                                        if ($User.DaysToExpire -in $Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.Reminder) {
+                                            $SecurityEscalation = $true
+                                            break
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if ($SecurityEscalation) {
+                        if ($Rule.SendToManager.SecurityEscalation.IncludeOU.Count -gt 0) {
+                            # Rule defined that only user withi specific OU has to be found
+                            $FoundOU = $false
+                            foreach ($OU in $Rule.SendToManager.SecurityEscalation.IncludeOU) {
+                                if ($User.OrganizationalUnit -like $OU) {
+                                    $FoundOU = $true
+                                    break
+                                }
+                            }
+                            if (-not $FoundOU) {
+                                continue
+                            }
+                        }
+                        if ($Rule.SendToManager.SecurityEscalation.ExcludeOU.Count -gt 0) {
+                            $FoundOU = $false
+                            foreach ($OU in $Rule.SendToManager.SecurityEscalation.ExcludeOU) {
+                                if ($User.OrganizationalUnit -like $OU) {
+                                    $FoundOU = $true
+                                    break
+                                }
+                            }
+                            # if OU is found we need to exclude the user
+                            if ($FoundOU) {
+                                continue
+                            }
+                        }
+                        if ($Rule.SendToManager.SecurityEscalation.ExcludeGroup.Count -gt 0) {
+                            # Rule defined that only user withi specific group has to be found
+                            $FoundGroup = $false
+                            foreach ($Group in $Rule.SendToManager.SecurityEscalation.ExcludeGroup) {
+                                if ($User.MemberOf -contains $Group) {
+                                    $FoundGroup = $true
+                                    break
+                                }
+                            }
+                            # if Group found, we need to skip this user
+                            if ($FoundGroup) {
+                                continue
+                            }
+                        }
+                        if ($Rule.SendToManager.SecurityEscalation.IncludeGroup.Count -gt 0) {
+                            # Rule defined that only user withi specific group has to be found
+                            $FoundGroup = $false
+                            foreach ($Group in $Rule.SendToManager.SecurityEscalation.IncludeGroup) {
+                                if ($User.MemberOf -contains $Group) {
+                                    $FoundGroup = $true
+                                    break
+                                }
+                            }
+                            if (-not $FoundGroup) {
+                                continue
+                            }
+                        }
+                        $Splat = [ordered] @{
+                            SummaryDictionary = $Summary['NotifySecurity']
+                            Type              = 'Security'
+                            ManagerType       = 'Escalation'
+                            Key               = $Rule.SendToManager.SecurityEscalation.Manager
+                            User              = $User
+                            Rule              = $Rule
+                        }
+                        Add-ManagerInformation @Splat
                     }
                 }
             }

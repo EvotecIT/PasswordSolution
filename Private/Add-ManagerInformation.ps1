@@ -14,7 +14,7 @@
         if ($Key -is [string]) {
             $KeyDN = $Key
         } else {
-            $KeyDN = $Key.EmailAddress
+            $KeyDN = $Key.DisplayName
         }
 
         if (-not $SummaryDictionary[$KeyDN]) {
