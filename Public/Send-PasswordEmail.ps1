@@ -8,6 +8,7 @@
         [Array] $SummaryUsersEmails,
         [Array] $SummaryManagersEmails,
         [Array] $SummaryEscalationEmails,
+        [string] $TimeToProcess,
 
         #[Array] $ManagedUsersManagerDisabled,
         #[Array] $ManagedUsersManagerMissing,
@@ -24,6 +25,7 @@
             SummaryEscalationEmails              = $SummaryEscalationEmails
             SummaryManagersEmails                = $SummaryManagersEmails
             SummaryUsersEmails                   = $SummaryUsersEmails
+            TimeToProcess                        = $TimeToProcess
             # Only works if User is set
             UserPrincipalName                    = $User.UserPrincipalName     # : adm.pklys@ad.evotec.xyz
             SamAccountName                       = $User.SamAccountName        # : adm.pklys

@@ -25,7 +25,7 @@
         [string] $FilePath,
         [string] $SearchPath
     )
-
+    $TimeStart = Start-TimeLog
     $Script:Reporting = [ordered] @{}
     $Script:Reporting['Version'] = Get-GitHubVersion -Cmdlet 'Start-PasswordSolution' -RepositoryOwner 'evotecit' -RepositoryName 'PasswordSolution'
     $TodayDate = Get-Date
@@ -906,6 +906,8 @@
         $WarningAction = 'Continue'
     }
 
+    $TimeEnd = Stop-TimeLog -Time $TimeStart -Option OneLiner
+
     if ($AdminSection.Enable) {
         Write-Color -Text "[i] Sending summary information " -Color White, Yellow, White, Yellow, White, Yellow, White
         $CountSecurity = 0
@@ -923,6 +925,7 @@
             $EmailSplat.SummaryUsersEmails = $SummaryUsersEmails
             $EmailSplat.SummaryManagersEmails = $SummaryManagersEmails
             $EmailSplat.SummaryEscalationEmails = $SummaryEscalationEmails
+            $EmailSplat.TimeToProcess = $TimeEnd
 
             $EmailSplat.EmailParameters = $EmailParameters
 
