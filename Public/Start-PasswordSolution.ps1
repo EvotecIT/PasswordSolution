@@ -1002,7 +1002,7 @@
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
                     New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
                     New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                }
+                } -Filtering
             }
         }
         if ($HTMLOptions.ShowManagersSent) {
@@ -1010,7 +1010,7 @@
                 New-HTMLTable -DataTable $SummaryManagersEmails {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                }
+                } -Filtering
             }
         }
         if ($HTMLOptions.ShowEscalationSent) {
@@ -1018,7 +1018,7 @@
                 New-HTMLTable -DataTable $SummaryEscalationEmails {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                }
+                } -Filtering
             }
         }
     } -ShowHTML:$HTMLOptions.ShowHTML -FilePath $FilePath -Online:$HTMLOptions.Online -WarningAction $WarningAction
