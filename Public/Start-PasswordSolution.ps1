@@ -165,7 +165,6 @@
                         continue
                     }
                 }
-
                 if ($Rule.IncludeName.Count -gt 0) {
                     $IncludeName = $false
                     foreach ($Name in $Rule.IncludeName) {
@@ -183,13 +182,11 @@
                         continue
                     }
                 }
-
                 if ($Summary['Notify'][$User.DistinguishedName] -and $Summary['Notify'][$User.DistinguishedName].ProcessManagersOnly -ne $true) {
                     # User already exists in the notifications - rules are overlapping, we only take the first one
                     # We also check for ProcessManagersOnly because we don't want first rule to ignore any other rules for users
                     continue
                 }
-
                 if ($Rule.IncludePasswordNeverExpires -and $Rule.IncludeExpiring) {
                     if ($User.PasswordNeverExpires -eq $true) {
                         $DaysToPasswordExpiry = $Rule.PasswordNeverExpiresDays - $User.PasswordDays
