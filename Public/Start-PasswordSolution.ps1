@@ -211,86 +211,156 @@
                 }
                 # Lets find users that expire, and match our rule
                 if ($User.DaysToExpire -in $Rule.Reminders) {
-                    if ($Logging.NotifyOnUserMatchingRule) {
-                        Write-Color -Text "[i]", " User ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
+                    # check if we need to notify user or just manager
+                    if (-not $Rule.ProcessManagersOnly) {
+                        if ($Logging.NotifyOnUserMatchingRule) {
+                            Write-Color -Text "[i]", " User ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
+                        }
+                        $Summary['Notify'][$User.DistinguishedName] = [ordered] @{
+                            User                = $User
+                            Rule                = $Rule
+                            ProcessManagersOnly = $Rule.ProcessManagersOnly
+                        }
+                        $Summary['Rules'][$Rule.Name][$User.DistinguishedName] = [ordered] @{
+                            User                = $User
+                            Rule                = $Rule
+                            ProcessManagersOnly = $Rule.ProcessManagersOnly
+                        }
                     }
-                    $Summary['Notify'][$User.DistinguishedName] = [ordered] @{
-                        User                = $User
-                        Rule                = $Rule
-                        ProcessManagersOnly = $Rule.ProcessManagersOnly
-                    }
-                    $Summary['Rules'][$Rule.Name][$User.DistinguishedName] = [ordered] @{
-                        User                = $User
-                        Rule                = $Rule
-                        ProcessManagersOnly = $Rule.ProcessManagersOnly
-                    }
-                    if ($Rule.SendToManager) {
-                        if ($Rule.SendToManager.Manager -and $Rule.SendToManager.Manager.Enable -eq $true -and $User.ManagerStatus -eq 'Enabled' -and $User.ManagerEmail -like "*@*") {
-                            # Manager is enabled and has an email, this is standard situation for manager in AD
-                            # But before we go and do that, maybe user wants to send emails to managers if those users are in specific group or OU
-                            if ($Rule.SendToManager.Manager.IncludeOU.Count -gt 0) {
-                                # Rule defined that only user withi specific OU has to be found
-                                $FoundOU = $false
-                                foreach ($OU in $Rule.SendToManager.Manager.IncludeOU) {
-                                    if ($User.OrganizationalUnit -like $OU) {
-                                        $FoundOU = $true
-                                        break
+                }
+                if ($Rule.SendToManager) {
+                    if ($Rule.SendToManager.Manager -and $Rule.SendToManager.Manager.Enable -eq $true -and $User.ManagerStatus -eq 'Enabled' -and $User.ManagerEmail -like "*@*") {
+                        $SendToManager = $true
+                        # Manager is enabled and has an email, this is standard situation for manager in AD
+                        # But before we go and do that, maybe user wants to send emails to managers if those users are in specific group or OU
+                        if ($Rule.SendToManager.Manager.IncludeOU.Count -gt 0) {
+                            # Rule defined that only user withi specific OU has to be found
+                            $FoundOU = $false
+                            foreach ($OU in $Rule.SendToManager.Manager.IncludeOU) {
+                                if ($User.OrganizationalUnit -like $OU) {
+                                    $FoundOU = $true
+                                    break
+                                }
+                            }
+                            if (-not $FoundOU) {
+                                $SendToManager = $false
+                            }
+                        }
+                        if ($SendToManager -and $Rule.SendToManager.Manager.ExcludeOU.Count -gt 0) {
+                            $FoundOU = $false
+                            foreach ($OU in $Rule.SendToManager.Manager.ExcludeOU) {
+                                if ($User.OrganizationalUnit -like $OU) {
+                                    $FoundOU = $true
+                                    break
+                                }
+                            }
+                            # if OU is found we need to exclude the user
+                            if ($FoundOU) {
+                                $SendToManager = $false
+                            }
+                        }
+                        if ($SendToManager -and $Rule.SendToManager.Manager.ExcludeGroup.Count -gt 0) {
+                            # Rule defined that only user withi specific group has to be found
+                            $FoundGroup = $false
+                            foreach ($Group in $Rule.SendToManager.Manager.ExcludeGroup) {
+                                if ($User.MemberOf -contains $Group) {
+                                    $FoundGroup = $true
+                                    break
+                                }
+                            }
+                            # if Group found, we need to skip this user
+                            if ($FoundGroup) {
+                                $SendToManager = $false
+                            }
+                        }
+                        if ($SendToManager -and $Rule.SendToManager.Manager.IncludeGroup.Count -gt 0) {
+                            # Rule defined that only user withi specific group has to be found
+                            $FoundGroup = $false
+                            foreach ($Group in $Rule.SendToManager.Manager.IncludeGroup) {
+                                if ($User.MemberOf -contains $Group) {
+                                    $FoundGroup = $true
+                                    break
+                                }
+                            }
+                            if (-not $FoundGroup) {
+                                $SendToManager = $false
+                            }
+                        }
+
+                        if ($SendToManager) {
+                            $SendToManager = $false
+                            if ($Rule.SendToManager.Manager.Reminders.Default.Enable -eq $true -and $null -eq $Rule.SendToManager.Manager.Reminders.Default.Reminder -and $User.DaysToExpire -in $Rule.Reminders) {
+                                # Use default reminder as per user, not per manager
+                                $SendToManager = $true
+                            } elseif ($Rule.SendToManager.Manager.Reminders.Default.Enable -eq $true -and $User.DaysToExpire -in $Rule.SendToManager.Manager.Reminders.Default.Reminder) {
+                                # User manager reminder as per manager config
+                                $SendToManager = $true
+                            }
+                            if (-not $SendToManager -and $Rule.SendToManager.Manager.Reminders.OnDay -and $Rule.SendToManager.Manager.Reminders.OnDay.Enable -eq $true) {
+                                foreach ($Day in $Rule.SendToManager.Manager.Reminders.OnDay.Days) {
+                                    if ($Day -eq "$($TodayDate.DayOfWeek)") {
+                                        if ($Rule.SendToManager.Manager.Reminders.OnDay.ComparisonType -eq 'lt') {
+                                            if ($User.DaysToExpire -lt $Rule.SendToManager.Manager.Reminders.OnDay.Reminder) {
+                                                $SendToManager = $true
+                                                break
+                                            }
+                                        } elseif ($Rule.SendToManager.Manager.Reminders.OnDay.ComparisonType -eq 'gt') {
+                                            if ($User.DaysToExpire -gt $Rule.SendToManager.Manager.Reminders.OnDay.Reminder) {
+                                                $SendToManager = $true
+                                                break
+                                            }
+                                        } elseif ($Rule.SendToManager.Manager.Reminders.OnDay.ComparisonType -eq 'eq') {
+                                            if ($User.DaysToExpire -eq $Rule.SendToManager.Manager.Reminders.OnDay.Reminder) {
+                                                $SendToManager = $true
+                                                break
+                                            }
+                                        } elseif ($Rule.SendtoManager.Manager.Reminders.OnDay.ComparisonType -eq 'in') {
+                                            if ($User.DaysToExpire -in $Rule.SendToManager.Manager.Reminders.OnDay.Reminder) {
+                                                $SendToManager = $true
+                                                break
+                                            }
+                                        }
                                     }
                                 }
-                                if (-not $FoundOU) {
-                                    continue
-                                }
                             }
-                            if ($Rule.SendToManager.Manager.ExcludeOU.Count -gt 0) {
-                                $FoundOU = $false
-                                foreach ($OU in $Rule.SendToManager.Manager.ExcludeOU) {
-                                    if ($User.OrganizationalUnit -like $OU) {
-                                        $FoundOU = $true
-                                        break
+                            if (-not $SendToManager -and $Rule.SendToManager.Manager.Reminders.OnDayOfMonth -and $Rule.SendToManager.Manager.Reminders.OnDayOfMonth.Enable -eq $true) {
+                                foreach ($Day in $Rule.SendToManager.Manager.Reminders.OnDayOfMonth.Days) {
+                                    if ($Day -eq $TodayDate.Day) {
+                                        if ($Rule.SendToManager.Manager.Reminders.OnDayOfMonth.ComparisonType -eq 'lt') {
+                                            if ($User.DaysToExpire -lt $Rule.SendToManager.Manager.Reminders.OnDayOfMonth.Reminder) {
+                                                $SendToManager = $true
+                                                break
+                                            }
+                                        } elseif ($Rule.SendToManager.Manager.Reminders.OnDayOfMonth.ComparisonType -eq 'gt') {
+                                            if ($User.DaysToExpire -gt $Rule.SendToManager.Manager.Reminders.OnDayOfMonth.Reminder) {
+                                                $SendToManager = $true
+                                                break
+                                            }
+                                        } elseif ($Rule.SendToManager.Manager.Reminders.OnDayOfMonth.ComparisonType -eq 'eq') {
+                                            if ($User.DaysToExpire -eq $Rule.SendToManager.Manager.Reminders.OnDayOfMonth.Reminder) {
+                                                $SendToManager = $true
+                                                break
+                                            }
+                                        } elseif ($Rule.SendtoManager.Manager.Reminders.OnDayOfMonth.ComparisonType -eq 'in') {
+                                            if ($User.DaysToExpire -in $Rule.SendToManager.Manager.Reminders.OnDayOfMonth.Reminder) {
+                                                $SendToManager = $true
+                                                break
+                                            }
+                                        }
                                     }
                                 }
-                                # if OU is found we need to exclude the user
-                                if ($FoundOU) {
-                                    continue
-                                }
                             }
-                            if ($Rule.SendToManager.Manager.ExcludeGroup.Count -gt 0) {
-                                # Rule defined that only user withi specific group has to be found
-                                $FoundGroup = $false
-                                foreach ($Group in $Rule.SendToManager.Manager.ExcludeGroup) {
-                                    if ($User.MemberOf -contains $Group) {
-                                        $FoundGroup = $true
-                                        break
-                                    }
+                            if ($SendToManager) {
+                                $Splat = [ordered] @{
+                                    SummaryDictionary = $Summary['NotifyManager']
+                                    Type              = 'ManagerDefault'
+                                    ManagerType       = 'Ok'
+                                    Key               = $User.ManagerDN
+                                    User              = $User
+                                    Rule              = $Rule
                                 }
-                                # if Group found, we need to skip this user
-                                if ($FoundGroup) {
-                                    continue
-                                }
+                                Add-ManagerInformation @Splat
                             }
-                            if ($Rule.SendToManager.Manager.IncludeGroup.Count -gt 0) {
-                                # Rule defined that only user withi specific group has to be found
-                                $FoundGroup = $false
-                                foreach ($Group in $Rule.SendToManager.Manager.IncludeGroup) {
-                                    if ($User.MemberOf -contains $Group) {
-                                        $FoundGroup = $true
-                                        break
-                                    }
-                                }
-                                if (-not $FoundGroup) {
-                                    continue
-                                }
-                            }
-                            $Splat = [ordered] @{
-                                SummaryDictionary = $Summary['NotifyManager']
-                                Type              = 'ManagerDefault'
-                                ManagerType       = 'Ok'
-                                Key               = $User.ManagerDN
-                                User              = $User
-                                Rule              = $Rule
-                                #Enabled           = $true
-                            }
-                            Add-ManagerInformation @Splat
                         }
                     }
                 }
@@ -612,6 +682,7 @@
             $User = $Notify.User
             $Rule = $Notify.Rule
 
+            # This shouldn't happen, but just in case, to be removed later on, as ProcessManagerOnly is skipping earlier on
             if ($Notify.ProcessManagersOnly -eq $true) {
                 if ($Logging.NotifyOnSkipUserManagerOnly) {
                     Write-Color -Text "[i]", " Skipping User (Manager Only - $($Rule.Name)) ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Magenta, White, Magenta, White, White, Blue
