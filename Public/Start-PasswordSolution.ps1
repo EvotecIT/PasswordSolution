@@ -1061,7 +1061,14 @@
         }
         if ($HTMLOptions.ShowRules) {
             foreach ($Rule in  $Summary['Rules'].Keys) {
-                New-HTMLTab -Name $Rule {
+                if ((Measure-Object -InputObject $Summary['Rules'][$Rule].Values.User).Count -gt 0) {
+                    $Color = 'LawnGreen'
+                    $IconSolid = 'Star'
+                } else {
+                    $Color = 'Salmon'
+                    $IconSolid = 'Stop'
+                }
+                New-HTMLTab -Name $Rule -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
                     New-HTMLTable -DataTable $Summary['Rules'][$Rule].Values.User -Filtering {
                         New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string
                         New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
@@ -1075,7 +1082,14 @@
             }
         }
         if ($HTMLOptions.ShowUsersSent) {
-            New-HTMLTab -Name 'Email sent to users' {
+            if ((Measure-Object -InputObject $SummaryUsersEmails).Count -gt 0) {
+                $Color = 'BrightTurquoise'
+                $IconSolid = 'sticky-note'
+            } else {
+                $Color = 'Amaranth'
+                $IconSolid = 'stop-circle'
+            }
+            New-HTMLTab -Name 'Email sent to users' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
                 New-HTMLTable -DataTable $SummaryUsersEmails {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
@@ -1085,7 +1099,14 @@
             }
         }
         if ($HTMLOptions.ShowManagersSent) {
-            New-HTMLTab -Name 'Email sent to manager' {
+            if ((Measure-Object -InputObject $SummaryManagersEmails).Count -gt 0) {
+                $Color = 'BrightTurquoise'
+                $IconSolid = 'sticky-note'
+            } else {
+                $Color = 'Amaranth'
+                $IconSolid = 'stop-circle'
+            }
+            New-HTMLTab -Name 'Email sent to manager' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
                 New-HTMLTable -DataTable $SummaryManagersEmails {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
@@ -1093,7 +1114,14 @@
             }
         }
         if ($HTMLOptions.ShowEscalationSent) {
-            New-HTMLTab -Name 'Email sent to Security' {
+            if ((Measure-Object -InputObject $SummaryEscalationEmails).Count -gt 0) {
+                $Color = 'BrightTurquoise'
+                $IconSolid = 'sticky-note'
+            } else {
+                $Color = 'Amaranth'
+                $IconSolid = 'stop-circle'
+            }
+            New-HTMLTab -Name 'Email sent to Security' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
                 New-HTMLTable -DataTable $SummaryEscalationEmails {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
