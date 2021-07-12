@@ -368,8 +368,64 @@
                 if ($Rule.SendToManager -and $Rule.SendToManager.ManagerNotCompliant -and $Rule.SendToManager.ManagerNotCompliant.Enable -eq $true -and $Rule.SendToManager.ManagerNotCompliant.Manager) {
                     # Not compliant (missing, disabled, no email), covers all the below options
                     if ($Rule.SendToManager.ManagerNotCompliant -and $Rule.SendToManager.ManagerNotCompliant.Enable -and $Rule.SendToManager.ManagerNotCompliant.Manager) {
-                        $ManagerNotCompliant = $false
+                        $ManagerNotCompliant = $true
+                        # But before we go and do that, maybe user wants to send emails to managers only if those users are in specific group or OU
+                        if ($Rule.SendToManager.ManagerNotCompliant.IncludeOU.Count -gt 0) {
+                            # Rule defined that only user withi specific OU has to be found
+                            $FoundOU = $false
+                            foreach ($OU in $Rule.SendToManager.ManagerNotCompliant.IncludeOU) {
+                                if ($User.OrganizationalUnit -like $OU) {
+                                    $FoundOU = $true
+                                    break
+                                }
+                            }
+                            if (-not $FoundOU) {
+                                $ManagerNotCompliant = $false
+                            }
+                        }
+                        if ($ManagerNotCompliant -and $Rule.SendToManager.ManagerNotCompliant.ExcludeOU.Count -gt 0) {
+                            $FoundOU = $false
+                            foreach ($OU in $Rule.SendToManager.ManagerNotCompliant.ExcludeOU) {
+                                if ($User.OrganizationalUnit -like $OU) {
+                                    $FoundOU = $true
+                                    break
+                                }
+                            }
+                            # if OU is found we need to exclude the user
+                            if ($FoundOU) {
+                                $ManagerNotCompliant = $false
+                            }
+                        }
+                        if ($ManagerNotCompliant -and $Rule.SendToManager.ManagerNotCompliant.ExcludeGroup.Count -gt 0) {
+                            # Rule defined that only user withi specific group has to be found
+                            $FoundGroup = $false
+                            foreach ($Group in $Rule.SendToManager.ManagerNotCompliant.ExcludeGroup) {
+                                if ($User.MemberOf -contains $Group) {
+                                    $FoundGroup = $true
+                                    break
+                                }
+                            }
+                            # if Group found, we need to skip this user
+                            if ($FoundGroup) {
+                                $ManagerNotCompliant = $false
+                            }
+                        }
+                        if ($ManagerNotCompliant -and $Rule.SendToManager.ManagerNotCompliant.IncludeGroup.Count -gt 0) {
+                            # Rule defined that only user withi specific group has to be found
+                            $FoundGroup = $false
+                            foreach ($Group in $Rule.SendToManager.ManagerNotCompliant.IncludeGroup) {
+                                if ($User.MemberOf -contains $Group) {
+                                    $FoundGroup = $true
+                                    break
+                                }
+                            }
+                            if (-not $FoundGroup) {
+                                $ManagerNotCompliant = $false
+                            }
+                        }
+
                         if ($Rule.SendToManager.ManagerNotCompliant.Reminders) {
+                            $ManagerNotCompliant = $false
                             if ($Rule.SendToManager.ManagerNotCompliant.Reminders.Default -and $Rule.SendToManager.ManagerNotCompliant.Reminders.Default.Enable -eq $true) {
                                 $Rule.SendToManager.ManagerNotCompliant.Reminders.Default.Reminder = $Rule.SendToManager.ManagerNotCompliant.Reminders.Default.Reminder | ForEach-Object { $_ }
                                 if ($User.DaysToExpire -in $Rule.SendToManager.ManagerNotCompliant.Reminders.Default.Reminder) {
@@ -432,60 +488,6 @@
                             }
                         }
                         if ($ManagerNotCompliant -eq $true) {
-                            # But before we go and do that, maybe user wants to send emails to managers only if those users are in specific group or OU
-                            if ($Rule.SendToManager.ManagerNotCompliant.IncludeOU.Count -gt 0) {
-                                # Rule defined that only user withi specific OU has to be found
-                                $FoundOU = $false
-                                foreach ($OU in $Rule.SendToManager.ManagerNotCompliant.IncludeOU) {
-                                    if ($User.OrganizationalUnit -like $OU) {
-                                        $FoundOU = $true
-                                        break
-                                    }
-                                }
-                                if (-not $FoundOU) {
-                                    continue
-                                }
-                            }
-                            if ($Rule.SendToManager.ManagerNotCompliant.ExcludeOU.Count -gt 0) {
-                                $FoundOU = $false
-                                foreach ($OU in $Rule.SendToManager.ManagerNotCompliant.ExcludeOU) {
-                                    if ($User.OrganizationalUnit -like $OU) {
-                                        $FoundOU = $true
-                                        break
-                                    }
-                                }
-                                # if OU is found we need to exclude the user
-                                if ($FoundOU) {
-                                    continue
-                                }
-                            }
-                            if ($Rule.SendToManager.ManagerNotCompliant.ExcludeGroup.Count -gt 0) {
-                                # Rule defined that only user withi specific group has to be found
-                                $FoundGroup = $false
-                                foreach ($Group in $Rule.SendToManager.ManagerNotCompliant.ExcludeGroup) {
-                                    if ($User.MemberOf -contains $Group) {
-                                        $FoundGroup = $true
-                                        break
-                                    }
-                                }
-                                # if Group found, we need to skip this user
-                                if ($FoundGroup) {
-                                    continue
-                                }
-                            }
-                            if ($Rule.SendToManager.ManagerNotCompliant.IncludeGroup.Count -gt 0) {
-                                # Rule defined that only user withi specific group has to be found
-                                $FoundGroup = $false
-                                foreach ($Group in $Rule.SendToManager.ManagerNotCompliant.IncludeGroup) {
-                                    if ($User.MemberOf -contains $Group) {
-                                        $FoundGroup = $true
-                                        break
-                                    }
-                                }
-                                if (-not $FoundGroup) {
-                                    continue
-                                }
-                            }
                             if ($Rule.SendToManager.ManagerNotCompliant.MissingEmail -and $User.ManagerStatus -in 'Enabled, bad email', 'No email') {
                                 # Manager is enabled but missing email
                                 $Splat = [ordered] @{
@@ -540,8 +542,62 @@
                 }
                 # Lets find users that require escalation
                 if ($Rule.SendToManager -and $Rule.SendToManager.SecurityEscalation -and $Rule.SendToManager.SecurityEscalation.Enable -eq $true -and $Rule.SendToManager.SecurityEscalation.Manager) {
-                    $SecurityEscalation = $false
+                    $SecurityEscalation = $true
+                    if ($Rule.SendToManager.SecurityEscalation.IncludeOU.Count -gt 0) {
+                        # Rule defined that only user withi specific OU has to be found
+                        $FoundOU = $false
+                        foreach ($OU in $Rule.SendToManager.SecurityEscalation.IncludeOU) {
+                            if ($User.OrganizationalUnit -like $OU) {
+                                $FoundOU = $true
+                                break
+                            }
+                        }
+                        if (-not $FoundOU) {
+                            $SecurityEscalation = $false
+                        }
+                    }
+                    if ($SecurityEscalation -and $Rule.SendToManager.SecurityEscalation.ExcludeOU.Count -gt 0) {
+                        $FoundOU = $false
+                        foreach ($OU in $Rule.SendToManager.SecurityEscalation.ExcludeOU) {
+                            if ($User.OrganizationalUnit -like $OU) {
+                                $FoundOU = $true
+                                break
+                            }
+                        }
+                        # if OU is found we need to exclude the user
+                        if ($FoundOU) {
+                            $SecurityEscalation = $false
+                        }
+                    }
+                    if ($SecurityEscalation -and $Rule.SendToManager.SecurityEscalation.ExcludeGroup.Count -gt 0) {
+                        # Rule defined that only user withi specific group has to be found
+                        $FoundGroup = $false
+                        foreach ($Group in $Rule.SendToManager.SecurityEscalation.ExcludeGroup) {
+                            if ($User.MemberOf -contains $Group) {
+                                $FoundGroup = $true
+                                break
+                            }
+                        }
+                        # if Group found, we need to skip this user
+                        if ($FoundGroup) {
+                            $SecurityEscalation = $false
+                        }
+                    }
+                    if ($SecurityEscalation -and $Rule.SendToManager.SecurityEscalation.IncludeGroup.Count -gt 0) {
+                        # Rule defined that only user withi specific group has to be found
+                        $FoundGroup = $false
+                        foreach ($Group in $Rule.SendToManager.SecurityEscalation.IncludeGroup) {
+                            if ($User.MemberOf -contains $Group) {
+                                $FoundGroup = $true
+                                break
+                            }
+                        }
+                        if (-not $FoundGroup) {
+                            $SecurityEscalation = $false
+                        }
+                    }
                     if ($Rule.SendToManager.SecurityEscalation.Reminders) {
+                        $SecurityEscalation = $false
                         if ($Rule.SendToManager.SecurityEscalation.Reminders.Default -and $Rule.SendToManager.SecurityEscalation.Reminders.Default.Enable -eq $true) {
                             $Rule.SendToManager.SecurityEscalation.Reminders.Default.Reminder = $Rule.SendToManager.SecurityEscalation.Reminders.Default.Reminder | ForEach-Object { $_ }
                             if ($User.DaysToExpire -in $Rule.SendToManager.SecurityEscalation.Reminders.Default.Reminder) {
@@ -604,59 +660,6 @@
                         }
                     }
                     if ($SecurityEscalation) {
-                        if ($Rule.SendToManager.SecurityEscalation.IncludeOU.Count -gt 0) {
-                            # Rule defined that only user withi specific OU has to be found
-                            $FoundOU = $false
-                            foreach ($OU in $Rule.SendToManager.SecurityEscalation.IncludeOU) {
-                                if ($User.OrganizationalUnit -like $OU) {
-                                    $FoundOU = $true
-                                    break
-                                }
-                            }
-                            if (-not $FoundOU) {
-                                continue
-                            }
-                        }
-                        if ($Rule.SendToManager.SecurityEscalation.ExcludeOU.Count -gt 0) {
-                            $FoundOU = $false
-                            foreach ($OU in $Rule.SendToManager.SecurityEscalation.ExcludeOU) {
-                                if ($User.OrganizationalUnit -like $OU) {
-                                    $FoundOU = $true
-                                    break
-                                }
-                            }
-                            # if OU is found we need to exclude the user
-                            if ($FoundOU) {
-                                continue
-                            }
-                        }
-                        if ($Rule.SendToManager.SecurityEscalation.ExcludeGroup.Count -gt 0) {
-                            # Rule defined that only user withi specific group has to be found
-                            $FoundGroup = $false
-                            foreach ($Group in $Rule.SendToManager.SecurityEscalation.ExcludeGroup) {
-                                if ($User.MemberOf -contains $Group) {
-                                    $FoundGroup = $true
-                                    break
-                                }
-                            }
-                            # if Group found, we need to skip this user
-                            if ($FoundGroup) {
-                                continue
-                            }
-                        }
-                        if ($Rule.SendToManager.SecurityEscalation.IncludeGroup.Count -gt 0) {
-                            # Rule defined that only user withi specific group has to be found
-                            $FoundGroup = $false
-                            foreach ($Group in $Rule.SendToManager.SecurityEscalation.IncludeGroup) {
-                                if ($User.MemberOf -contains $Group) {
-                                    $FoundGroup = $true
-                                    break
-                                }
-                            }
-                            if (-not $FoundGroup) {
-                                continue
-                            }
-                        }
                         $Splat = [ordered] @{
                             SummaryDictionary = $Summary['NotifySecurity']
                             Type              = 'Security'
@@ -916,6 +919,14 @@
                 continue
             }
 
+            if ($SecuritySection.AttachCSV -and $ManagedUsers.Count -gt 0) {
+                $ManagedUsers | Export-Csv -LiteralPath $Env:TEMP\ManagedUsersSecurity.csv -NoTypeInformation -Force -Encoding UTF8 -ErrorAction Stop
+                $EmailSplat.Attachments = @(
+                    if (Test-Path -LiteralPath "$Env:TEMP\ManagedUsersSecurity.csv") {
+                        "$Env:TEMP\ManagedUsersSecurity.csv"
+                    }
+                )
+            }
             $EmailSplat.User = $ManagerUser
             $EmailSplat.ManagedUsers = $ManagedUsers | Select-Object -Property 'Status', 'DisplayName', 'Enabled', 'SamAccountName', 'Domain', 'DateExpiry', 'DaysToExpire', 'PasswordLastSet', 'PasswordExpired'
             #$EmailSplat.ManagedUsersManagerNotCompliant = $ManagedUsersManagerNotCompliant
