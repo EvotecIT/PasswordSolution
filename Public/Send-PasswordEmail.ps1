@@ -57,6 +57,8 @@
         $EmailParameters.Body = $Body
         if ($Attachments) {
             $EmailParameters.Attachment = $Attachments
+        } else {
+            $EmailParameters.Attachment = @()
         }
         Send-EmailMessage @EmailParameters
     }
