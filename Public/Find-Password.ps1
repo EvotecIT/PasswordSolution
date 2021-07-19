@@ -6,10 +6,6 @@
         [alias('Domain', 'Domains')][string[]] $IncludeDomains,
         [System.Collections.IDictionary] $ExtendedForestInformation,
         [string] $OverwriteEmailProperty,
-        #[Array] $ConditionProperties,
-        #[System.Collections.IDictionary] $CachedUsers,
-        #[System.Collections.IDictionary] $CachedUsersPrepared,
-        #[System.Collections.IDictionary] $CachedManagers
         [switch] $AsHashTable
     )
     $Today = Get-Date
@@ -22,9 +18,6 @@
         if ($OverwriteEmailProperty) {
             $OverwriteEmailProperty
         }
-        #if ($ConditionProperties) {
-        #    $ConditionProperties
-        #}
     )
     # We're caching all users to make sure it's speedy gonzales when querying for Managers
     if (-not $CachedUsers) {
@@ -41,15 +34,6 @@
         $Server = $ForestInformation['QueryServers'][$Domain]['HostName'][0]
 
         Write-Color -Text "[i] Getting users from ", "$($Domain)", " using ", $Server -Color White, Yellow, White, Yellow, White, Yellow, White
-        # We query all users instead of using filter. Since we need manager field and manager data this way it should be faster (query once - get it all)
-        #$DomainUsers = Get-ADUser -Server $Server -Filter '*' -Properties $Properties -ErrorAction Stop
-        #foreach ($_ in $DomainUsers) {
-        #$CachedUsers["$($_.DistinguishedName)"] = $_
-        # We reuse filtering, account is enabled, password is required and password is not set to change on next logon
-        #if ($_.Enabled -eq $true -and $_.PasswordNotRequired -ne $true -and $null -ne $_.PasswordLastSet) {
-        #    $_
-        #}
-        #}
         try {
             Get-ADUser -Server $Server -Filter '*' -Properties $Properties -ErrorAction Stop
         } catch {

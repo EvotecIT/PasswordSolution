@@ -10,9 +10,6 @@
         [Array] $SummaryEscalationEmails,
         [string] $TimeToProcess,
         [Array] $Attachments,
-        #[Array] $ManagedUsersManagerDisabled,
-        #[Array] $ManagedUsersManagerMissing,
-        #[Array] $ManagedUsersManagerMissingEmail,
         [System.Collections.IDictionary] $EmailParameters,
         [string] $Subject
     )
