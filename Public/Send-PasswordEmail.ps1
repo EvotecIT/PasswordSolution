@@ -23,7 +23,6 @@
             SummaryManagersEmails                = $SummaryManagersEmails
             SummaryUsersEmails                   = $SummaryUsersEmails
             TimeToProcess                        = $TimeToProcess
-            Attachment                           = $Attachments
             # Only works if User is set
             UserPrincipalName                    = $User.UserPrincipalName     # : adm.pklys@ad.evotec.xyz
             SamAccountName                       = $User.SamAccountName        # : adm.pklys
@@ -56,7 +55,9 @@
         # following replacement is a bit more cumbersome the the one above but a bit more secure and doesn't require creating 20+ unused variables
         $EmailParameters.Subject = Add-ParametersToString -String $Subject -Parameter $SourceParameters
         $EmailParameters.Body = $Body
-
+        if ($Attachments) {
+            $EmailParameters.Attachment = $Attachments
+        }
         Send-EmailMessage @EmailParameters
     }
 }
