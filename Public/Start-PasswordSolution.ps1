@@ -1033,6 +1033,10 @@
     }
 
     if ($HTMLOptions.Enable) {
+        if (-not $HTMLOptions.Title) {
+            $HTMLOptions.Title = "Password Solution Report"
+        }
+
         Write-Color -Text "[i]", " Generating HTML report " -Color White, Yellow, Green
         # Create report
         New-HTML {
@@ -1365,7 +1369,7 @@
                     } -Filtering
                 }
             }
-        } -ShowHTML:$HTMLOptions.ShowHTML -FilePath $FilePath -Online:$HTMLOptions.Online -WarningAction $WarningAction
+        } -ShowHTML:$HTMLOptions.ShowHTML -FilePath $FilePath -Online:$HTMLOptions.Online -WarningAction $WarningAction -TitleText $HTMLOptions.Title
 
         Write-Color -Text "[i]" , " Generating HTML report ", "Done" -Color White, Yellow, Green
     }
