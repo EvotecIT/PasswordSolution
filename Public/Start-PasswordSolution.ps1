@@ -935,7 +935,7 @@
             #$EmailSplat.ManagedUsersManagerMissingEmail = $ManagedUsersManagerMissingEmail
             $EmailSplat.EmailParameters = $EmailParameters
 
-            if ($ManagerSection.SendToDefaultEmail -ne $true) {
+            if ($SecuritySection.SendToDefaultEmail -ne $true) {
                 $EmailSplat.EmailParameters.To = $ManagerUser.EmailAddress
             } else {
                 $EmailSplat.EmailParameters.To = $SecuritySection.DefaultEmail
@@ -967,8 +967,8 @@
                 #ManagerMissingEmail      = $ManagedUsersManagerMissingEmail.SamAccountName
                 #ManagerMissingEmailCount = $ManagedUsersManagerMissingEmail.Count
             }
-            if ($ManagerSection.SendCountMaximum -gt 0) {
-                if ($ManagerSection.SendCountMaximum -le $CountSecurity) {
+            if ($SecuritySection.SendCountMaximum -gt 0) {
+                if ($SecuritySection.SendCountMaximum -le $CountSecurity) {
                     Write-Color -Text "[i]", " Send count maximum reached. There may be more managers that match the rule." -Color Red, DarkMagenta
                     break
                 }
