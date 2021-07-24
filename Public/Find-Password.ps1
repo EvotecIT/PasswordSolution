@@ -133,15 +133,17 @@
             # Since FGP policies are a bit special they do not tick the PasswordNeverExpires box, but at the same time value for "msDS-UserPasswordExpiryTimeComputed" is set to 9223372036854775807
             $PasswordNeverExpires = $true
         }
-        if ($PasswordNeverExpires -or $null -eq $User.PasswordLastSet) {
-            # If password last set is null or password never expires is set to true, then date of expiry and days to expire is not applicable
-            $DateExpiry = $null
-            $DaysToExpire = $null
-        }
+
         if ($User.pwdLastSet -eq 0 -and $DateExpiry.Year -eq 1601) {
             $PasswordAtNextLogon = $true
         } else {
             $PasswordAtNextLogon = $false
+        }
+
+        if ($PasswordNeverExpires -or $null -eq $User.PasswordLastSet) {
+            # If password last set is null or password never expires is set to true, then date of expiry and days to expire is not applicable
+            $DateExpiry = $null
+            $DaysToExpire = $null
         }
 
         $UserAccountControl = Convert-UserAccountControl -UserAccountControl $User.UserAccountControl
@@ -165,10 +167,10 @@
             DaysToExpire          = $DaysToExpire
             PasswordExpired       = $User.PasswordExpired
             PasswordDays          = $PasswordDays
+            PasswordAtNextLogon   = $PasswordAtNextLogon
             PasswordLastSet       = $User.PasswordLastSet
             PasswordNotRequired   = $User.PasswordNotRequired
             PasswordNeverExpires  = $PasswordNeverExpires
-            PasswordAtNextLogon   = $PasswordAtNextLogon
             Manager               = $Manager
             ManagerSamAccountName = $ManagerSamAccountName
             ManagerEmail          = $ManagerEmail
@@ -186,8 +188,6 @@
         foreach ($Property in $ConditionProperties) {
             $MyUser["$Property"] = $User.$Property
         }
-        #[PSCustomObject] $MyUser
-
         $CachedUsers["$($User.DistinguishedName)"] = [PSCustomObject] $MyUser
     }
     if ($AsHashTable) {

@@ -21,9 +21,7 @@
         [Parameter(Mandatory)][scriptblock] $TemplateAdmin,
         [Parameter(Mandatory)][string] $TemplateAdminSubject,
         [Parameter(Mandatory)][System.Collections.IDictionary] $Logging,
-        [Parameter(Mandatory)][System.Collections.IDictionary] $HTMLReportPrimary,
-        [Parameter(Mandatory)][System.Collections.IDictionary] $HTMLReportSecondary,
-        [Parameter(Mandatory)][System.Collections.IDictionary] $HTMLSearch,
+        [Array] $HTMLReports,
         [string] $SearchPath
     )
     $TimeStart = Start-TimeLog
@@ -216,7 +214,21 @@
 
                 if ($null -eq $User.DaysToExpire) {
                     if ($Logging.NotifyOnUserDaysToExpireNull) {
-                        Write-Color -Text "[i]", " User ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire not set. (Password Last Set: ", $User.PasswordLastSet, ")" -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
+                        Write-Color -Text @(
+                            "[i]",
+                            " User ",
+                            $User.DisplayName,
+                            " (",
+                            $User.UserPrincipalName,
+                            ")",
+                            " days to expire not set. ",
+                            "(",
+                            "Password Last Set: ",
+                            $User.PasswordLastSet,
+                            ")",
+                            " (Password at next logon: ",
+                            $User.PasswordAtNextLogon, ")"
+                        ) -Color Yellow, White, Yellow, White, Yellow, White, White, White, Yellow, DarkCyan, White, Yellow, DarkCyan, White
                     }
                     # if days to expire is not set, password last set is not set either
                     # this means account either was never used or account we're using to has no permissions over that account
@@ -235,15 +247,14 @@
                     }
                     $Locations[$Location].Count++
                     $Locations[$Location].Names.Add($User.SamAccountName)
-                    continue
                 }
 
                 # Lets find users that expire, and match our rule
-                if ($User.DaysToExpire -in $Rule.Reminders) {
+                if ($null -ne $User.DaysToExpire -and $User.DaysToExpire -in $Rule.Reminders) {
                     # check if we need to notify user or just manager
                     if (-not $Rule.ProcessManagersOnly) {
                         if ($Logging.NotifyOnUserMatchingRule) {
-                            Write-Color -Text "[i]", " User ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
+                            Write-Color -Text "[i]", " User ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire, " " -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
                         }
                         $Summary['Notify'][$User.DistinguishedName] = [ordered] @{
                             User                = $User
@@ -257,7 +268,7 @@
                         }
                     }
                 }
-                if ($Rule.SendToManager) {
+                if ($null -ne $User.DaysToExpire -and $Rule.SendToManager) {
                     if ($Rule.SendToManager.Manager -and $Rule.SendToManager.Manager.Enable -eq $true -and $User.ManagerStatus -eq 'Enabled' -and $User.ManagerEmail -like "*@*") {
                         $SendToManager = $true
                         # Manager is enabled and has an email, this is standard situation for manager in AD
@@ -569,7 +580,7 @@
                     }
                 }
                 # Lets find users that require escalation
-                if ($Rule.SendToManager -and $Rule.SendToManager.SecurityEscalation -and $Rule.SendToManager.SecurityEscalation.Enable -eq $true -and $Rule.SendToManager.SecurityEscalation.Manager) {
+                if ($null -ne $User.DaysToExpire -and $Rule.SendToManager -and $Rule.SendToManager.SecurityEscalation -and $Rule.SendToManager.SecurityEscalation.Enable -eq $true -and $Rule.SendToManager.SecurityEscalation.Manager) {
                     $SecurityEscalation = $true
                     if ($Rule.SendToManager.SecurityEscalation.IncludeOU.Count -gt 0) {
                         # Rule defined that only user withi specific OU has to be found
@@ -1054,256 +1065,260 @@
         Write-Color -Text "[i] Sending summary information is ", "disabled!" -Color White, Yellow, DarkMagenta
     }
 
-    if ($HTMLReportPrimary.Enable) {
-        if ($HTMLReportPrimary.DisableWarnings -eq $true) {
-            $WarningAction = 'SilentlyContinue'
-        } else {
-            $WarningAction = 'Continue'
-        }
-        if (-not $HTMLReportPrimary.Title) {
-            $HTMLReportPrimary.Title = "Password Solution Report"
-        }
-
-        Write-Color -Text "[i]", " Generating HTML report " -Color White, Yellow, Green
-        # Create report
-        New-HTML {
-            New-HTMLHeader {
-                New-HTMLSection -Invisible {
-                    New-HTMLSection {
-                        New-HTMLText -Text "Report generated on $(Get-Date)" -Color Blue
-                    } -JustifyContent flex-start -Invisible
-                    New-HTMLSection {
-                        New-HTMLText -Text "Password Solution - $($Script:Reporting['Version'])" -Color Blue
-                    } -JustifyContent flex-end -Invisible
-                }
+    foreach ($Report in $HTMLReports) {
+        if ($Report.Enable) {
+            Write-Color -Text "[i]", " Generating HTML report ", $Report.Title -Color White, Yellow, Green
+            if ($Report.DisableWarnings -eq $true) {
+                $WarningAction = 'SilentlyContinue'
+            } else {
+                $WarningAction = 'Continue'
             }
-            New-TableOption -DataStore JavaScript -ArrayJoin -BoolAsString
-            if ($HTMLReportPrimary.ShowConfiguration) {
-                New-HTMLTab -Name "About" {
-                    New-HTMLTab -Name "Configuration" {
-                        New-HTMLSection -Invisible {
-                            New-HTMLSection -HeaderText "Email Configuration" {
-                                New-HTMLList {
-                                    foreach ($Key in $EmailParameters.Keys) {
-                                        if ($Key -ne 'Password') {
-                                            New-HTMLListItem -Text $Key, ": ", $EmailParameters[$Key] -FontWeight normal, normal, bold
-                                        } else {
-                                            New-HTMLListItem -Text $Key, ": ", "REDACTED" -FontWeight normal, normal, bold
-                                        }
-                                    }
-                                }
-                            }
-                            New-HTMLSection -HeaderText "Logging" {
-                                New-HTMLList {
-                                    foreach ($Key in $Logging.Keys) {
-                                        if ($Key -ne 'Password') {
-                                            New-HTMLListItem -Text $Key, ": ", $Logging[$Key] -FontWeight normal, normal, bold
-                                        } else {
-                                            New-HTMLListItem -Text $Key, ": ", "REDACTED" -FontWeight normal, normal, bold
-                                        }
-                                    }
-                                }
-                            }
-                            New-HTMLSection -HeaderText "HTMLReportPrimary" {
-                                New-HTMLList {
-                                    foreach ($Key in $HTMLReportPrimary.Keys) {
-                                        if ($Key -ne 'Password') {
-                                            New-HTMLListItem -Text $Key, ": ", $HTMLReportPrimary[$Key] -FontWeight normal, normal, bold
-                                        } else {
-                                            New-HTMLListItem -Text $Key, ": ", "REDACTED" -FontWeight normal, normal, bold
-                                        }
-                                    }
-                                }
-                            }
-                            New-HTMLSection -HeaderText "Other" {
-                                New-HTMLList {
-                                    New-HTMLListItem -Text 'FilePath', ": ", $FilePath -FontWeight normal, normal, bold
-                                    New-HTMLListItem -Text 'SearchPath', ": ", $SearchPath -FontWeight normal, normal, bold
-                                }
-                            }
-                        }
+            if (-not $Report.Title) {
+                $Report.Title = "Password Solution Report"
+            }
 
-                        New-HTMLSection -Invisible {
-                            New-HTMLSection -HeaderText "User Section" {
-                                New-HTMLList {
-                                    New-HTMLListItem -Text "Enabled: ", $UserSection.Enable -FontWeight normal, bold -TextDecoration underline, none
-                                    New-HTMLListItem -Text "SendCountMaximum: ", $UserSection.SendCountMaximum -FontWeight normal, bold -TextDecoration underline, none
-                                    New-HTMLListItem -Text "SendToDefaultEmail: ", $UserSection.SendToDefaultEmail -FontWeight normal, bold -TextDecoration underline, none
-                                    New-HTMLListItem -Text "DefaultEmail: ", ($UserSection.DefaultEmail -join ", ") -FontWeight normal, bold -TextDecoration underline, none
-                                }
-                            }
-                            New-HTMLSection -HeaderText "Manager Section" {
-                                New-HTMLList {
-                                    New-HTMLListItem -Text "Enabled: ", $ManagerSection.Enable -FontWeight normal, bold -TextDecoration underline, none
-                                    New-HTMLListItem -Text "SendCountMaximum: ", $ManagerSection.SendCountMaximum -FontWeight normal, bold -TextDecoration underline, none
-                                    New-HTMLListItem -Text "SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail -FontWeight normal, bold -TextDecoration underline, none
-                                    New-HTMLListItem -Text "DefaultEmail: ", ($ManagerSection.DefaultEmail -join ", ") -FontWeight normal, bold -TextDecoration underline, none
-                                }
-                            }
-                            New-HTMLSection -HeaderText "Security Section" {
-                                New-HTMLList {
-                                    New-HTMLListItem -Text "Enabled: ", $SecuritySection.Enable -FontWeight normal, bold -TextDecoration underline, none
-                                    New-HTMLListItem -Text "SendCountMaximum: ", $SecuritySection.SendCountMaximum -FontWeight normal, bold -TextDecoration underline, none
-                                    New-HTMLListItem -Text "SendToDefaultEmail: ", $SecuritySection.SendToDefaultEmail -FontWeight normal, bold -TextDecoration underline, none
-                                    New-HTMLListItem -Text "DefaultEmail: ", ($SecuritySection.DefaultEmail -join ", ") -FontWeight normal, bold -TextDecoration underline, none
-                                    New-HTMLListItem -Text "Attach CSV: ", ($SecuritySection.AttachCSV -join ",") -FontWeight normal, bold -TextDecoration underline, none
-                                }
-                            }
-                            New-HTMLSection -HeaderText "Admin Section" {
-                                New-HTMLList {
-                                    New-HTMLListItem -Text "Enabled: ", $AdminSection.Enable -FontWeight normal, bold -TextDecoration underline, none
-                                    New-HTMLListItem -Text "Subject: ", $AdminSection.Subject -FontWeight normal, bold -TextDecoration underline, none
-                                    New-HTMLListItem -Text "Manager: ", $AdminSection.Manager.DisplayName -FontWeight normal, bold -TextDecoration underline, none
-                                    New-HTMLListItem -Text "Manager Email: ", ($AdminSection.Manager.EmailAddress -join ", ") -FontWeight normal, bold -TextDecoration underline, none
-                                }
-                            }
-                        }
+            # Create report
+            New-HTML {
+                New-HTMLHeader {
+                    New-HTMLSection -Invisible {
+                        New-HTMLSection {
+                            New-HTMLText -Text "Report generated on $(Get-Date)" -Color Blue
+                        } -JustifyContent flex-start -Invisible
+                        New-HTMLSection {
+                            New-HTMLText -Text "Password Solution - $($Script:Reporting['Version'])" -Color Blue
+                        } -JustifyContent flex-end -Invisible
                     }
-                    New-HTMLTab -Name 'Rules Configuration' {
-                        New-HTMLText -Text "There are ", $Rules.Count, " rules defined in the Password Solution. ", "Please keep in mind that order of the rules matter." -FontWeight normal, bold, normal -Color None, Blue, None
-
-                        foreach ($Rule in $Rules) {
-                            if ($Rule.Enable) {
-                                $SectionColor = 'SpringGreen'
-                            } else {
-                                $SectionColor = 'Coral'
-                            }
-                            New-HTMLSection -HeaderText "Rule $($Rule.Name)" -CanCollapse -HeaderBackGroundColor $SectionColor {
-                                New-HTMLList {
-                                    if ($Rule.Enable) {
-                                        New-HTMLListItem -Text "Rule ", $Rule.Name, " is ", "enabled" -FontWeight normal, bold, normal, bold, normal, normal -Color None, None, None, Green
-                                    } else {
-                                        New-HTMLListItem -Text "Rule ", $Rule.Name, " is ", "disabled" -FontWeight normal, bold, normal, bold, normal, normal -Color None, None, None, Red
-                                    }
+                }
+                New-TableOption -DataStore JavaScript -ArrayJoin -BoolAsString
+                if ($Report.ShowConfiguration) {
+                    New-HTMLTab -Name "About" {
+                        New-HTMLTab -Name "Configuration" {
+                            New-HTMLSection -Invisible {
+                                New-HTMLSection -HeaderText "Email Configuration" {
                                     New-HTMLList {
-                                        New-HTMLListItem -Text "Notify till expiry on ", $($Rule.Reminders -join ","), " day " -FontWeight normal, bold, normal
-                                        if ($Rule.IncludeExpiring) {
-                                            New-HTMLListItem -Text "Include expiring accounts is ", "enabled" -FontWeight bold, bold -Color None, Green
-                                        } else {
-                                            New-HTMLListItem -Text "Include expiring accounts is ", "disabled" -FontWeight bold, bold -Color None, Red
+                                        foreach ($Key in $EmailParameters.Keys) {
+                                            if ($Key -ne 'Password') {
+                                                New-HTMLListItem -Text $Key, ": ", $EmailParameters[$Key] -FontWeight normal, normal, bold
+                                            } else {
+                                                New-HTMLListItem -Text $Key, ": ", "REDACTED" -FontWeight normal, normal, bold
+                                            }
                                         }
-                                        if ($Rule.IncludePasswordNeverExpires) {
-                                            New-HTMLListItem -Text "Include passwords never expiring with ", $Rule.PasswordNeverExpiresDays, " days rule" -FontWeight bold -Color Amethyst
-                                        } else {
-                                            New-HTMLListItem -Text "Do not include passwords that never expire." -FontWeight bold -Color Blue
+                                    }
+                                }
+                                New-HTMLSection -HeaderText "Logging" {
+                                    New-HTMLList {
+                                        foreach ($Key in $Logging.Keys) {
+                                            if ($Key -ne 'Password') {
+                                                New-HTMLListItem -Text $Key, ": ", $Logging[$Key] -FontWeight normal, normal, bold
+                                            } else {
+                                                New-HTMLListItem -Text $Key, ": ", "REDACTED" -FontWeight normal, normal, bold
+                                            }
                                         }
-                                        if ($Rule.IncludeName.Count -gt 0 -and $Rule.IncludeNameProperties.Count -gt 0) {
-                                            New-HTMLListItem -Text "Apply naming rule to require that account contains of of names ", $($Rule.IncludeName -join ", "), " in at least one property ", ($Rule.IncludeNameProperties -join ", ") -FontWeight normal, bold, normal, bold, normal -Color None, Blue, None, Blue
-                                        } else {
-                                            New-HTMLListItem -Text "Do not apply special name rules" -Color Blue -FontWeight bold
+                                    }
+                                }
+                                <#
+                                New-HTMLSection -HeaderText "Report Options" {
+                                    New-HTMLList {
+                                        foreach ($Key in $Report.Keys) {
+                                            if ($Key -ne 'Password') {
+                                                New-HTMLListItem -Text $Key, ": ", $HTMLReportPrimary[$Key] -FontWeight normal, normal, bold
+                                            } else {
+                                                New-HTMLListItem -Text $Key, ": ", "REDACTED" -FontWeight normal, normal, bold
+                                            }
                                         }
-                                        if ($Rule.IncludeOU) {
-                                            New-HTMLListItem -Text "Apply Organizational Unit inclusion on ", ($Rule.IncludeOU -join ", ") -FontWeight normal, bold -Color None, Blue
-                                        } else {
-                                            New-HTMLListItem -Text "Do not apply Organizational Unit limit" -Color Blue -FontWeight bold
-                                        }
-                                        if ($Rule.ExcludeOU) {
-                                            New-HTMLListItem -Text "Apply Organizational Unit exclusion on ", $Rule.ExcludeOU -FontWeight normal, bold -Color None, Green
-                                        } else {
-                                            New-HTMLListItem -Text "Do not exclude any Organizational Unit" -Color Blue -FontWeight bold
-                                        }
-                                        if ($Rule.IncludeGroup) {
-                                            New-HTMLListItem -Text "Appply Group Membership inclusion (direct only) ", ($Rule.IncludeGroup -join ", ")
-                                        } else {
-                                            New-HTMLListItem -Text "Do not apply Group Membership limit"
-                                        }
-                                        if ($Rule.ExcludeGroup) {
-                                            New-HTMLListItem -Text "Apply Group Membership exclusion (direct only): ", ($Rule.ExcludeGroup -join ", ")
-                                        } else {
-                                            New-HTMLListItem -Text "Do not apply Group Membership exclusion"
-                                        }
-                                        New-HTMLListItem -Text "Send to manager" -NestedListItems {
-                                            New-HTMLList {
-                                                if ($Rule.SendToManager.Manager.Enable) {
-                                                    New-HTMLListItem -Text "Manager ", " is ", 'enabled' -FontWeight bold, normal, bold -Color None, None, Green {
+                                    }
+                                }
+                                #>
+                                New-HTMLSection -HeaderText "Other" {
+                                    New-HTMLList {
+                                        New-HTMLListItem -Text 'FilePath', ": ", $FilePath -FontWeight normal, normal, bold
+                                        New-HTMLListItem -Text 'SearchPath', ": ", $SearchPath -FontWeight normal, normal, bold
+                                    }
+                                }
+                            }
 
-                                                    }
-                                                } else {
-                                                    New-HTMLListItem -Text "Manager ", " is ", 'disabled' -FontWeight bold, normal, bold -Color None, None, Red {
+                            New-HTMLSection -Invisible {
+                                New-HTMLSection -HeaderText "User Section" {
+                                    New-HTMLList {
+                                        New-HTMLListItem -Text "Enabled: ", $UserSection.Enable -FontWeight normal, bold -TextDecoration underline, none
+                                        New-HTMLListItem -Text "SendCountMaximum: ", $UserSection.SendCountMaximum -FontWeight normal, bold -TextDecoration underline, none
+                                        New-HTMLListItem -Text "SendToDefaultEmail: ", $UserSection.SendToDefaultEmail -FontWeight normal, bold -TextDecoration underline, none
+                                        New-HTMLListItem -Text "DefaultEmail: ", ($UserSection.DefaultEmail -join ", ") -FontWeight normal, bold -TextDecoration underline, none
+                                    }
+                                }
+                                New-HTMLSection -HeaderText "Manager Section" {
+                                    New-HTMLList {
+                                        New-HTMLListItem -Text "Enabled: ", $ManagerSection.Enable -FontWeight normal, bold -TextDecoration underline, none
+                                        New-HTMLListItem -Text "SendCountMaximum: ", $ManagerSection.SendCountMaximum -FontWeight normal, bold -TextDecoration underline, none
+                                        New-HTMLListItem -Text "SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail -FontWeight normal, bold -TextDecoration underline, none
+                                        New-HTMLListItem -Text "DefaultEmail: ", ($ManagerSection.DefaultEmail -join ", ") -FontWeight normal, bold -TextDecoration underline, none
+                                    }
+                                }
+                                New-HTMLSection -HeaderText "Security Section" {
+                                    New-HTMLList {
+                                        New-HTMLListItem -Text "Enabled: ", $SecuritySection.Enable -FontWeight normal, bold -TextDecoration underline, none
+                                        New-HTMLListItem -Text "SendCountMaximum: ", $SecuritySection.SendCountMaximum -FontWeight normal, bold -TextDecoration underline, none
+                                        New-HTMLListItem -Text "SendToDefaultEmail: ", $SecuritySection.SendToDefaultEmail -FontWeight normal, bold -TextDecoration underline, none
+                                        New-HTMLListItem -Text "DefaultEmail: ", ($SecuritySection.DefaultEmail -join ", ") -FontWeight normal, bold -TextDecoration underline, none
+                                        New-HTMLListItem -Text "Attach CSV: ", ($SecuritySection.AttachCSV -join ",") -FontWeight normal, bold -TextDecoration underline, none
+                                    }
+                                }
+                                New-HTMLSection -HeaderText "Admin Section" {
+                                    New-HTMLList {
+                                        New-HTMLListItem -Text "Enabled: ", $AdminSection.Enable -FontWeight normal, bold -TextDecoration underline, none
+                                        New-HTMLListItem -Text "Subject: ", $AdminSection.Subject -FontWeight normal, bold -TextDecoration underline, none
+                                        New-HTMLListItem -Text "Manager: ", $AdminSection.Manager.DisplayName -FontWeight normal, bold -TextDecoration underline, none
+                                        New-HTMLListItem -Text "Manager Email: ", ($AdminSection.Manager.EmailAddress -join ", ") -FontWeight normal, bold -TextDecoration underline, none
+                                    }
+                                }
+                            }
+                        }
+                        New-HTMLTab -Name 'Rules Configuration' {
+                            New-HTMLText -Text "There are ", $Rules.Count, " rules defined in the Password Solution. ", "Please keep in mind that order of the rules matter." -FontWeight normal, bold, normal -Color None, Blue, None
 
-                                                    }
-                                                }
-                                                if ($Rule.SendToManager.ManagerNotCompliant.Enable) {
-                                                    New-HTMLListItem -Text "Manager Escalation", " is ", 'enabled' -FontWeight bold, normal, bold -Color None, None, Green {
-                                                        New-HTMLList {
-                                                            New-HTMLListItem -Text "Manager Name: ", $Rule.SendToManager.ManagerNotCompliant.Manager.DisplayName -FontWeight normal, bold -TextDecoration underline, none
-                                                            New-HTMLListItem -Text "Manager Email Address: ", $Rule.SendToManager.ManagerNotCompliant.Manager.EmailAddress -FontWeight normal, bold -TextDecoration underline, none
+                            foreach ($Rule in $Rules) {
+                                if ($Rule.Enable) {
+                                    $SectionColor = 'SpringGreen'
+                                } else {
+                                    $SectionColor = 'Coral'
+                                }
+                                New-HTMLSection -HeaderText "Rule $($Rule.Name)" -CanCollapse -HeaderBackGroundColor $SectionColor {
+                                    New-HTMLList {
+                                        if ($Rule.Enable) {
+                                            New-HTMLListItem -Text "Rule ", $Rule.Name, " is ", "enabled" -FontWeight normal, bold, normal, bold, normal, normal -Color None, None, None, Green
+                                        } else {
+                                            New-HTMLListItem -Text "Rule ", $Rule.Name, " is ", "disabled" -FontWeight normal, bold, normal, bold, normal, normal -Color None, None, None, Red
+                                        }
+                                        New-HTMLList {
+                                            New-HTMLListItem -Text "Notify till expiry on ", $($Rule.Reminders -join ","), " day " -FontWeight normal, bold, normal
+                                            if ($Rule.IncludeExpiring) {
+                                                New-HTMLListItem -Text "Include expiring accounts is ", "enabled" -FontWeight bold, bold -Color None, Green
+                                            } else {
+                                                New-HTMLListItem -Text "Include expiring accounts is ", "disabled" -FontWeight bold, bold -Color None, Red
+                                            }
+                                            if ($Rule.IncludePasswordNeverExpires) {
+                                                New-HTMLListItem -Text "Include passwords never expiring with ", $Rule.PasswordNeverExpiresDays, " days rule" -FontWeight bold -Color Amethyst
+                                            } else {
+                                                New-HTMLListItem -Text "Do not include passwords that never expire." -FontWeight bold -Color Blue
+                                            }
+                                            if ($Rule.IncludeName.Count -gt 0 -and $Rule.IncludeNameProperties.Count -gt 0) {
+                                                New-HTMLListItem -Text "Apply naming rule to require that account contains of of names ", $($Rule.IncludeName -join ", "), " in at least one property ", ($Rule.IncludeNameProperties -join ", ") -FontWeight normal, bold, normal, bold, normal -Color None, Blue, None, Blue
+                                            } else {
+                                                New-HTMLListItem -Text "Do not apply special name rules" -Color Blue -FontWeight bold
+                                            }
+                                            if ($Rule.IncludeOU) {
+                                                New-HTMLListItem -Text "Apply Organizational Unit inclusion on ", ($Rule.IncludeOU -join ", ") -FontWeight normal, bold -Color None, Blue
+                                            } else {
+                                                New-HTMLListItem -Text "Do not apply Organizational Unit limit" -Color Blue -FontWeight bold
+                                            }
+                                            if ($Rule.ExcludeOU) {
+                                                New-HTMLListItem -Text "Apply Organizational Unit exclusion on ", $Rule.ExcludeOU -FontWeight normal, bold -Color None, Green
+                                            } else {
+                                                New-HTMLListItem -Text "Do not exclude any Organizational Unit" -Color Blue -FontWeight bold
+                                            }
+                                            if ($Rule.IncludeGroup) {
+                                                New-HTMLListItem -Text "Appply Group Membership inclusion (direct only) ", ($Rule.IncludeGroup -join ", ")
+                                            } else {
+                                                New-HTMLListItem -Text "Do not apply Group Membership limit"
+                                            }
+                                            if ($Rule.ExcludeGroup) {
+                                                New-HTMLListItem -Text "Apply Group Membership exclusion (direct only): ", ($Rule.ExcludeGroup -join ", ")
+                                            } else {
+                                                New-HTMLListItem -Text "Do not apply Group Membership exclusion"
+                                            }
+                                            New-HTMLListItem -Text "Send to manager" -NestedListItems {
+                                                New-HTMLList {
+                                                    if ($Rule.SendToManager.Manager.Enable) {
+                                                        New-HTMLListItem -Text "Manager ", " is ", 'enabled' -FontWeight bold, normal, bold -Color None, None, Green {
+
                                                         }
-                                                        New-HTMLList {
-                                                            New-HTMLListItem -Text "Rules: " {
-                                                                New-HTMLList {
-                                                                    if ($Rule.SendToManager.ManagerNotCompliant.Reminders.Default.Enable) {
-                                                                        New-HTMLListItem -Text "Default: ", $Rule.SendToManager.ManagerNotCompliant.Reminders.Default.Enable
-                                                                    } else {
-                                                                        New-HTMLListItem -Text "Default rule is ", "disabled" -FontWeight bold, bold -Color None, Red
-                                                                    }
-                                                                    if ($Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.Enable) {
-                                                                        New-HTMLListItem -Text @(
-                                                                            "On day (of the week) is ", "enabled"
-                                                                            " on days: ", $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.Days,
-                                                                            " with comparison ", $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.ComparisonType,
-                                                                            ' and reminder ', $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.Reminder
-                                                                        ) -FontWeight bold, bold, normal, bold, normal, bold, normal, bold -Color None, Green, None
-                                                                    } else {
-                                                                        New-HTMLListItem -Text "On day of week rule is ", "disabled" -FontWeight bold, bold -Color None, Red
-                                                                    }
-                                                                    if ($Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.Enable) {
-                                                                        New-HTMLListItem -Text @(
-                                                                            "On day of month rule is ", "enabled",
-                                                                            " on days ", ($Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.Days -join ","),
-                                                                            " with comparison ", $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.ComparisonType,
-                                                                            ' reminder ', $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.Reminder
-                                                                        ) -FontWeight bold, bold, normal, bold, normal, bold, normal, bold -Color None, Green, None
-                                                                    } else {
-                                                                        New-HTMLListItem -Text "On day of month rule is ", "disabled" -FontWeight bold, bold -Color None, Red
+                                                    } else {
+                                                        New-HTMLListItem -Text "Manager ", " is ", 'disabled' -FontWeight bold, normal, bold -Color None, None, Red {
+
+                                                        }
+                                                    }
+                                                    if ($Rule.SendToManager.ManagerNotCompliant.Enable) {
+                                                        New-HTMLListItem -Text "Manager Escalation", " is ", 'enabled' -FontWeight bold, normal, bold -Color None, None, Green {
+                                                            New-HTMLList {
+                                                                New-HTMLListItem -Text "Manager Name: ", $Rule.SendToManager.ManagerNotCompliant.Manager.DisplayName -FontWeight normal, bold -TextDecoration underline, none
+                                                                New-HTMLListItem -Text "Manager Email Address: ", $Rule.SendToManager.ManagerNotCompliant.Manager.EmailAddress -FontWeight normal, bold -TextDecoration underline, none
+                                                            }
+                                                            New-HTMLList {
+                                                                New-HTMLListItem -Text "Rules: " {
+                                                                    New-HTMLList {
+                                                                        if ($Rule.SendToManager.ManagerNotCompliant.Reminders.Default.Enable) {
+                                                                            New-HTMLListItem -Text "Default: ", $Rule.SendToManager.ManagerNotCompliant.Reminders.Default.Enable
+                                                                        } else {
+                                                                            New-HTMLListItem -Text "Default rule is ", "disabled" -FontWeight bold, bold -Color None, Red
+                                                                        }
+                                                                        if ($Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.Enable) {
+                                                                            New-HTMLListItem -Text @(
+                                                                                "On day (of the week) is ", "enabled"
+                                                                                " on days: ", $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.Days,
+                                                                                " with comparison ", $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.ComparisonType,
+                                                                                ' and reminder ', $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.Reminder
+                                                                            ) -FontWeight bold, bold, normal, bold, normal, bold, normal, bold -Color None, Green, None
+                                                                        } else {
+                                                                            New-HTMLListItem -Text "On day of week rule is ", "disabled" -FontWeight bold, bold -Color None, Red
+                                                                        }
+                                                                        if ($Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.Enable) {
+                                                                            New-HTMLListItem -Text @(
+                                                                                "On day of month rule is ", "enabled",
+                                                                                " on days ", ($Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.Days -join ","),
+                                                                                " with comparison ", $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.ComparisonType,
+                                                                                ' reminder ', $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.Reminder
+                                                                            ) -FontWeight bold, bold, normal, bold, normal, bold, normal, bold -Color None, Green, None
+                                                                        } else {
+                                                                            New-HTMLListItem -Text "On day of month rule is ", "disabled" -FontWeight bold, bold -Color None, Red
+                                                                        }
                                                                     }
                                                                 }
                                                             }
                                                         }
+                                                    } else {
+                                                        New-HTMLListItem -Text "Manager Escalation", " is ", "disabled" -FontWeight bold, normal, bold -Color None, None, Red
                                                     }
-                                                } else {
-                                                    New-HTMLListItem -Text "Manager Escalation", " is ", "disabled" -FontWeight bold, normal, bold -Color None, None, Red
-                                                }
-                                                if ($Rule.SendToManager.SecurityEscalation.Enable) {
-                                                    New-HTMLListItem -Text "Security Escalation ", $Rule.SendToManager.SecurityEscalation.Enable -FontWeight normal, bold {
-                                                        New-HTMLList {
-                                                            New-HTMLListItem -Text "Manager Name: ", $Rule.SendToManager.SecurityEscalation.Manager.DisplayName -FontWeight normal, bold -TextDecoration underline, none
-                                                            New-HTMLListItem -Text "Manager Email Address: ", $Rule.SendToManager.SecurityEscalation.Manager.EmailAddress -FontWeight normal, bold -TextDecoration underline, none
-                                                        }
-                                                        New-HTMLList {
-                                                            New-HTMLListItem -Text "Rules: " {
-                                                                New-HTMLList {
-                                                                    if ($Rule.SendToManager.SecurityEscalation.Reminders.Default.Enable) {
-                                                                        New-HTMLListItem -Text "Default: ", $Rule.SendToManager.SecurityEscalation.Reminders.Default.Enable
-                                                                    } else {
-                                                                        New-HTMLListItem -Text "Default rule is ", "disabled" -FontWeight bold, bold -Color None, Red
-                                                                    }
-                                                                    if ($Rule.SendToManager.SecurityEscalation.Reminders.OnDay.Enable) {
-                                                                        New-HTMLListItem -Text @(
-                                                                            "On day (of the week) is ", "enabled"
-                                                                            " on days: ", $Rule.SendToManager.SecurityEscalation.Reminders.OnDay.Days,
-                                                                            " with comparison ", $Rule.SendToManager.SecurityEscalation.Reminders.OnDay.ComparisonType,
-                                                                            ' and reminder ', $Rule.SendToManager.SecurityEscalation.Reminders.OnDay.Reminder
-                                                                        ) -FontWeight bold, bold, normal, bold, normal, bold, normal, bold -Color None, Green, None
-                                                                    } else {
-                                                                        New-HTMLListItem -Text "On day of week rule is ", "disabled" -FontWeight bold, bold -Color None, Red
-                                                                    }
-                                                                    if ($Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.Enable) {
-                                                                        New-HTMLListItem -Text @(
-                                                                            "On day of month rule is ", "enabled",
-                                                                            " on days ", ($Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.Days -join ","),
-                                                                            " with comparison ", $Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.ComparisonType,
-                                                                            ' reminder ', $Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.Reminder
-                                                                        ) -FontWeight bold, bold, normal, bold, normal, bold, normal, bold -Color None, Green, None
-                                                                    } else {
-                                                                        New-HTMLListItem -Text "On day of month rule is ", "disabled" -FontWeight bold, bold -Color None, Red
+                                                    if ($Rule.SendToManager.SecurityEscalation.Enable) {
+                                                        New-HTMLListItem -Text "Security Escalation ", $Rule.SendToManager.SecurityEscalation.Enable -FontWeight normal, bold {
+                                                            New-HTMLList {
+                                                                New-HTMLListItem -Text "Manager Name: ", $Rule.SendToManager.SecurityEscalation.Manager.DisplayName -FontWeight normal, bold -TextDecoration underline, none
+                                                                New-HTMLListItem -Text "Manager Email Address: ", $Rule.SendToManager.SecurityEscalation.Manager.EmailAddress -FontWeight normal, bold -TextDecoration underline, none
+                                                            }
+                                                            New-HTMLList {
+                                                                New-HTMLListItem -Text "Rules: " {
+                                                                    New-HTMLList {
+                                                                        if ($Rule.SendToManager.SecurityEscalation.Reminders.Default.Enable) {
+                                                                            New-HTMLListItem -Text "Default: ", $Rule.SendToManager.SecurityEscalation.Reminders.Default.Enable
+                                                                        } else {
+                                                                            New-HTMLListItem -Text "Default rule is ", "disabled" -FontWeight bold, bold -Color None, Red
+                                                                        }
+                                                                        if ($Rule.SendToManager.SecurityEscalation.Reminders.OnDay.Enable) {
+                                                                            New-HTMLListItem -Text @(
+                                                                                "On day (of the week) is ", "enabled"
+                                                                                " on days: ", $Rule.SendToManager.SecurityEscalation.Reminders.OnDay.Days,
+                                                                                " with comparison ", $Rule.SendToManager.SecurityEscalation.Reminders.OnDay.ComparisonType,
+                                                                                ' and reminder ', $Rule.SendToManager.SecurityEscalation.Reminders.OnDay.Reminder
+                                                                            ) -FontWeight bold, bold, normal, bold, normal, bold, normal, bold -Color None, Green, None
+                                                                        } else {
+                                                                            New-HTMLListItem -Text "On day of week rule is ", "disabled" -FontWeight bold, bold -Color None, Red
+                                                                        }
+                                                                        if ($Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.Enable) {
+                                                                            New-HTMLListItem -Text @(
+                                                                                "On day of month rule is ", "enabled",
+                                                                                " on days ", ($Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.Days -join ","),
+                                                                                " with comparison ", $Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.ComparisonType,
+                                                                                ' reminder ', $Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.Reminder
+                                                                            ) -FontWeight bold, bold, normal, bold, normal, bold, normal, bold -Color None, Green, None
+                                                                        } else {
+                                                                            New-HTMLListItem -Text "On day of month rule is ", "disabled" -FontWeight bold, bold -Color None, Red
+                                                                        }
                                                                     }
                                                                 }
                                                             }
                                                         }
+                                                    } else {
+                                                        New-HTMLListItem -Text "Security Escalation", " is ", "disabled" -FontWeight bold, normal, bold -Color None, None, Red
                                                     }
-                                                } else {
-                                                    New-HTMLListItem -Text "Security Escalation", " is ", "disabled" -FontWeight bold, normal, bold -Color None, None, Red
                                                 }
                                             }
                                         }
@@ -1313,246 +1328,168 @@
                         }
                     }
                 }
-            }
-            if ($HTMLReportPrimary.ShowAllUsers) {
-                New-HTMLTab -Name 'All Users' {
-                    New-HTMLTable -DataTable $CachedUsers.Values -Filtering {
-                        New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
-                        New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
-                        New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string
-                        New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
-                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
-                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Not available' -BackgroundColor BlueSmoke
-                    }
-                }
-            }
-            if ($HTMLReportPrimary.ShowRules) {
-                foreach ($Rule in  $Summary['Rules'].Keys) {
-                    if ((Measure-Object -InputObject $Summary['Rules'][$Rule].Values.User).Count -gt 0) {
-                        $Color = 'LawnGreen'
-                        $IconSolid = 'Star'
-                    } else {
-                        $Color = 'Salmon'
-                        $IconSolid = 'Stop'
-                    }
-                    New-HTMLTab -Name $Rule -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
-                        New-HTMLTable -DataTable $Summary['Rules'][$Rule].Values.User -Filtering {
-                            New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string
+                if ($Report.ShowAllUsers) {
+                    New-HTMLTab -Name 'All Users' {
+                        New-HTMLTable -DataTable $CachedUsers.Values -Filtering {
+                            New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
                             New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
-                            New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                            New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string
                             New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                            New-TableCondition -Name 'PasswordAtNextLogon' -BackgroundColor BlueSmoke -FailBackgroundColor LawnGreen -Value $true -ComparisonType string
                             New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
                             New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
                             New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Not available' -BackgroundColor BlueSmoke
                         }
                     }
                 }
-            }
-            if ($HTMLReportPrimary.ShowUsersSent) {
-                if ((Measure-Object -InputObject $SummaryUsersEmails).Count -gt 0) {
-                    $Color = 'BrightTurquoise'
-                    $IconSolid = 'sticky-note'
-                } else {
-                    $Color = 'Amaranth'
-                    $IconSolid = 'stop-circle'
-                }
-                New-HTMLTab -Name 'Email sent to users' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
-                    New-HTMLTable -DataTable $SummaryUsersEmails {
-                        New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
-                        New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                        New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                        New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                    } -Filtering
-                }
-            }
-            if ($HTMLReportPrimary.ShowManagersSent) {
-                if ((Measure-Object -InputObject $SummaryManagersEmails).Count -gt 0) {
-                    $Color = 'BrightTurquoise'
-                    $IconSolid = 'sticky-note'
-                } else {
-                    $Color = 'Amaranth'
-                    $IconSolid = 'stop-circle'
-                }
-                New-HTMLTab -Name 'Email sent to manager' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
-                    New-HTMLTable -DataTable $SummaryManagersEmails {
-                        New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
-                        New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                    } -Filtering
-                }
-            }
-            if ($HTMLReportPrimary.ShowEscalationSent) {
-                if ((Measure-Object -InputObject $SummaryEscalationEmails).Count -gt 0) {
-                    $Color = 'BrightTurquoise'
-                    $IconSolid = 'sticky-note'
-                } else {
-                    $Color = 'Amaranth'
-                    $IconSolid = 'stop-circle'
-                }
-                New-HTMLTab -Name 'Email sent to Security' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
-                    New-HTMLTable -DataTable $SummaryEscalationEmails {
-                        New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
-                        New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                    } -Filtering
-                }
-            }
-            if ($HTMLReportPrimary.ShowSkippedUsers) {
-                New-HTMLTab -Name 'Skipped Users' {
-                    New-HTMLTable -DataTable $AllSkipped.Values -Filtering {
-                        New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
-                        New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
-                        New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string
-                        New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
-                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
-                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Not available' -BackgroundColor BlueSmoke
+                if ($Report.ShowRules) {
+                    foreach ($Rule in  $Summary['Rules'].Keys) {
+                        if ((Measure-Object -InputObject $Summary['Rules'][$Rule].Values.User).Count -gt 0) {
+                            $Color = 'LawnGreen'
+                            $IconSolid = 'Star'
+                        } else {
+                            $Color = 'Salmon'
+                            $IconSolid = 'Stop'
+                        }
+                        New-HTMLTab -Name $Rule -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
+                            New-HTMLTable -DataTable $Summary['Rules'][$Rule].Values.User -Filtering {
+                                New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string
+                                New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
+                                New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                                New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                                New-TableCondition -Name 'PasswordAtNextLogon' -BackgroundColor BlueSmoke -FailBackgroundColor LawnGreen -Value $true -ComparisonType string
+                                New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
+                                New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
+                                New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Not available' -BackgroundColor BlueSmoke
+                            }
+                        }
                     }
                 }
-            }
-            if ($HTMLReportPrimary.ShowSkippedLocations) {
-                New-HTMLTab -Name 'Skipped Locations' {
-                    New-HTMLTable -DataTable $Locations.Values -Filtering {
+                if ($Report.ShowUsersSent) {
+                    if ((Measure-Object -InputObject $SummaryUsersEmails).Count -gt 0) {
+                        $Color = 'BrightTurquoise'
+                        $IconSolid = 'sticky-note'
+                    } else {
+                        $Color = 'Amaranth'
+                        $IconSolid = 'stop-circle'
+                    }
+                    New-HTMLTab -Name 'Email sent to users' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
+                        New-HTMLTable -DataTable $SummaryUsersEmails {
+                            New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                            New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+                            New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                            New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                        } -Filtering
+                    }
+                }
+                if ($Report.ShowManagersSent) {
+                    if ((Measure-Object -InputObject $SummaryManagersEmails).Count -gt 0) {
+                        $Color = 'BrightTurquoise'
+                        $IconSolid = 'sticky-note'
+                    } else {
+                        $Color = 'Amaranth'
+                        $IconSolid = 'stop-circle'
+                    }
+                    New-HTMLTab -Name 'Email sent to manager' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
+                        New-HTMLTable -DataTable $SummaryManagersEmails {
+                            New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                            New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+                        } -Filtering
+                    }
+                }
+                if ($Report.ShowEscalationSent) {
+                    if ((Measure-Object -InputObject $SummaryEscalationEmails).Count -gt 0) {
+                        $Color = 'BrightTurquoise'
+                        $IconSolid = 'sticky-note'
+                    } else {
+                        $Color = 'Amaranth'
+                        $IconSolid = 'stop-circle'
+                    }
+                    New-HTMLTab -Name 'Email sent to Security' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
+                        New-HTMLTable -DataTable $SummaryEscalationEmails {
+                            New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                            New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+                        } -Filtering
+                    }
+                }
+                if ($Report.ShowSearchUsers) {
+                    [Array] $UsersSent = $SummarySearch['EmailSent'].Values #| ForEach-Object { if ($_ -ne $null) { $_ } }
+                    if ($UsersSent.Count -gt 0) {
+                        $Color = 'BrightTurquoise'
+                        $IconSolid = 'sticky-note'
+                    } else {
+                        $Color = 'Amaranth'
+                        $IconSolid = 'stop-circle'
+                    }
+                    New-HTMLTab -Name 'Users notified' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
+                        New-HTMLTable -DataTable $UsersSent {
+                            New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                            New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+                            New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                            New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                        } -Filtering
+                    }
+                }
+                if ($Report.ShowSearchManagers) {
+                    [Array] $ShowSearchManagers = $SummarySearch['EmailManagers'].Values #| ForEach-Object { if ($_ -ne $null) { $_ } }
+                    if ($ShowSearchManagers.Count -gt 0) {
+                        $Color = 'BrightTurquoise'
+                        $IconSolid = 'sticky-note'
+                    } else {
+                        $Color = 'Amaranth'
+                        $IconSolid = 'stop-circle'
+                    }
+                    New-HTMLTab -Name 'Email sent to manager' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
+                        New-HTMLTable -DataTable $ShowSearchManagers {
+                            New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                            New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+                        } -Filtering
+                    }
+                }
+                if ($Report.ShowSearchEscalations) {
+                    [Array] $ShowSearchEscalations = $SummarySearch['EmailEscalations'].Values #| ForEach-Object { if ($_ -ne $null) { $_ } }
+                    if ($ShowSearchEscalations.Count -gt 0) {
+                        $Color = 'BrightTurquoise'
+                        $IconSolid = 'sticky-note'
+                    } else {
+                        $Color = 'Amaranth'
+                        $IconSolid = 'stop-circle'
+                    }
+                    New-HTMLTab -Name 'Email sent to Security' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
+                        New-HTMLTable -DataTable $ShowSearchEscalations {
+                            New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                            New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+                        } -Filtering
+                    }
+                }
+                if ($Report.ShowSkippedUsers) {
+                    New-HTMLTab -Name 'Skipped Users' -IconSolid users {
+                        New-HTMLPanel -AlignContentText center {
+                            New-HTMLText -FontSize 15pt -Text "Those users have no password date set. This means account running expiration checks doesn't have permissions or acccout never had password set or account is set to change password on logon. "
+                        } -Invisible
+                        New-HTMLTable -DataTable $AllSkipped.Values -Filtering {
+                            New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
+                            New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
+                            New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string
+                            New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                            New-TableCondition -Name 'PasswordAtNextLogon' -BackgroundColor BlueSmoke -FailBackgroundColor LawnGreen -Value $true -ComparisonType string
+                            New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
+                            New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
+                            New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Not available' -BackgroundColor BlueSmoke
+                        }
+                    }
+                }
+                if ($Report.ShowSkippedLocations) {
+                    New-HTMLTab -Name 'Skipped Locations' -IconSolid building {
+                        New-HTMLTable -DataTable $Locations.Values -Filtering {
 
+                        }
                     }
                 }
-            }
-        } -ShowHTML:$HTMLReportPrimary.ShowHTML -FilePath $HTMLReportPrimary.FilePath -Online:$HTMLReportPrimary.Online -WarningAction $WarningAction -TitleText $HTMLReportPrimary.Title
+            } -ShowHTML:$Report.ShowHTML -FilePath $Report.FilePath -Online:$Report.Online -WarningAction $WarningAction -TitleText $Report.Title
 
-        Write-Color -Text "[i]" , " Generating HTML report ", "Done" -Color White, Yellow, Green
-    }
-    if ($HTMLReportSecondary.Enable) {
-        if ($HTMLReportSecondary.DisableWarnings -eq $true) {
-            $WarningAction = 'SilentlyContinue'
-        } else {
-            $WarningAction = 'Continue'
+            Write-Color -Text "[i]" , " Generating HTML report ", $Report.Title, ". Done" -Color White, Yellow, Green
         }
-        if (-not $HTMLReportSecondary.Title) {
-            $HTMLReportSecondary.Title = "Password Solution Report All"
-        }
-        Write-Color -Text "[i]", " Generating HTML report (All Users) " -Color White, Yellow, Green
-        New-HTML {
-            New-HTMLHeader {
-                New-HTMLSection -Invisible {
-                    New-HTMLSection {
-                        New-HTMLText -Text "Report generated on $(Get-Date)" -Color Blue
-                    } -JustifyContent flex-start -Invisible
-                    New-HTMLSection {
-                        New-HTMLText -Text "Password Solution - $($Script:Reporting['Version'])" -Color Blue
-                    } -JustifyContent flex-end -Invisible
-                }
-            }
-            New-TableOption -DataStore JavaScript -ArrayJoin -BoolAsString
-            if ($HTMLReportSecondary.ShowAllUsers) {
-                New-HTMLTab -Name 'All Users' {
-                    New-HTMLTable -DataTable $CachedUsers.Values -Filtering {
-                        New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
-                        New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
-                        New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string
-                        New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
-                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
-                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Not available' -BackgroundColor BlueSmoke
-                    }
-                }
-            }
-            if ($HTMLReportSecondary.ShowSkippedUsers) {
-                New-HTMLTab -Name 'Skipped Users' {
-                    New-HTMLTable -DataTable $AllSkipped.Values -Filtering {
-                        New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
-                        New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
-                        New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string
-                        New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
-                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
-                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Not available' -BackgroundColor BlueSmoke
-                    }
-                }
-            }
-            if ($HTMLReportSecondary.ShowSkippedLocations) {
-                New-HTMLTab -Name 'Skipped Locations' {
-                    New-HTMLTable -DataTable $Locations.Values -Filtering {
-
-                    }
-                }
-            }
-        } -ShowHTML:$HTMLReportSecondary.ShowHTML -FilePath $HTMLReportSecondary.FilePath -Online:$HTMLReportSecondary.Online -WarningAction $WarningAction -TitleText $HTMLReportSecondary.Title
-        Write-Color -Text "[i]" , " Generating HTML report (All Users) ", "Done" -Color White, Yellow, Green
-    }
-    if ($HTMLSearch.Enable) {
-        if ($HTMLSearch.DisableWarnings -eq $true) {
-            $WarningAction = 'SilentlyContinue'
-        } else {
-            $WarningAction = 'Continue'
-        }
-        if (-not $HTMLSearch.Title) {
-            $HTMLSearch.Title = "Password Solution Search"
-        }
-        Write-Color -Text "[i]", " Generating HTML Search" -Color White, Yellow, Green
-        New-HTML {
-            New-HTMLHeader {
-                New-HTMLSection -Invisible {
-                    New-HTMLSection {
-                        New-HTMLText -Text "Report generated on $(Get-Date)" -Color Blue
-                    } -JustifyContent flex-start -Invisible
-                    New-HTMLSection {
-                        New-HTMLText -Text "Password Solution - $($Script:Reporting['Version'])" -Color Blue
-                    } -JustifyContent flex-end -Invisible
-                }
-            }
-            New-TableOption -DataStore JavaScript -ArrayJoin -BoolAsString
-
-            if ($HTMLSearch.ShowUsersSent) {
-                [Array] $UsersSent = $SummarySearch['EmailSent'].Values #| ForEach-Object { if ($_ -ne $null) { $_ } }
-                if ($UsersSent.Count -gt 0) {
-                    $Color = 'BrightTurquoise'
-                    $IconSolid = 'sticky-note'
-                } else {
-                    $Color = 'Amaranth'
-                    $IconSolid = 'stop-circle'
-                }
-                New-HTMLTab -Name 'Users notified' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
-                    New-HTMLTable -DataTable $UsersSent {
-                        New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
-                        New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                        New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                        New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                    } -Filtering
-                }
-            }
-            if ($HTMLSearch.ShowManagersSent) {
-                [Array] $Managers = $SummarySearch['EmailManagers'].Values #| ForEach-Object { if ($_ -ne $null) { $_ } }
-                if ($Managers.Count -gt 0) {
-                    $Color = 'BrightTurquoise'
-                    $IconSolid = 'sticky-note'
-                } else {
-                    $Color = 'Amaranth'
-                    $IconSolid = 'stop-circle'
-                }
-                New-HTMLTab -Name 'Email sent to manager' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
-                    New-HTMLTable -DataTable $Managers {
-                        New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
-                        New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                    } -Filtering
-                }
-            }
-            if ($HTMLSearch.ShowEscalationSent) {
-                [Array] $Escalations = $SummarySearch['EmailEscalations'].Values #| ForEach-Object { if ($_ -ne $null) { $_ } }
-                if ($Escalations.Count -gt 0) {
-                    $Color = 'BrightTurquoise'
-                    $IconSolid = 'sticky-note'
-                } else {
-                    $Color = 'Amaranth'
-                    $IconSolid = 'stop-circle'
-                }
-                New-HTMLTab -Name 'Email sent to Security' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
-                    New-HTMLTable -DataTable $Escalations {
-                        New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
-                        New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                    } -Filtering
-                }
-            }
-        } -ShowHTML:$HTMLSearch.ShowHTML -FilePath $HTMLSearch.FilePath -Online:$HTMLSearch.Online -WarningAction $WarningAction -TitleText $HTMLSearch.Title
-        Write-Color -Text "[i]" , " Generating HTML report (All Users) ", "Done" -Color White, Yellow, Green
     }
     if ($SearchPath) {
         Write-Color -Text "[i]" , " Saving Search report " -Color White, Yellow, Green
