@@ -21,8 +21,9 @@
         [Parameter(Mandatory)][scriptblock] $TemplateAdmin,
         [Parameter(Mandatory)][string] $TemplateAdminSubject,
         [Parameter(Mandatory)][System.Collections.IDictionary] $Logging,
-        [Parameter(Mandatory)][System.Collections.IDictionary] $HTMLOptions,
-        [string] $FilePath,
+        [Parameter(Mandatory)][System.Collections.IDictionary] $HTMLReportPrimary,
+        [Parameter(Mandatory)][System.Collections.IDictionary] $HTMLReportSecondary,
+        [Parameter(Mandatory)][System.Collections.IDictionary] $HTMLSearch,
         [string] $SearchPath
     )
     $TimeStart = Start-TimeLog
@@ -93,6 +94,9 @@
     $Summary['NotifySecurity'] = [ordered] @{}
     $Summary['Rules'] = [ordered] @{}
 
+
+    $AllSkipped = [ordered] @{}
+    $Locations = [ordered] @{}
 
     Write-Color -Text "[i]", " Starting process to find expiring users" -Color Yellow, White, Green, White, Green, White, Green, White
     $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty
@@ -209,6 +213,31 @@
                     Write-Color -Text "[i]", " Processing rule ", $Rule.Name, " doesn't include IncludePasswordNeverExpires nor IncludeExpiring so skipping." -Color Yellow, White, Green, White, Green, White, Green, White
                     continue
                 }
+
+                if ($null -eq $User.DaysToExpire) {
+                    if ($Logging.NotifyOnUserDaysToExpireNull) {
+                        Write-Color -Text "[i]", " User ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire not set. (Password Last Set: ", $User.PasswordLastSet, ")" -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
+                    }
+                    # if days to expire is not set, password last set is not set either
+                    # this means account either was never used or account we're using to has no permissions over that account
+                    $AllSkipped[$User.DistinguishedName] = $User
+
+                    $Location = $User.OrganizationalUnit
+                    if (-not $Location) {
+                        $Location = 'Default'
+                    }
+                    if (-not $Locations[$Location]) {
+                        $Locations[$Location] = [PSCustomObject] @{
+                            Location = $Location
+                            Count    = 0
+                            Names    = [System.Collections.Generic.List[string]]::new()
+                        }
+                    }
+                    $Locations[$Location].Count++
+                    $Locations[$Location].Names.Add($User.SamAccountName)
+                    continue
+                }
+
                 # Lets find users that expire, and match our rule
                 if ($User.DaysToExpire -in $Rule.Reminders) {
                     # check if we need to notify user or just manager
@@ -286,7 +315,6 @@
                                 $SendToManager = $false
                             }
                         }
-
                         if ($SendToManager) {
                             $SendToManager = $false
                             if ($Rule.SendToManager.Manager.Reminders.Default.Enable -eq $true -and $null -eq $Rule.SendToManager.Manager.Reminders.Default.Reminder -and $User.DaysToExpire -in $Rule.Reminders) {
@@ -979,12 +1007,6 @@
         Write-Color -Text "[i] Sending notifications to security is ", "disabled!" -Color White, Yellow, DarkMagenta
     }
 
-    if ($HTMLOptions.DisableWarnings -eq $true) {
-        $WarningAction = 'SilentlyContinue'
-    } else {
-        $WarningAction = 'Continue'
-    }
-
     $TimeEnd = Stop-TimeLog -Time $TimeStart -Option OneLiner
 
     if ($AdminSection.Enable) {
@@ -1032,9 +1054,14 @@
         Write-Color -Text "[i] Sending summary information is ", "disabled!" -Color White, Yellow, DarkMagenta
     }
 
-    if ($HTMLOptions.Enable) {
-        if (-not $HTMLOptions.Title) {
-            $HTMLOptions.Title = "Password Solution Report"
+    if ($HTMLReportPrimary.Enable) {
+        if ($HTMLReportPrimary.DisableWarnings -eq $true) {
+            $WarningAction = 'SilentlyContinue'
+        } else {
+            $WarningAction = 'Continue'
+        }
+        if (-not $HTMLReportPrimary.Title) {
+            $HTMLReportPrimary.Title = "Password Solution Report"
         }
 
         Write-Color -Text "[i]", " Generating HTML report " -Color White, Yellow, Green
@@ -1051,7 +1078,7 @@
                 }
             }
             New-TableOption -DataStore JavaScript -ArrayJoin -BoolAsString
-            if ($HTMLOptions.ShowConfiguration) {
+            if ($HTMLReportPrimary.ShowConfiguration) {
                 New-HTMLTab -Name "About" {
                     New-HTMLTab -Name "Configuration" {
                         New-HTMLSection -Invisible {
@@ -1077,11 +1104,11 @@
                                     }
                                 }
                             }
-                            New-HTMLSection -HeaderText "HTMLOptions" {
+                            New-HTMLSection -HeaderText "HTMLReportPrimary" {
                                 New-HTMLList {
-                                    foreach ($Key in $HTMLOptions.Keys) {
+                                    foreach ($Key in $HTMLReportPrimary.Keys) {
                                         if ($Key -ne 'Password') {
-                                            New-HTMLListItem -Text $Key, ": ", $HTMLOptions[$Key] -FontWeight normal, normal, bold
+                                            New-HTMLListItem -Text $Key, ": ", $HTMLReportPrimary[$Key] -FontWeight normal, normal, bold
                                         } else {
                                             New-HTMLListItem -Text $Key, ": ", "REDACTED" -FontWeight normal, normal, bold
                                         }
@@ -1287,7 +1314,7 @@
                     }
                 }
             }
-            if ($HTMLOptions.ShowAllUsers) {
+            if ($HTMLReportPrimary.ShowAllUsers) {
                 New-HTMLTab -Name 'All Users' {
                     New-HTMLTable -DataTable $CachedUsers.Values -Filtering {
                         New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
@@ -1300,7 +1327,7 @@
                     }
                 }
             }
-            if ($HTMLOptions.ShowRules) {
+            if ($HTMLReportPrimary.ShowRules) {
                 foreach ($Rule in  $Summary['Rules'].Keys) {
                     if ((Measure-Object -InputObject $Summary['Rules'][$Rule].Values.User).Count -gt 0) {
                         $Color = 'LawnGreen'
@@ -1322,7 +1349,7 @@
                     }
                 }
             }
-            if ($HTMLOptions.ShowUsersSent) {
+            if ($HTMLReportPrimary.ShowUsersSent) {
                 if ((Measure-Object -InputObject $SummaryUsersEmails).Count -gt 0) {
                     $Color = 'BrightTurquoise'
                     $IconSolid = 'sticky-note'
@@ -1339,7 +1366,7 @@
                     } -Filtering
                 }
             }
-            if ($HTMLOptions.ShowManagersSent) {
+            if ($HTMLReportPrimary.ShowManagersSent) {
                 if ((Measure-Object -InputObject $SummaryManagersEmails).Count -gt 0) {
                     $Color = 'BrightTurquoise'
                     $IconSolid = 'sticky-note'
@@ -1354,7 +1381,7 @@
                     } -Filtering
                 }
             }
-            if ($HTMLOptions.ShowEscalationSent) {
+            if ($HTMLReportPrimary.ShowEscalationSent) {
                 if ((Measure-Object -InputObject $SummaryEscalationEmails).Count -gt 0) {
                     $Color = 'BrightTurquoise'
                     $IconSolid = 'sticky-note'
@@ -1369,9 +1396,163 @@
                     } -Filtering
                 }
             }
-        } -ShowHTML:$HTMLOptions.ShowHTML -FilePath $FilePath -Online:$HTMLOptions.Online -WarningAction $WarningAction -TitleText $HTMLOptions.Title
+            if ($HTMLReportPrimary.ShowSkippedUsers) {
+                New-HTMLTab -Name 'Skipped Users' {
+                    New-HTMLTable -DataTable $AllSkipped.Values -Filtering {
+                        New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
+                        New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
+                        New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string
+                        New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
+                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
+                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Not available' -BackgroundColor BlueSmoke
+                    }
+                }
+            }
+            if ($HTMLReportPrimary.ShowSkippedLocations) {
+                New-HTMLTab -Name 'Skipped Locations' {
+                    New-HTMLTable -DataTable $Locations.Values -Filtering {
+
+                    }
+                }
+            }
+        } -ShowHTML:$HTMLReportPrimary.ShowHTML -FilePath $HTMLReportPrimary.FilePath -Online:$HTMLReportPrimary.Online -WarningAction $WarningAction -TitleText $HTMLReportPrimary.Title
 
         Write-Color -Text "[i]" , " Generating HTML report ", "Done" -Color White, Yellow, Green
+    }
+    if ($HTMLReportSecondary.Enable) {
+        if ($HTMLReportSecondary.DisableWarnings -eq $true) {
+            $WarningAction = 'SilentlyContinue'
+        } else {
+            $WarningAction = 'Continue'
+        }
+        if (-not $HTMLReportSecondary.Title) {
+            $HTMLReportSecondary.Title = "Password Solution Report All"
+        }
+        Write-Color -Text "[i]", " Generating HTML report (All Users) " -Color White, Yellow, Green
+        New-HTML {
+            New-HTMLHeader {
+                New-HTMLSection -Invisible {
+                    New-HTMLSection {
+                        New-HTMLText -Text "Report generated on $(Get-Date)" -Color Blue
+                    } -JustifyContent flex-start -Invisible
+                    New-HTMLSection {
+                        New-HTMLText -Text "Password Solution - $($Script:Reporting['Version'])" -Color Blue
+                    } -JustifyContent flex-end -Invisible
+                }
+            }
+            New-TableOption -DataStore JavaScript -ArrayJoin -BoolAsString
+            if ($HTMLReportSecondary.ShowAllUsers) {
+                New-HTMLTab -Name 'All Users' {
+                    New-HTMLTable -DataTable $CachedUsers.Values -Filtering {
+                        New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
+                        New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
+                        New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string
+                        New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
+                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
+                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Not available' -BackgroundColor BlueSmoke
+                    }
+                }
+            }
+            if ($HTMLReportSecondary.ShowSkippedUsers) {
+                New-HTMLTab -Name 'Skipped Users' {
+                    New-HTMLTable -DataTable $AllSkipped.Values -Filtering {
+                        New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
+                        New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
+                        New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string
+                        New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
+                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
+                        New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Not available' -BackgroundColor BlueSmoke
+                    }
+                }
+            }
+            if ($HTMLReportSecondary.ShowSkippedLocations) {
+                New-HTMLTab -Name 'Skipped Locations' {
+                    New-HTMLTable -DataTable $Locations.Values -Filtering {
+
+                    }
+                }
+            }
+        } -ShowHTML:$HTMLReportSecondary.ShowHTML -FilePath $HTMLReportSecondary.FilePath -Online:$HTMLReportSecondary.Online -WarningAction $WarningAction -TitleText $HTMLReportSecondary.Title
+        Write-Color -Text "[i]" , " Generating HTML report (All Users) ", "Done" -Color White, Yellow, Green
+    }
+    if ($HTMLSearch.Enable) {
+        if ($HTMLSearch.DisableWarnings -eq $true) {
+            $WarningAction = 'SilentlyContinue'
+        } else {
+            $WarningAction = 'Continue'
+        }
+        if (-not $HTMLSearch.Title) {
+            $HTMLSearch.Title = "Password Solution Search"
+        }
+        Write-Color -Text "[i]", " Generating HTML Search" -Color White, Yellow, Green
+        New-HTML {
+            New-HTMLHeader {
+                New-HTMLSection -Invisible {
+                    New-HTMLSection {
+                        New-HTMLText -Text "Report generated on $(Get-Date)" -Color Blue
+                    } -JustifyContent flex-start -Invisible
+                    New-HTMLSection {
+                        New-HTMLText -Text "Password Solution - $($Script:Reporting['Version'])" -Color Blue
+                    } -JustifyContent flex-end -Invisible
+                }
+            }
+            New-TableOption -DataStore JavaScript -ArrayJoin -BoolAsString
+
+            if ($HTMLSearch.ShowUsersSent) {
+                [Array] $UsersSent = $SummarySearch['EmailSent'].Values #| ForEach-Object { if ($_ -ne $null) { $_ } }
+                if ($UsersSent.Count -gt 0) {
+                    $Color = 'BrightTurquoise'
+                    $IconSolid = 'sticky-note'
+                } else {
+                    $Color = 'Amaranth'
+                    $IconSolid = 'stop-circle'
+                }
+                New-HTMLTab -Name 'Users notified' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
+                    New-HTMLTable -DataTable $UsersSent {
+                        New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                        New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+                        New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                        New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                    } -Filtering
+                }
+            }
+            if ($HTMLSearch.ShowManagersSent) {
+                [Array] $Managers = $SummarySearch['EmailManagers'].Values #| ForEach-Object { if ($_ -ne $null) { $_ } }
+                if ($Managers.Count -gt 0) {
+                    $Color = 'BrightTurquoise'
+                    $IconSolid = 'sticky-note'
+                } else {
+                    $Color = 'Amaranth'
+                    $IconSolid = 'stop-circle'
+                }
+                New-HTMLTab -Name 'Email sent to manager' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
+                    New-HTMLTable -DataTable $Managers {
+                        New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                        New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+                    } -Filtering
+                }
+            }
+            if ($HTMLSearch.ShowEscalationSent) {
+                [Array] $Escalations = $SummarySearch['EmailEscalations'].Values #| ForEach-Object { if ($_ -ne $null) { $_ } }
+                if ($Escalations.Count -gt 0) {
+                    $Color = 'BrightTurquoise'
+                    $IconSolid = 'sticky-note'
+                } else {
+                    $Color = 'Amaranth'
+                    $IconSolid = 'stop-circle'
+                }
+                New-HTMLTab -Name 'Email sent to Security' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
+                    New-HTMLTable -DataTable $Escalations {
+                        New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                        New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+                    } -Filtering
+                }
+            }
+        } -ShowHTML:$HTMLSearch.ShowHTML -FilePath $HTMLSearch.FilePath -Online:$HTMLSearch.Online -WarningAction $WarningAction -TitleText $HTMLSearch.Title
+        Write-Color -Text "[i]" , " Generating HTML report (All Users) ", "Done" -Color White, Yellow, Green
     }
     if ($SearchPath) {
         Write-Color -Text "[i]" , " Saving Search report " -Color White, Yellow, Green
