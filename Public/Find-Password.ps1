@@ -46,6 +46,12 @@
     }
     Write-Color -Text "[i] Preparing all users for password expirations in forest ", $Forest.Name -Color White, Yellow, White, Yellow, White, Yellow, White
     foreach ($User in $Users) {
+        $DateExpiry = $null
+        $DaysToExpire = $null
+        $PasswordDays = $null
+        $PasswordNeverExpires = $null
+        $PasswordAtNextLogon = $null
+        $HasMailbox = $null
         #$UserManager = $Cache["$($User.Manager)"]
         if ($User.Manager) {
             $Manager = $Cache[$User.Manager].DisplayName
@@ -105,6 +111,8 @@
 
         if ($User.PasswordLastSet) {
             $PasswordDays = (New-TimeSpan -Start ($User.PasswordLastSet) -End ($Today)).Days
+        } else {
+            $PasswordDays = $null
         }
 
         if ($User."msDS-UserPasswordExpiryTimeComputed" -ne 9223372036854775807) {
