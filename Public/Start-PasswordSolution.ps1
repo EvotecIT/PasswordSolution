@@ -240,13 +240,20 @@
                     }
                     if (-not $Locations[$Location]) {
                         $Locations[$Location] = [PSCustomObject] @{
-                            Location = $Location
-                            Count    = 0
-                            Names    = [System.Collections.Generic.List[string]]::new()
+                            Location     = $Location
+                            Count        = 0
+                            CountExpired = 0
+                            Names        = [System.Collections.Generic.List[string]]::new()
+                            NamesExpired = [System.Collections.Generic.List[string]]::new()
                         }
                     }
-                    $Locations[$Location].Count++
-                    $Locations[$Location].Names.Add($User.SamAccountName)
+                    if ($User.PasswordExpired) {
+                        $Locations[$Location].CountExpired++
+                        $Locations[$Location].NamesExpired.Add($User.SamAccountName)
+                    } else {
+                        $Locations[$Location].Count++
+                        $Locations[$Location].Names.Add($User.SamAccountName)
+                    }
                 }
 
                 # Lets find users that expire, and match our rule
@@ -1482,7 +1489,7 @@
                 if ($Report.ShowSkippedLocations) {
                     New-HTMLTab -Name 'Skipped Locations' -IconSolid building {
                         New-HTMLTable -DataTable $Locations.Values -Filtering {
-
+                            New-TableHeader -ResponsiveOperations none -Names 'Names', 'NamesExpired'
                         }
                     }
                 }
