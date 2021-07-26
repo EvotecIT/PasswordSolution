@@ -338,7 +338,7 @@
                             if ($Rule.SendToManager.Manager.Reminders.Default.Enable -eq $true -and $null -eq $Rule.SendToManager.Manager.Reminders.Default.Reminder -and $User.DaysToExpire -in $Rule.Reminders) {
                                 # Use default reminder as per user, not per manager
                                 $SendToManager = $true
-                            } elseif ($Rule.SendToManager.Manager.Reminders.Default.Enable -eq $true -and $User.DaysToExpire -in $Rule.SendToManager.Manager.Reminders.Default.Reminder) {
+                            } elseif ($Rule.SendToManager.Manager.Reminders.Default.Enable -eq $true -and $Rule.SendToManager.Manager.Reminders.Default.Reminder -and $User.DaysToExpire -in $Rule.SendToManager.Manager.Reminders.Default.Reminder) {
                                 # User manager reminder as per manager config
                                 $SendToManager = $true
                             }
