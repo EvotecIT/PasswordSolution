@@ -1072,6 +1072,16 @@
         Write-Color -Text "[i] Sending summary information is ", "disabled!" -Color White, Yellow, DarkMagenta
     }
 
+    $TranslateOperators = @{
+        'lt' = 'Less than'
+        'gt' = 'Greater than'
+        'eq' = 'Equal to'
+        'ne' = 'Not equal to'
+        'le' = 'Less than or equal to'
+        'ge' = 'Greater than or equal to'
+        'in' = 'In'
+    }
+
     foreach ($Report in $HTMLReports) {
         if ($Report.Enable) {
             Write-Color -Text "[i]", " Generating HTML report ", $Report.Title -Color White, Yellow, Green
@@ -1253,8 +1263,8 @@
                                                                             New-HTMLListItem -Text @(
                                                                                 "On day of the week ", "is ", "enabled"
                                                                                 " on days: ", ($Rule.SendToManager.Manager.Reminders.OnDay.Days -join ", "),
-                                                                                " with comparison ", $Rule.SendToManager.Manager.Reminders.OnDay.ComparisonType,
-                                                                                ' and reminder ', $Rule.SendToManager.Manager.Reminders.OnDay.Reminder
+                                                                                " with comparison ", $TranslateOperators[$Rule.SendToManager.Manager.Reminders.OnDay.ComparisonType],
+                                                                                ' value ', $Rule.SendToManager.Manager.Reminders.OnDay.Reminder
                                                                             ) -FontWeight bold, normal, bold, normal, bold, normal, bold, normal, bold -Color None, None, Green, None, Green, None, Green, None, Green
                                                                         } else {
                                                                             New-HTMLListItem -Text "On day of week rule is ", "disabled" -FontWeight bold, bold -Color None, Red
@@ -1263,8 +1273,8 @@
                                                                             New-HTMLListItem -Text @(
                                                                                 "On day of the month rule ", "is", " enabled",
                                                                                 " on days ", ($Rule.SendToManager.Manager.Reminders.OnDayOfMonth.Days -join ","),
-                                                                                " with comparison ", $Rule.SendToManager.Manager.Reminders.OnDayOfMonth.ComparisonType,
-                                                                                ' reminder ', $Rule.SendToManager.Manager.Reminders.OnDayOfMonth.Reminder
+                                                                                " with comparison ", $TranslateOperators[$Rule.SendToManager.Manager.Reminders.OnDayOfMonth.ComparisonType],
+                                                                                ' value ', $Rule.SendToManager.Manager.Reminders.OnDayOfMonth.Reminder
                                                                             ) -FontWeight bold, normal, bold, normal, bold, normal, bold, normal, bold -Color None, None, Green, None, Green, None, Green, None, Green
                                                                         } else {
                                                                             New-HTMLListItem -Text "On day of month rule is ", "disabled" -FontWeight bold, bold -Color None, Red
@@ -1298,8 +1308,8 @@
                                                                             New-HTMLListItem -Text @(
                                                                                 "On day of the week ", "is ", "enabled"
                                                                                 " on days: ", ($Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.Days -join ", "),
-                                                                                " with comparison ", $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.ComparisonType,
-                                                                                ' and reminder ', $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.Reminder
+                                                                                " with comparison ", $TranslateOperators[$Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.ComparisonType],
+                                                                                ' value ', $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDay.Reminder
                                                                             ) -FontWeight bold, normal, bold, normal, bold, normal, bold, normal, bold -Color None, None, Green, None, Green, None, Green, None, Green
                                                                         } else {
                                                                             New-HTMLListItem -Text "On day of week rule is ", "disabled" -FontWeight bold, bold -Color None, Red
@@ -1308,8 +1318,8 @@
                                                                             New-HTMLListItem -Text @(
                                                                                 "On day of the month rule ", "is", " enabled",
                                                                                 " on days ", ($Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.Days -join ", "),
-                                                                                " with comparison ", $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.ComparisonType,
-                                                                                ' reminder ', $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.Reminder
+                                                                                " with comparison ", $TranslateOperators[$Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.ComparisonType],
+                                                                                ' value ', $Rule.SendToManager.ManagerNotCompliant.Reminders.OnDayOfMonth.Reminder
                                                                             ) -FontWeight bold, normal, bold, normal, bold, normal, bold, normal, bold -Color None, None, Green, None, Green, None, Green, None, Green
                                                                         } else {
                                                                             New-HTMLListItem -Text "On day of month rule is ", "disabled" -FontWeight bold, bold -Color None, Red
@@ -1350,8 +1360,8 @@
                                                                             New-HTMLListItem -Text @(
                                                                                 "On day of the week ", "is ", "enabled"
                                                                                 " on days: ", ($Rule.SendToManager.SecurityEscalation.Reminders.OnDay.Days -join ", "),
-                                                                                " with comparison ", $Rule.SendToManager.SecurityEscalation.Reminders.OnDay.ComparisonType,
-                                                                                ' and reminder ', $Rule.SendToManager.SecurityEscalation.Reminders.OnDay.Reminder
+                                                                                " with comparison ", $TranslateOperators[$Rule.SendToManager.SecurityEscalation.Reminders.OnDay.ComparisonType],
+                                                                                ' value ', $Rule.SendToManager.SecurityEscalation.Reminders.OnDay.Reminder
                                                                             ) -FontWeight bold, normal, bold, normal, bold, normal, bold, normal, bold -Color None, None, Green, None, Green, None, Green, None, Green
                                                                         } else {
                                                                             New-HTMLListItem -Text "On day of week rule is ", "disabled" -FontWeight bold, bold -Color None, Red
@@ -1360,8 +1370,8 @@
                                                                             New-HTMLListItem -Text @(
                                                                                 "On day of the month rule ", "is", " enabled",
                                                                                 " on days ", ($Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.Days -join ", "),
-                                                                                " with comparison ", $Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.ComparisonType,
-                                                                                ' reminder ', $Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.Reminder
+                                                                                " with comparison ", $TranslateOperators[$Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.ComparisonType],
+                                                                                ' value ', $Rule.SendToManager.SecurityEscalation.Reminders.OnDayOfMonth.Reminder
                                                                             ) -FontWeight bold, normal, bold, normal, bold, normal, bold, normal, bold -Color None, None, Green, None, Green, None, Green, None, Green
                                                                         } else {
                                                                             New-HTMLListItem -Text "On day of month rule is ", "disabled" -FontWeight bold, bold -Color None, Red
