@@ -160,6 +160,8 @@
             UserPrincipalName     = $User.UserPrincipalName
             SamAccountName        = $User.SamAccountName
             Domain                = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToDomainCN
+            RuleName              = ''
+            RuleOptions           = [System.Collections.Generic.List[string]]::new()
             Enabled               = $User.Enabled
             HasMailbox            = $HasMailbox
             EmailAddress          = $EmailAddress
