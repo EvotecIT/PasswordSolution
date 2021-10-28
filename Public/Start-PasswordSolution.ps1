@@ -206,6 +206,7 @@
                 }
 
                 if ($null -eq $User.DaysToExpire) {
+                    # This is to track users that our account may not have permissions over
                     if ($Logging.NotifyOnUserDaysToExpireNull) {
                         Write-Color -Text @(
                             "[i]",
@@ -390,6 +391,23 @@
                                 }
                             }
                             if ($SendToManager) {
+                                if ($Logging.NotifyOnUserMatchingRuleForManager) {
+                                    Write-Color -Text "[i]", " User (manager rule) ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire, " " -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
+                                }
+                                <#
+                                $Summary['Notify'][$User.DistinguishedName] = [ordered] @{
+                                    User                = $User
+                                    Rule                = $Rule
+                                    ProcessManagersOnly = $Rule.ProcessManagersOnly
+                                }
+                                #>
+                                # If we need to send an email to manager we need to update rules, just in case the user has not matched for user section
+                                $Summary['Rules'][$Rule.Name][$User.DistinguishedName] = [ordered] @{
+                                    User                = $User
+                                    Rule                = $Rule
+                                    ProcessManagersOnly = $Rule.ProcessManagersOnly
+                                }
+                                # Push manager to list
                                 $Splat = [ordered] @{
                                     SummaryDictionary = $Summary['NotifyManager']
                                     Type              = 'ManagerDefault'
