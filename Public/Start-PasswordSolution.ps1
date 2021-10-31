@@ -1,4 +1,83 @@
 ﻿function Start-PasswordSolution {
+    <#
+    .SYNOPSIS
+    Starts Password Expiry Notifications for the whole forest
+
+    .DESCRIPTION
+    Starts Password Expiry Notifications for the whole forest
+
+    .PARAMETER EmailParameters
+    Parameters for Email. Uses Mailozaurr splatting behind the scenes, so it supports all options that Mailozaurr does.
+
+    .PARAMETER OverwriteEmailProperty
+    Property responsible for overwriting the default email field in Active Directory. Useful when the password notification has to go somewhere else than users email address.
+
+    .PARAMETER UserSection
+    Parameter description
+
+    .PARAMETER ManagerSection
+    Parameter description
+
+    .PARAMETER SecuritySection
+    Parameter description
+
+    .PARAMETER AdminSection
+    Parameter description
+
+    .PARAMETER Rules
+    Parameter description
+
+    .PARAMETER TemplatePreExpiry
+    Parameter description
+
+    .PARAMETER TemplatePreExpirySubject
+    Parameter description
+
+    .PARAMETER TemplatePostExpiry
+    Parameter description
+
+    .PARAMETER TemplatePostExpirySubject
+    Parameter description
+
+    .PARAMETER TemplateManager
+    Parameter description
+
+    .PARAMETER TemplateManagerSubject
+    Parameter description
+
+    .PARAMETER TemplateSecurity
+    Parameter description
+
+    .PARAMETER TemplateSecuritySubject
+    Parameter description
+
+    .PARAMETER TemplateManagerNotCompliant
+    Parameter description
+
+    .PARAMETER TemplateManagerNotCompliantSubject
+    Parameter description
+
+    .PARAMETER TemplateAdmin
+    Parameter description
+
+    .PARAMETER TemplateAdminSubject
+    Parameter description
+
+    .PARAMETER Logging
+    Parameter description
+
+    .PARAMETER HTMLReports
+    Parameter description
+
+    .PARAMETER SearchPath
+    Parameter description
+
+    .EXAMPLE
+    An example
+
+    .NOTES
+    General notes
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][System.Collections.IDictionary] $EmailParameters,
