@@ -6,9 +6,9 @@
     CompatiblePSEditions = @('Desktop', 'Core')
     Copyright            = '(c) 2011 - 2021 Przemyslaw Klys @ Evotec. All rights reserved.'
     Description          = 'This module allows the creation of password expiry emails for users, managers, administrators, and security according to defined templates. It''s able to work with different rules allowing to fully customize who gets the email and when.'
-    FunctionsToExport    = @('Find-Password', 'Find-PasswordNotification', 'Send-PasswordEmail', 'Start-PasswordSolution')
+    FunctionsToExport    = @('Find-Password', 'Find-PasswordNotification', 'Start-PasswordSolution')
     GUID                 = 'c58ff818-1de6-4500-961c-a243c2043255'
-    ModuleVersion        = '0.0.22'
+    ModuleVersion        = '0.0.23'
     PowerShellVersion    = '5.1'
     PrivateData          = @{
         PSData = @{
