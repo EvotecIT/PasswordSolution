@@ -45,11 +45,15 @@
         'Manager', 'DisplayName', 'GivenName', 'Surname', 'SamAccountName', 'EmailAddress', 'msDS-UserPasswordExpiryTimeComputed', 'PasswordExpired', 'PasswordLastSet', 'PasswordNotRequired', 'Enabled', 'PasswordNeverExpires', 'Mail', 'MemberOf', 'LastLogonDate', 'Name'
         'userAccountControl'
         'msExchMailboxGuid'
-        'pwdLastSet'
+        'pwdLastSet', 'ObjectClass'
         if ($OverwriteEmailProperty) {
             $OverwriteEmailProperty
         }
     )
+    $PropertiesContacts = @(
+        'SamAccountName', 'CanonicalName', 'WhenChanged', 'WhenChanged', 'DisplayName', 'DistinguishedName', 'Name', 'Mail', 'TargetAddress', 'ObjectClass'
+    )
+
     # We're caching all users to make sure it's speedy gonzales when querying for Managers
     if (-not $CachedUsers) {
         $CachedUsers = [ordered] @{ }
@@ -72,8 +76,23 @@
             Write-Color '[e] Error: ', $ErrorMessage -Color White, Red
         }
     }
+    [Array] $Contacts = foreach ($Domain in $ForestInformation.Domains) {
+        Write-Color -Text "[i] Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color White, Yellow, White, Yellow, White, Yellow, White
+        $Server = $ForestInformation['QueryServers'][$Domain]['HostName'][0]
+
+        Write-Color -Text "[i] Getting contacts from ", "$($Domain)", " using ", $Server -Color White, Yellow, White, Yellow, White, Yellow, White
+        try {
+            Get-ADObject -LDAPFilter "objectClass=Contact" -Server $Server -Properties $PropertiesContacts -ErrorAction Stop
+        } catch {
+            $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
+            Write-Color '[e] Error: ', $ErrorMessage -Color White, Red
+        }
+    }
     foreach ($User in $Users) {
         $Cache[$User.DistinguishedName] = $User
+    }
+    foreach ($Contact in $Contacts) {
+        $Cache[$Contact.DistinguishedName] = $Contact
     }
     Write-Color -Text "[i] Preparing all users for password expirations in forest ", $Forest.Name -Color White, Yellow, White, Yellow, White, Yellow, White
     foreach ($User in $Users) {
@@ -87,6 +106,7 @@
         if ($User.Manager) {
             $Manager = $Cache[$User.Manager].DisplayName
             $ManagerSamAccountName = $Cache[$User.Manager].SamAccountName
+            $ManagerDisplayName = $Cache[$User.Manager].DisplayName
             $ManagerEmail = $Cache[$User.Manager].Mail
             $ManagerEnabled = $Cache[$User.Manager].Enabled
             $ManagerLastLogon = $Cache[$User.Manager].LastLogonDate
@@ -103,9 +123,12 @@
                 }
             } elseif ($ManagerEnabled) {
                 $ManagerStatus = 'No email'
+            } elseif ($Cache[$User.Manager].ObjectClass -eq 'Contact') {
+                $ManagerStatus = 'Enabled' # we need to treat it as always enabled
             } else {
                 $ManagerStatus = 'Disabled'
             }
+            $ManagerType = $Cache[$User.Manager].ObjectClass
         } else {
             if ($User.ObjectClass -eq 'user') {
                 $ManagerStatus = 'Missing'
@@ -114,12 +137,13 @@
             }
             $Manager = $null
             $ManagerSamAccountName = $null
+            $ManagerDisplayName = $null
             $ManagerEmail = $null
             $ManagerEnabled = $null
             $ManagerLastLogon = $null
             $ManagerLastLogonDays = $null
+            $ManagerType = $null
         }
-
 
         if ($OverwriteEmailProperty) {
             # fix this for a user
@@ -205,10 +229,12 @@
             PasswordNotRequired   = $User.PasswordNotRequired
             PasswordNeverExpires  = $PasswordNeverExpires
             Manager               = $Manager
+            ManagerDisplayName    = $ManagerDisplayName
             ManagerSamAccountName = $ManagerSamAccountName
             ManagerEmail          = $ManagerEmail
             ManagerStatus         = $ManagerStatus
             ManagerLastLogonDays  = $ManagerLastLogonDays
+            ManagerType           = $ManagerType
             DisplayName           = $User.DisplayName
             Name                  = $User.Name
             GivenName             = $User.GivenName
@@ -222,6 +248,43 @@
             $MyUser["$Property"] = $User.$Property
         }
         $CachedUsers["$($User.DistinguishedName)"] = [PSCustomObject] $MyUser
+    }
+    foreach ($Contact in $Contacts) {
+        # create dummy objects for manager contacts
+        $MyUser = [ordered] @{
+            UserPrincipalName     = $null
+            SamAccountName        = $null
+            Domain                = ConvertFrom-DistinguishedName -DistinguishedName $Contact.DistinguishedName -ToDomainCN
+            RuleName              = ''
+            RuleOptions           = [System.Collections.Generic.List[string]]::new()
+            Enabled               = $true
+            HasMailbox            = $null
+            EmailAddress          = $Contact.Mail
+            DateExpiry            = $null
+            DaysToExpire          = $null
+            PasswordExpired       = $null
+            PasswordDays          = $null
+            PasswordAtNextLogon   = $null
+            PasswordLastSet       = $null
+            PasswordNotRequired   = $null
+            PasswordNeverExpires  = $null
+            Manager               = $null
+            ManagerDisplayName    = $null
+            ManagerSamAccountName = $null
+            ManagerEmail          = $null
+            ManagerStatus         = $null
+            ManagerLastLogonDays  = $null
+            ManagerType           = $null
+            DisplayName           = $Contact.DisplayName
+            Name                  = $Contact.Name
+            GivenName             = $null
+            Surname               = $null
+            OrganizationalUnit    = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToOrganizationalUnit
+            MemberOf              = $Contact.MemberOf
+            DistinguishedName     = $Contact.DistinguishedName
+            ManagerDN             = $null
+        }
+        $CachedUsers["$($Contact.DistinguishedName)"] = [PSCustomObject] $MyUser
     }
     if ($AsHashTable) {
         $CachedUsers
