@@ -115,19 +115,6 @@
             } else {
                 $ManagerLastLogonDays = $null
             }
-            if ($ManagerEnabled -and $ManagerEmail) {
-                if ((Test-EmailAddress -EmailAddress $ManagerEmail).IsValid -eq $true) {
-                    $ManagerStatus = 'Enabled'
-                } else {
-                    $ManagerStatus = 'Enabled, bad email'
-                }
-            } elseif ($ManagerEnabled) {
-                $ManagerStatus = 'No email'
-            } elseif ($Cache[$User.Manager].ObjectClass -eq 'Contact') {
-                $ManagerStatus = 'Enabled' # we need to treat it as always enabled
-            } else {
-                $ManagerStatus = 'Disabled'
-            }
             $ManagerType = $Cache[$User.Manager].ObjectClass
         } else {
             if ($User.ObjectClass -eq 'user') {
@@ -168,6 +155,23 @@
             $PasswordDays = (New-TimeSpan -Start ($User.PasswordLastSet) -End ($Today)).Days
         } else {
             $PasswordDays = $null
+        }
+
+        # Since we fixed manager above, we now check for status
+        if ($User.Manager) {
+            if ($ManagerEnabled -and $ManagerEmail) {
+                if ((Test-EmailAddress -EmailAddress $ManagerEmail).IsValid -eq $true) {
+                    $ManagerStatus = 'Enabled'
+                } else {
+                    $ManagerStatus = 'Enabled, bad email'
+                }
+            } elseif ($ManagerEnabled) {
+                $ManagerStatus = 'No email'
+            } elseif ($Cache[$User.Manager].ObjectClass -eq 'Contact') {
+                $ManagerStatus = 'Enabled' # we need to treat it as always enabled
+            } else {
+                $ManagerStatus = 'Disabled'
+            }
         }
 
         if ($User."msDS-UserPasswordExpiryTimeComputed" -ne 9223372036854775807) {
