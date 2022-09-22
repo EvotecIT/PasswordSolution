@@ -60,7 +60,9 @@
                         New-HTMLSection -HeaderText "Email Configuration" {
                             New-HTMLList {
                                 foreach ($Key in $EmailParameters.Keys) {
-                                    if ($Key -ne 'Password') {
+                                    if ($Key -eq 'Body') {
+
+                                    } elseif ($Key -ne 'Password') {
                                         New-HTMLListItem -Text $Key, ": ", $EmailParameters[$Key] -FontWeight normal, normal, bold
                                     } else {
                                         New-HTMLListItem -Text $Key, ": ", "REDACTED" -FontWeight normal, normal, bold
