@@ -1,5 +1,9 @@
 ﻿# PasswordSolution Release History
 
+## 0.0.26
+- Remove Body from EmailConfiguration in HTML Report
+- Fixes an issue with table in reports having borders (from the EmailBody)
+
 ## 0.0.25
 - Fix ManagerStatus when Overwriteproperty is in use
 - Add HTML report to Email to Admins
