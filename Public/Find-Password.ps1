@@ -247,6 +247,7 @@
             MemberOf              = $User.MemberOf
             DistinguishedName     = $User.DistinguishedName
             ManagerDN             = $User.Manager
+            Type                  = 'User'
         }
         foreach ($Property in $ConditionProperties) {
             $MyUser["$Property"] = $User.$Property
@@ -283,10 +284,11 @@
             Name                  = $Contact.Name
             GivenName             = $null
             Surname               = $null
-            OrganizationalUnit    = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToOrganizationalUnit
+            OrganizationalUnit    = ConvertFrom-DistinguishedName -DistinguishedName $Contact.DistinguishedName -ToOrganizationalUnit
             MemberOf              = $Contact.MemberOf
             DistinguishedName     = $Contact.DistinguishedName
             ManagerDN             = $null
+            Type                  = 'Contact'
         }
         $CachedUsers["$($Contact.DistinguishedName)"] = [PSCustomObject] $MyUser
     }
