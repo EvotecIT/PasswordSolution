@@ -341,13 +341,21 @@
             }
         }
         if ($Report.ShowAllUsers) {
+            $AllUsers = foreach ($User in $CachedUsers.Values) {
+                if ($User.Type -eq 'Contact') {
+                    continue
+                }
+                $User
+            }
             New-HTMLTab -Name 'All Users' {
-                New-HTMLTable -DataTable $CachedUsers.Values -Filtering {
+                New-HTMLTable -DataTable $AllUsers -Filtering {
                     New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
                     New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
-                    New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string
+                    New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -Value $false -ComparisonType string
+                    New-TableCondition -Name 'PasswordExpired' -BackgroundColor Salmon -Value $true -ComparisonType string
                     New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                    New-TableCondition -Name 'PasswordAtNextLogon' -BackgroundColor BlueSmoke -FailBackgroundColor LawnGreen -Value $true -ComparisonType string
+                    New-TableCondition -Name 'PasswordAtNextLogon' -BackgroundColor BlueSmoke -Value $true -ComparisonType string
+                    New-TableCondition -Name 'PasswordAtNextLogon' -BackgroundColor LawnGreen -Value $false -ComparisonType string
                     New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
                     New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
                     New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Not available' -BackgroundColor BlueSmoke
@@ -367,9 +375,11 @@
                     New-HTMLTable -DataTable $Summary['Rules'][$Rule].Values.User -Filtering {
                         New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string
                         New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
-                        New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                        New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -Value $false -ComparisonType string
+                        New-TableCondition -Name 'PasswordExpired' -BackgroundColor Salmon -Value $true -ComparisonType string
                         New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                        New-TableCondition -Name 'PasswordAtNextLogon' -BackgroundColor BlueSmoke -FailBackgroundColor LawnGreen -Value $true -ComparisonType string
+                        New-TableCondition -Name 'PasswordAtNextLogon' -BackgroundColor BlueSmoke -Value $true -ComparisonType string
+                        New-TableCondition -Name 'PasswordAtNextLogon' -BackgroundColor LawnGreen -Value $false -ComparisonType string
                         New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
                         New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
                         New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Not available' -BackgroundColor BlueSmoke
@@ -389,7 +399,8 @@
                 New-HTMLTable -DataTable $SummaryUsersEmails {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                    New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                    New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -Value $false -ComparisonType string
+                    New-TableCondition -Name 'PasswordExpired' -BackgroundColor Salmon -Value $true -ComparisonType string
                     New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
                 } -Filtering
             }
@@ -437,7 +448,8 @@
                 New-HTMLTable -DataTable $UsersSent {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                    New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
+                    New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -Value $false -ComparisonType string
+                    New-TableCondition -Name 'PasswordExpired' -BackgroundColor Salmon -Value $true -ComparisonType string
                     New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
                 } -Filtering
             }
@@ -482,9 +494,11 @@
                 New-HTMLTable -DataTable $AllSkipped.Values -Filtering {
                     New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
                     New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
-                    New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string
+                    New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -Value $false -ComparisonType string
+                    New-TableCondition -Name 'PasswordExpired' -BackgroundColor Salmon -Value $true -ComparisonType string
                     New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                    New-TableCondition -Name 'PasswordAtNextLogon' -BackgroundColor BlueSmoke -FailBackgroundColor LawnGreen -Value $true -ComparisonType string
+                    New-TableCondition -Name 'PasswordAtNextLogon' -BackgroundColor BlueSmoke -Value $true -ComparisonType string
+                    New-TableCondition -Name 'PasswordAtNextLogon' -BackgroundColor LawnGreen -Value $false -ComparisonType string
                     New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
                     New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
                     New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Not available' -BackgroundColor BlueSmoke
