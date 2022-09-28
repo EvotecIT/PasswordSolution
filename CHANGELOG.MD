@@ -1,5 +1,9 @@
 ﻿# PasswordSolution Release History
 
+## 0.0.27
+- Fixes to report not showing contacts anymore
+- Fixes to report conditional formatting which would format unnessecary fields
+
 ## 0.0.26
 - Remove Body from EmailConfiguration in HTML Report
 - Fixes an issue with table in reports having borders (from the EmailBody)
