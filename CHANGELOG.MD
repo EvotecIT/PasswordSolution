@@ -1,6 +1,6 @@
 ﻿# PasswordSolution Release History
 
-## 0.0.27
+## 0.0.28
 - Fixes to report not showing contacts anymore
 - Fixes to report conditional formatting which would format unnessecary fields
 
