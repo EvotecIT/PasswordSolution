@@ -15,6 +15,32 @@
 - Fix ManagerStatus when Overwriteproperty is in use
 - Add HTML report to Email to Admins
 
+```powershell
+HTMLReports                        = @(
+    # Accepts a list of reports to generate. Can be multiple reprorts having different sections, or just one having it all
+    [ordered] @{
+        Enable                = $true
+        ShowHTML              = $true
+        Title                 = "Password Solution Summary"
+        Online                = $true
+        DisableWarnings       = $true
+        ShowConfiguration     = $true
+        ShowAllUsers          = $true
+        ShowRules             = $true
+        ShowUsersSent         = $true
+        ShowManagersSent      = $true
+        ShowEscalationSent    = $true
+        ShowSkippedUsers      = $true
+        ShowSkippedLocations  = $true
+        ShowSearchUsers       = $true
+        ShowSearchManagers    = $true
+        ShowSearchEscalations = $true
+        FilePath              = "$PSScriptRoot\Reporting\PasswordSolution_$(($Date).ToString('yyyy-MM-dd_HH_mm_ss')).html"
+        AttachToEmail         = $true # new option
+    }
+)
+```
+
 ## 0.0.24
 - Bump dependencies of PSWriteHTML, Mailozaurr to newest versions
 - Add support for managers of users being a Contact (with an email field)
