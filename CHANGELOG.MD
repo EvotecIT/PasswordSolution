@@ -1,5 +1,8 @@
 ﻿# PasswordSolution Release History
 
+## 0.0.29 - 2022.10.11
+- Fixes to report ShowSkippedUsers to not show contacts users
+
 ## 0.0.28
 - Fixes to report not showing contacts anymore
 - Fixes to report conditional formatting which would format unnessecary fields
