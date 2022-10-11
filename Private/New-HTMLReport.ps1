@@ -488,10 +488,15 @@
         }
         if ($Report.ShowSkippedUsers) {
             New-HTMLTab -Name 'Skipped Users' -IconSolid users {
+                $SkippedUsers = foreach ($User in  $AllSkipped.Values) {
+                    if ($User.Type -ne 'Contact') {
+                        $User
+                    }
+                }
                 New-HTMLPanel -AlignContentText center {
                     New-HTMLText -FontSize 15pt -Text "Those users have no password date set. This means account running expiration checks doesn't have permissions or acccout never had password set or account is set to change password on logon. "
                 } -Invisible
-                New-HTMLTable -DataTable $AllSkipped.Values -Filtering {
+                New-HTMLTable -DataTable $SkippedUsers -Filtering {
                     New-TableCondition -Name 'Enabled' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
                     New-TableCondition -Name 'HasMailbox' -BackgroundColor LawnGreen -FailBackgroundColor BlueSmoke -Value $true -ComparisonType string -Operator eq
                     New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -Value $false -ComparisonType string
