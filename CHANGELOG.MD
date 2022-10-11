@@ -1,14 +1,14 @@
 ﻿# PasswordSolution Release History
 
 ## 0.0.29 - 2022.10.11
-- Fixes to report ShowSkippedUsers to not show contacts users
+- Fixes to report **ShowSkippedUsers** to skip Contacts
 
 ## 0.0.28
-- Fixes to report not showing contacts anymore
+- Fixes to report **All Users** to skip Contacts
 - Fixes to report conditional formatting which would format unnessecary fields
 
 ## 0.0.26
-- Remove Body from EmailConfiguration in HTML Report
+- Remove Body from **EmailConfiguration** in HTML Report
 - Fixes an issue with table in reports having borders (from the EmailBody)
 
 ## 0.0.25
