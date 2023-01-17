@@ -32,7 +32,7 @@
         Write-Color -Text "[i] Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color White, Yellow, White, Yellow, White, Yellow, White
         $Server = $ForestInformation['QueryServers'][$Domain]['HostName'][0]
 
-        Write-Color -Text "[i] Getting users from ", "$($Domain)", " using ", $Server -Color White, Yellow, White, Yellow, White, Yellow, White
+        Write-Color -Text "[i] Getting replication data from ", "$($Domain)", " using ", $Server -Color White, Yellow, White, Yellow, White, Yellow, White
 
         $testPasswordQualitySplat = @{
             WeakPasswords = $WeakPasswords
@@ -40,7 +40,6 @@
         Remove-EmptyValue -Hashtable $testPasswordQualitySplat
 
         Get-ADReplAccount -All -Server $Server
-
     }
 
     $Quality = $PasswordQuality | Test-PasswordQuality @testPasswordQualitySplat -IncludeDisabledAccounts

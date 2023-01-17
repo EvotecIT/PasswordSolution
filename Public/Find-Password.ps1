@@ -106,7 +106,10 @@
     }
 
     Write-Color -Text "[i] Preparing all users for password expirations in forest ", $Forest.Name -Color White, Yellow, White, Yellow, White, Yellow, White
+    $CountUsers = 0
     foreach ($User in $Users) {
+        $CountUsers++
+        Write-Verbose -Message "Processing $($User.DisplayName) - $($CountUsers)/$($Users.Count)"
         $DateExpiry = $null
         $DaysToExpire = $null
         $PasswordDays = $null
@@ -321,7 +324,10 @@
         }
     }
     if ($ReturnObjectsType -contains 'Contacts') {
+        $CountContacts = 0
         foreach ($Contact in $Contacts) {
+            $CountContacts++
+            Write-Verbose -Message "Processing $($Contact.DisplayName) - $($CountContacts)/$($Contacts.Count)"
             # create dummy objects for manager contacts
             $MyUser = [ordered] @{
                 UserPrincipalName     = $null
