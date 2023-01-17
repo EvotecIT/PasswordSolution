@@ -3,14 +3,15 @@
     param(
         [string] $FilePath,
         [switch] $DontShow,
-        [switch] $Online
+        [switch] $Online,
+        [string[]] $WeakPasswords
     )
     $Script:Reporting = [ordered] @{}
     $Script:Reporting['Version'] = Get-GitHubVersion -Cmdlet 'Show-PasswordQuality' -RepositoryOwner 'evotecit' -RepositoryName 'PasswordSolution'
 
 
     Write-Color '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
-    $PasswordQuality = Find-PasswordQuality -IncludeStatistics
+    $PasswordQuality = Find-PasswordQuality -IncludeStatistics -WeakPasswords $WeakPasswords
     $Users = $PasswordQuality.Users
     $Statistics = $PasswordQuality.Statistics
 
