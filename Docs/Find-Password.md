@@ -14,8 +14,8 @@ Scan Active Directory forest for all users and their password expiration date
 
 ```
 Find-Password [[-Forest] <String>] [[-ExcludeDomains] <String[]>] [[-IncludeDomains] <String[]>]
- [[-ExtendedForestInformation] <IDictionary>] [[-OverwriteEmailProperty] <String>] [-AsHashTable]
- [<CommonParameters>]
+ [[-ExtendedForestInformation] <IDictionary>] [[-OverwriteEmailProperty] <String>]
+ [[-ReturnObjectsType] <String[]>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -105,17 +105,17 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -AsHashTable
-Return result as HashTable, instead of Array
+### -ReturnObjectsType
+{{ Fill ReturnObjectsType Description }}
 
 ```yaml
-Type: SwitchParameter
+Type: String[]
 Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: Named
-Default value: False
+Position: 7
+Default value: @('Users', 'Contacts')
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

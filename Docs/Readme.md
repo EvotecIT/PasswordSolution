@@ -17,6 +17,12 @@ Scan Active Directory forest for all users and their password expiration date
 ### [Find-PasswordNotification](Find-PasswordNotification.md)
 Searches thru XML logs created by Password Solution
 
+### [Find-PasswordQuality](Find-PasswordQuality.md)
+{{ Fill in the Synopsis }}
+
+### [Show-PasswordQuality](Show-PasswordQuality.md)
+{{ Fill in the Synopsis }}
+
 ### [Start-PasswordSolution](Start-PasswordSolution.md)
 Starts Password Expiry Notifications for the whole forest
 
