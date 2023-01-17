@@ -1,5 +1,8 @@
 ﻿# PasswordSolution Release History
 
+## 0.0.30 - 2023.01.17
+- Add ability to check password quality (requires higher permissions) and based on DSInternals
+
 ## 0.0.29 - 2022.10.11
 - Fixes to report **ShowSkippedUsers** to skip Contacts
 
