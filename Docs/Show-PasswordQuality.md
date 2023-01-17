@@ -13,7 +13,8 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Show-PasswordQuality [[-FilePath] <String>] [-DontShow] [-Online] [<CommonParameters>]
+Show-PasswordQuality [[-FilePath] <String>] [-DontShow] [-Online] [[-WeakPasswords] <String[]>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -70,6 +71,21 @@ Aliases:
 
 Required: False
 Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WeakPasswords
+{{ Fill WeakPasswords Description }}
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
