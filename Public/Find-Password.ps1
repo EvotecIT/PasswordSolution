@@ -21,9 +21,6 @@
     .PARAMETER OverwriteEmailProperty
     Overwrite EmailAddress property with different property name
 
-    .PARAMETER AsHashTable
-    Return result as HashTable, instead of Array
-
     .EXAMPLE
     Find-Password | ft
 
@@ -37,7 +34,11 @@
         [alias('Domain', 'Domains')][string[]] $IncludeDomains,
         [System.Collections.IDictionary] $ExtendedForestInformation,
         [string] $OverwriteEmailProperty,
-        [switch] $AsHashTable
+        [Parameter(DontShow)][switch] $AsHashTable,
+        [Parameter(DontShow)][string] $HashtableField = 'DistinguishedName',
+        [ValidateSet('Users', 'Contacts')][string[]] $ReturnObjectsType = @('Users', 'Contacts'),
+        [Parameter(DontShow)][switch] $AsHashTableObject,
+        [Parameter(DontShow)][string[]] $AddEmptyProperties = @()
     )
     $Today = Get-Date
 
@@ -62,7 +63,13 @@
         $Cache = [ordered] @{ }
     }
     Write-Color -Text "[i] Discovering forest information" -Color White, Yellow, White, Yellow, White, Yellow, White
-    $ForestInformation = Get-WinADForestDetails -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
+    $ForestInformation = Get-WinADForestDetails -Extended -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
+
+    # lets get domain name / netbios hashtable for easy use
+    $DNSNetBios = @{ }
+    foreach ($NETBIOS in $ForestInformation.DomainsExtendedNetBIOS.Keys) {
+        $DNSNetBios[$ForestInformation.DomainsExtendedNetBIOS[$NETBIOS].DnsRoot] = $NETBIOS
+    }
 
     [Array] $Users = foreach ($Domain in $ForestInformation.Domains) {
         Write-Color -Text "[i] Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color White, Yellow, White, Yellow, White, Yellow, White
@@ -76,24 +83,28 @@
             Write-Color '[e] Error: ', $ErrorMessage -Color White, Red
         }
     }
-    [Array] $Contacts = foreach ($Domain in $ForestInformation.Domains) {
-        Write-Color -Text "[i] Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color White, Yellow, White, Yellow, White, Yellow, White
-        $Server = $ForestInformation['QueryServers'][$Domain]['HostName'][0]
-
-        Write-Color -Text "[i] Getting contacts from ", "$($Domain)", " using ", $Server -Color White, Yellow, White, Yellow, White, Yellow, White
-        try {
-            Get-ADObject -LDAPFilter "objectClass=Contact" -Server $Server -Properties $PropertiesContacts -ErrorAction Stop
-        } catch {
-            $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
-            Write-Color '[e] Error: ', $ErrorMessage -Color White, Red
-        }
-    }
     foreach ($User in $Users) {
         $Cache[$User.DistinguishedName] = $User
     }
-    foreach ($Contact in $Contacts) {
-        $Cache[$Contact.DistinguishedName] = $Contact
+
+    if ($ReturnObjectsType -contains 'Contacts') {
+        [Array] $Contacts = foreach ($Domain in $ForestInformation.Domains) {
+            Write-Color -Text "[i] Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color White, Yellow, White, Yellow, White, Yellow, White
+            $Server = $ForestInformation['QueryServers'][$Domain]['HostName'][0]
+
+            Write-Color -Text "[i] Getting contacts from ", "$($Domain)", " using ", $Server -Color White, Yellow, White, Yellow, White, Yellow, White
+            try {
+                Get-ADObject -LDAPFilter "objectClass=Contact" -Server $Server -Properties $PropertiesContacts -ErrorAction Stop
+            } catch {
+                $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
+                Write-Color '[e] Error: ', $ErrorMessage -Color White, Red
+            }
+        }
+        foreach ($Contact in $Contacts) {
+            $Cache[$Contact.DistinguishedName] = $Contact
+        }
     }
+
     Write-Color -Text "[i] Preparing all users for password expirations in forest ", $Forest.Name -Color White, Yellow, White, Yellow, White, Yellow, White
     foreach ($User in $Users) {
         $DateExpiry = $null
@@ -214,83 +225,149 @@
         } else {
             $HasMailbox = $false
         }
-
-        $MyUser = [ordered] @{
-            UserPrincipalName     = $User.UserPrincipalName
-            SamAccountName        = $User.SamAccountName
-            Domain                = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToDomainCN
-            RuleName              = ''
-            RuleOptions           = [System.Collections.Generic.List[string]]::new()
-            Enabled               = $User.Enabled
-            HasMailbox            = $HasMailbox
-            EmailAddress          = $EmailAddress
-            DateExpiry            = $DateExpiry
-            DaysToExpire          = $DaysToExpire
-            PasswordExpired       = $User.PasswordExpired
-            PasswordDays          = $PasswordDays
-            PasswordAtNextLogon   = $PasswordAtNextLogon
-            PasswordLastSet       = $User.PasswordLastSet
-            PasswordNotRequired   = $User.PasswordNotRequired
-            PasswordNeverExpires  = $PasswordNeverExpires
-            Manager               = $Manager
-            ManagerDisplayName    = $ManagerDisplayName
-            ManagerSamAccountName = $ManagerSamAccountName
-            ManagerEmail          = $ManagerEmail
-            ManagerStatus         = $ManagerStatus
-            ManagerLastLogonDays  = $ManagerLastLogonDays
-            ManagerType           = $ManagerType
-            DisplayName           = $User.DisplayName
-            Name                  = $User.Name
-            GivenName             = $User.GivenName
-            Surname               = $User.Surname
-            OrganizationalUnit    = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToOrganizationalUnit
-            MemberOf              = $User.MemberOf
-            DistinguishedName     = $User.DistinguishedName
-            ManagerDN             = $User.Manager
-            Type                  = 'User'
+        if ($AddEmptyProperties.Count -gt 0) {
+            $StartUser = [ordered] @{
+                UserPrincipalName    = $User.UserPrincipalName
+                SamAccountName       = $User.SamAccountName
+                Domain               = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToDomainCN
+                RuleName             = ''
+                RuleOptions          = [System.Collections.Generic.List[string]]::new()
+                Enabled              = $User.Enabled
+                HasMailbox           = $HasMailbox
+                EmailAddress         = $EmailAddress
+                DateExpiry           = $DateExpiry
+                DaysToExpire         = $DaysToExpire
+                PasswordExpired      = $User.PasswordExpired
+                PasswordDays         = $PasswordDays
+                PasswordAtNextLogon  = $PasswordAtNextLogon
+                PasswordLastSet      = $User.PasswordLastSet
+                PasswordNotRequired  = $User.PasswordNotRequired
+                PasswordNeverExpires = $PasswordNeverExpires
+            }
+            foreach ($Property in $AddEmptyProperties) {
+                $StartUser.$Property = $null
+            }
+            $EndUser = [ordered] @{
+                Manager               = $Manager
+                ManagerDisplayName    = $ManagerDisplayName
+                ManagerSamAccountName = $ManagerSamAccountName
+                ManagerEmail          = $ManagerEmail
+                ManagerStatus         = $ManagerStatus
+                ManagerLastLogonDays  = $ManagerLastLogonDays
+                ManagerType           = $ManagerType
+                DisplayName           = $User.DisplayName
+                Name                  = $User.Name
+                GivenName             = $User.GivenName
+                Surname               = $User.Surname
+                OrganizationalUnit    = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToOrganizationalUnit
+                MemberOf              = $User.MemberOf
+                DistinguishedName     = $User.DistinguishedName
+                ManagerDN             = $User.Manager
+                Type                  = 'User'
+            }
+            $MyUser = $StartUser + $EndUser
+        } else {
+            $MyUser = [ordered] @{
+                UserPrincipalName     = $User.UserPrincipalName
+                SamAccountName        = $User.SamAccountName
+                Domain                = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToDomainCN
+                RuleName              = ''
+                RuleOptions           = [System.Collections.Generic.List[string]]::new()
+                Enabled               = $User.Enabled
+                HasMailbox            = $HasMailbox
+                EmailAddress          = $EmailAddress
+                DateExpiry            = $DateExpiry
+                DaysToExpire          = $DaysToExpire
+                PasswordExpired       = $User.PasswordExpired
+                PasswordDays          = $PasswordDays
+                PasswordAtNextLogon   = $PasswordAtNextLogon
+                PasswordLastSet       = $User.PasswordLastSet
+                PasswordNotRequired   = $User.PasswordNotRequired
+                PasswordNeverExpires  = $PasswordNeverExpires
+                Manager               = $Manager
+                ManagerDisplayName    = $ManagerDisplayName
+                ManagerSamAccountName = $ManagerSamAccountName
+                ManagerEmail          = $ManagerEmail
+                ManagerStatus         = $ManagerStatus
+                ManagerLastLogonDays  = $ManagerLastLogonDays
+                ManagerType           = $ManagerType
+                DisplayName           = $User.DisplayName
+                Name                  = $User.Name
+                GivenName             = $User.GivenName
+                Surname               = $User.Surname
+                OrganizationalUnit    = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToOrganizationalUnit
+                MemberOf              = $User.MemberOf
+                DistinguishedName     = $User.DistinguishedName
+                ManagerDN             = $User.Manager
+                Type                  = 'User'
+            }
         }
         foreach ($Property in $ConditionProperties) {
             $MyUser["$Property"] = $User.$Property
         }
-        $CachedUsers["$($User.DistinguishedName)"] = [PSCustomObject] $MyUser
-    }
-    foreach ($Contact in $Contacts) {
-        # create dummy objects for manager contacts
-        $MyUser = [ordered] @{
-            UserPrincipalName     = $null
-            SamAccountName        = $null
-            Domain                = ConvertFrom-DistinguishedName -DistinguishedName $Contact.DistinguishedName -ToDomainCN
-            RuleName              = ''
-            RuleOptions           = [System.Collections.Generic.List[string]]::new()
-            Enabled               = $true
-            HasMailbox            = $null
-            EmailAddress          = $Contact.Mail
-            DateExpiry            = $null
-            DaysToExpire          = $null
-            PasswordExpired       = $null
-            PasswordDays          = $null
-            PasswordAtNextLogon   = $null
-            PasswordLastSet       = $null
-            PasswordNotRequired   = $null
-            PasswordNeverExpires  = $null
-            Manager               = $null
-            ManagerDisplayName    = $null
-            ManagerSamAccountName = $null
-            ManagerEmail          = $null
-            ManagerStatus         = $null
-            ManagerLastLogonDays  = $null
-            ManagerType           = $null
-            DisplayName           = $Contact.DisplayName
-            Name                  = $Contact.Name
-            GivenName             = $null
-            Surname               = $null
-            OrganizationalUnit    = ConvertFrom-DistinguishedName -DistinguishedName $Contact.DistinguishedName -ToOrganizationalUnit
-            MemberOf              = $Contact.MemberOf
-            DistinguishedName     = $Contact.DistinguishedName
-            ManagerDN             = $null
-            Type                  = 'Contact'
+        if ($HashtableField -eq 'NetBiosSamAccountName') {
+            $HashField = $DNSNetBios[$MyUser.Domain] + '\' + $MyUser.SamAccountName
+            if ($AsHashTableObject) {
+                $CachedUsers["$HashField"] = $MyUser
+            } else {
+                $CachedUsers["$HashField"] = [PSCustomObject] $MyUser
+            }
+        } else {
+            if ($AsHashTableObject) {
+                $CachedUsers["$($User.$HashtableField)"] = $MyUser
+            } else {
+                $CachedUsers["$($User.$HashtableField)"] = [PSCustomObject] $MyUser
+            }
         }
-        $CachedUsers["$($Contact.DistinguishedName)"] = [PSCustomObject] $MyUser
+    }
+    if ($ReturnObjectsType -contains 'Contacts') {
+        foreach ($Contact in $Contacts) {
+            # create dummy objects for manager contacts
+            $MyUser = [ordered] @{
+                UserPrincipalName     = $null
+                SamAccountName        = $null
+                Domain                = ConvertFrom-DistinguishedName -DistinguishedName $Contact.DistinguishedName -ToDomainCN
+                RuleName              = ''
+                RuleOptions           = [System.Collections.Generic.List[string]]::new()
+                Enabled               = $true
+                HasMailbox            = $null
+                EmailAddress          = $Contact.Mail
+                DateExpiry            = $null
+                DaysToExpire          = $null
+                PasswordExpired       = $null
+                PasswordDays          = $null
+                PasswordAtNextLogon   = $null
+                PasswordLastSet       = $null
+                PasswordNotRequired   = $null
+                PasswordNeverExpires  = $null
+                Manager               = $null
+                ManagerDisplayName    = $null
+                ManagerSamAccountName = $null
+                ManagerEmail          = $null
+                ManagerStatus         = $null
+                ManagerLastLogonDays  = $null
+                ManagerType           = $null
+                DisplayName           = $Contact.DisplayName
+                Name                  = $Contact.Name
+                GivenName             = $null
+                Surname               = $null
+                OrganizationalUnit    = ConvertFrom-DistinguishedName -DistinguishedName $Contact.DistinguishedName -ToOrganizationalUnit
+                MemberOf              = $Contact.MemberOf
+                DistinguishedName     = $Contact.DistinguishedName
+                ManagerDN             = $null
+                Type                  = 'Contact'
+            }
+            if ($HashtableField -eq 'NetBiosSamAccountName') {
+                # Contacts do not have NetBiosSamAccountName
+                continue
+            } else {
+                if ($AsHashTableObject) {
+                    $CachedUsers["$($Contact.$HashtableField)"] = $MyUser
+                } else {
+                    $CachedUsers["$($Contact.$HashtableField)"] = [PSCustomObject] $MyUser
+                }
+            }
+        }
     }
     if ($AsHashTable) {
         $CachedUsers
