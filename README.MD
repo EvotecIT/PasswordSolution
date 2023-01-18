@@ -26,6 +26,7 @@ PasswordSolution is a PowerShell module that provides Password Expiry notificati
 ## Features
 
 - Find all users with passwords that are expiring and send notifications
+- Find and asses password quality of users in a forest
 
 ## Installing
 
@@ -33,7 +34,13 @@ Everyone can install this module from **PowerShellGallery** hosted by Microsoft.
 Version on **PowershellGallery** is optimized for speed and signed. Using code from **GitHub** is **recommended for development**.
 
 ```powershell
-Install-Module -Name PasswordSolution -AllowClobber -Force
+Install-Module -Name PasswordSolution -AllowClobber -Force -Verbose
+```
+
+If you want to use Password Quality checks you need to install DSInternals manually.
+
+```powershell
+Install-Module DSInternals -Force -Verbose
 ```
 
 Force and AllowClobber aren't necessary, but they do skip errors in case some appear.
