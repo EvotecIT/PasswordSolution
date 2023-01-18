@@ -11,7 +11,12 @@
 
 
     Write-Color '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
+
     $PasswordQuality = Find-PasswordQuality -IncludeStatistics -WeakPasswords $WeakPasswords
+    if (-not $PasswordQuality) {
+        # most likely DSInternals not installed
+        return
+    }
     $Users = $PasswordQuality.Users
     $Statistics = $PasswordQuality.Statistics
 

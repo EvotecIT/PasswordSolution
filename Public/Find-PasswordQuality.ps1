@@ -22,17 +22,22 @@
         'DuplicatePasswordGroups'
     )
 
+    $ModuleExists = Get-Command -Module DSInternals -ErrorAction SilentlyContinue
+    if (-not $ModuleExists) {
+        Write-Color -Text "[!] ", "DSInternals module is not installed. Please install it using Install-Module DSInternals -Verbose" -Color Yellow, Red
+        return
+    }
     $AllUsers = Find-Password -AsHashTable -HashtableField NetBiosSamAccountName -ReturnObjectsType Users -AsHashTableObject -AddEmptyProperties $PropertiesToAdd
 
-    Write-Color -Text "[i] Discovering forest information" -Color White, Yellow, White, Yellow, White, Yellow, White
+    Write-Color -Text "[i] ", "Discovering forest information" -Color White, Yellow, White, Yellow, White, Yellow, White
     $ForestInformation = Get-WinADForestDetails -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
 
     $PasswordsInHash = [ordered] @{}
     $PasswordQuality = foreach ($Domain in $ForestInformation.Domains) {
-        Write-Color -Text "[i] Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color White, Yellow, White, Yellow, White, Yellow, White
+        Write-Color -Text "[i] ", "Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color White, Yellow, White, Yellow, White, Yellow, White
         $Server = $ForestInformation['QueryServers'][$Domain]['HostName'][0]
 
-        Write-Color -Text "[i] Getting replication data from ", "$($Domain)", " using ", $Server -Color White, Yellow, White, Yellow, White, Yellow, White
+        Write-Color -Text "[i] ", "Getting replication data from ", "$($Domain)", " using ", $Server -Color White, Yellow, White, Yellow, White, Yellow, White
 
         $testPasswordQualitySplat = @{
             WeakPasswords = $WeakPasswords
@@ -41,9 +46,11 @@
 
         Get-ADReplAccount -All -Server $Server
     }
-
+    Write-Color -Text "[i] Testing password quality" -Color White, Yellow, White, Yellow, White, Yellow, White
     $Quality = $PasswordQuality | Test-PasswordQuality @testPasswordQualitySplat -IncludeDisabledAccounts
 
+
+    Write-Color -Text "[i] Processing results" -Color White, Yellow, White, Yellow, White, Yellow, White
     foreach ($Property in $Quality.PSObject.Properties.Name) {
         #if ($Property -eq 'DuplicatePasswordGroups') {
         #    $PasswordsInHash[$Domain][$Property] = $PasswordQuality.$Property
