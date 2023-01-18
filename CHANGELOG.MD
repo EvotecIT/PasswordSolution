@@ -1,5 +1,11 @@
 ﻿# PasswordSolution Release History
 
+## 0.0.32 - 2023.01.18
+- Removed DSInternals from required modules (made it optional / disables Password Quality Check). This is to not trigger any security alerts in your environment if you just want to use the module for password expiration and not password quality checks.
+
+## 0.0.31 - 2023.01.17
+- Small updates to logging
+
 ## 0.0.30 - 2023.01.17
 - Add ability to check password quality (requires higher permissions) and based on DSInternals
 
