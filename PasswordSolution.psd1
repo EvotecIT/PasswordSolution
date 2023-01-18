@@ -8,7 +8,7 @@
     Description          = 'This module allows the creation of password expiry emails for users, managers, administrators, and security according to defined templates. It''s able to work with different rules allowing to fully customize who gets the email and when.'
     FunctionsToExport    = @('Find-Password', 'Find-PasswordNotification', 'Find-PasswordQuality', 'Show-PasswordQuality', 'Start-PasswordSolution')
     GUID                 = 'c58ff818-1de6-4500-961c-a243c2043255'
-    ModuleVersion        = '0.0.31'
+    ModuleVersion        = '0.0.32'
     PowerShellVersion    = '5.1'
     PrivateData          = @{
         PSData = @{
@@ -34,10 +34,6 @@
             ModuleVersion = '0.87.3'
             ModuleName    = 'PSWriteColor'
             Guid          = '0b0ba5c5-ec85-4c2b-a718-874e55a8bc3f'
-        }, @{
-            ModuleVersion = '4.8'
-            ModuleName    = 'DSInternals'
-            Guid          = '766b3ad8-eb78-48e6-84bd-61b31d96b53e'
         }, 'ActiveDirectory')
     RootModule           = 'PasswordSolution.psm1'
 }
