@@ -36,7 +36,7 @@ $Configuration = @{
                 @{ ModuleName = 'Mailozaurr'; ModuleVersion = "Latest"; Guid = '2b0ea9f1-3ff1-4300-b939-106d5da608fa' }
                 @{ ModuleName = 'PSWriteHTML'; ModuleVersion = "Latest"; Guid = 'a7bdf640-f5cb-4acf-9de0-365b322d245c' }
                 @{ ModuleName = 'PSWriteColor'; ModuleVersion = "Latest"; Guid = '0b0ba5c5-ec85-4c2b-a718-874e55a8bc3f' }
-                @{ ModuleName = 'DSInternals'; ModuleVersion = 'Latest'; Guid = '766b3ad8-eb78-48e6-84bd-61b31d96b53e' }
+                #@{ ModuleName = 'DSInternals'; ModuleVersion = 'Latest'; Guid = '766b3ad8-eb78-48e6-84bd-61b31d96b53e' }
             )
             ExternalModuleDependencies = @(
                 "ActiveDirectory"
@@ -137,6 +137,9 @@ $Configuration = @{
         Documentation     = @{
             Path       = 'Docs'
             PathReadme = 'Docs\Readme.md'
+        }
+        Signing           = @{
+            CertificateThumbprint = '36A8A2D0E227D81A2D3B60DCE0CFCF23BEFC343B'
         }
     }
     Steps       = @{
