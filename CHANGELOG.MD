@@ -1,5 +1,10 @@
 ﻿# PasswordSolution Release History
 
+## 0.0.33 - 2023.04.18
+- General improvements
+- Added separate duplicate groups tables to report for easier visibility
+- Prefer writable DCs when quering AD
+
 ## 0.0.32 - 2023.01.18
 - Removed DSInternals from required modules (made it optional / disables Password Quality Check). This is to not trigger any security alerts in your environment if you just want to use the module for password expiration and not password quality checks.
 
