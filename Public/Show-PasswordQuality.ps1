@@ -50,7 +50,7 @@
 
 
     Write-Color '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
-    Write-Color '[i]', ' Gathering passwords dataa ' -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
+    Write-Color '[i]', ' Gathering passwords data' -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
     $TimeStartPasswords = Start-TimeLog
     $PasswordQuality = Find-PasswordQuality -IncludeStatistics -WeakPasswords $WeakPasswords
     if (-not $PasswordQuality) {
@@ -218,7 +218,7 @@
                 New-HTMLSection -Invisible {
 
                     New-HTMLTabPanel {
-                        foreach ($DuplicateGroup in $DuplicateGroups.Keys) {
+                        foreach ($DuplicateGroup in $DuplicateGroups.Keys | Sort-Object) {
                             New-HTMLTab -Name "$DuplicateGroup ($($DuplicateGroups[$DuplicateGroup].Count))" {
                                 New-HTMLTable -DataTable $DuplicateGroups[$DuplicateGroup] {
                                     New-HTMLTableCondition -Name 'Enabled' -ComparisonType string -Operator eq -Value $true -BackgroundColor LimeGreen -FailBackgroundColor BlizzardBlue
