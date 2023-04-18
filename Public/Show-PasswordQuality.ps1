@@ -246,6 +246,7 @@
 
     $EndLogHTML = Stop-TimeLog -Time $TimeStartHTML -Option OneLiner
     $EndLog = Stop-TimeLog -Time $TimeStart -Option OneLiner
-    Write-Color '[i]', 'Time to generate HTML ', $EndLogHTML -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
-    Write-Color '[i]', "[PasswordSolution] ", 'Time to generate ', $EndLog -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
+    Write-Color '[i]', ' Time to generate HTML ', $EndLogHTML -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
+    Write-Color '[i]', ' Time to generate ', $EndLog -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
+    Write-Color '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
 }
