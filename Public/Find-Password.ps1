@@ -75,7 +75,7 @@
         $Cache = [ordered] @{ }
     }
     Write-Color -Text "[i] Discovering forest information" -Color White, Yellow, White, Yellow, White, Yellow, White
-    $ForestInformation = Get-WinADForestDetails -Extended -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
+    $ForestInformation = Get-WinADForestDetails -PreferWritable -Extended -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
 
     # lets get domain name / netbios hashtable for easy use
     $DNSNetBios = @{ }
