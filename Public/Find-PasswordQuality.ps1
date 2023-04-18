@@ -24,42 +24,39 @@
 
     $ModuleExists = Get-Command -Module DSInternals -ErrorAction SilentlyContinue
     if (-not $ModuleExists) {
-        Write-Color -Text "[!] ", "DSInternals module is not installed. Please install it using Install-Module DSInternals -Verbose" -Color Yellow, Red
+        Write-Color -Text "[e] ", "DSInternals module is not installed. Please install it using Install-Module DSInternals -Verbose" -Color Yellow, Red
         return
     }
     $AllUsers = Find-Password -AsHashTable -HashtableField NetBiosSamAccountName -ReturnObjectsType Users -AsHashTableObject -AddEmptyProperties $PropertiesToAdd
 
-    Write-Color -Text "[i] ", "Discovering forest information" -Color White, Yellow, White, Yellow, White, Yellow, White
-    $ForestInformation = Get-WinADForestDetails -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
+    Write-Color -Text "[i] ", "Discovering forest information" -Color Yellow, Gray, White, Yellow, White, Yellow, White
+    $ForestInformation = Get-WinADForestDetails -PreferWritable -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
 
     $PasswordsInHash = [ordered] @{}
     $PasswordQuality = foreach ($Domain in $ForestInformation.Domains) {
-        Write-Color -Text "[i] ", "Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color White, Yellow, White, Yellow, White, Yellow, White
+        Write-Color -Text "[i] ", "Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color Yellow, Gray, White, Yellow, White, Yellow, White
         $Server = $ForestInformation['QueryServers'][$Domain]['HostName'][0]
 
-        Write-Color -Text "[i] ", "Getting replication data from ", "$($Domain)", " using ", $Server -Color White, Yellow, White, Yellow, White, Yellow, White
+        Write-Color -Text "[i] ", "Getting replication data from ", "$($Domain)", " using ", $Server -Color Yellow, Gray, White, Yellow, White, Yellow, White
 
         $testPasswordQualitySplat = @{
             WeakPasswords = $WeakPasswords
         }
         Remove-EmptyValue -Hashtable $testPasswordQualitySplat
 
-        Get-ADReplAccount -All -Server $Server
+        try {
+            Get-ADReplAccount -All -Server $Server -ErrorAction Stop
+        } catch {
+            Write-Color -Text "[e] ", "Unable to get replication data from ", "$($Domain)", " using ", $Server, ". Error: ", $_.Exception.Message -Color Red, Yellow, White, Yellow, Red, Red
+        }
     }
-    Write-Color -Text "[i] Testing password quality" -Color White, Yellow, White, Yellow, White, Yellow, White
+    Write-Color -Text "[i] Testing password quality" -Color Yellow, Gray, White, Yellow, White, Yellow, White
     $Quality = $PasswordQuality | Test-PasswordQuality @testPasswordQualitySplat -IncludeDisabledAccounts
 
-
-    Write-Color -Text "[i] Processing results" -Color White, Yellow, White, Yellow, White, Yellow, White
+    Write-Color -Text "[i] Processing results" -Color Yellow, Gray, White, Yellow, White, Yellow, White
     foreach ($Property in $Quality.PSObject.Properties.Name) {
-        #if ($Property -eq 'DuplicatePasswordGroups') {
-        #    $PasswordsInHash[$Domain][$Property] = $PasswordQuality.$Property
-        #} else {
         $PasswordsInHash[$Property] = $Quality.$Property
-        #}
     }
-
-
 
     $PasswordGroupsUsers = [ordered] @{}
     $Count = 0
@@ -115,7 +112,6 @@
         SmartCardUsersWithPasswordEnabledOnly  = 0
         SmartCardUsersWithPasswordDisabledOnly = 0
     }
-
 
     $OutputUsers = foreach ($User in $AllUsers.Keys) {
         foreach ($Property in $PasswordsInHash.Keys) {
