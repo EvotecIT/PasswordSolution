@@ -5,7 +5,7 @@ $Date = Get-Date
 $GraphCredentials = @{
     ClientID     = '0fb383f1-8bfe-4c68-8ce2-5f6aa1d602fe'
     DirectoryID  = 'ceb371f6-8745-4876-a040-69f2d10a9d1a'
-    ClientSecret = 'VKDM_2.eC2US7pFW1~nvAPeW_YlGc48P47'
+    ClientSecret = Get-Content -Raw -LiteralPath "C:\Support\Important\O365-GraphEmailTestingKey.txt"
 }
 
 $PasswordSolution = [ordered] @{
@@ -14,10 +14,10 @@ $PasswordSolution = [ordered] @{
         Credential = ConvertTo-GraphCredential -ClientID $GraphCredentials.ClientID -ClientSecret $GraphCredentials.ClientSecret -DirectoryID $GraphCredentials.DirectoryID
         Graph      = $true
         Priority   = 'Normal'
-        From       = 'przemyslaw.klys@evotec.pl'
-        #To         = 'przemyslaw.klys@evotec.pl' # your default email field (IMPORTANT)
+        From       = 'przemyslaw.klys+testgithub@evotec.pl'
+        #To         = 'przemyslaw.klys+testgithub@evotec.pl' # your default email field (IMPORTANT)
         WhatIf     = $false
-        ReplyTo = 'contact@evotec.pl'
+        ReplyTo    = 'contact+testgithub@evotec.pl'
     }
     # Standard SMTP credentials
     # EmailParameters                    = [ordered] @{
@@ -34,33 +34,34 @@ $PasswordSolution = [ordered] @{
     # }
     OverwriteEmailProperty             = 'extensionAttribute13'
     UserSection                        = @{
-        Enable             = $true
-        SendCountMaximum   = 3
-        SendToDefaultEmail = $true # if enabled $EmailParameters are used (good for testing)
-        DefaultEmail       = 'przemyslaw.klys@evotec.pl' # your default email field (IMPORTANT)
+        Enable                 = $true
+        SendCountMaximum       = 3
+        SendToDefaultEmail     = $true # if enabled $EmailParameters are used (good for testing)
+        DefaultEmail           = 'przemyslaw.klys+testgithub@evotec.pl' # your default email field (IMPORTANT)
+        OverwriteEmailProperty = 'extensionAttribute12'
     }
     ManagerSection                     = @{
-        Enable             = $true
-        SendCountMaximum   = 3
-        SendToDefaultEmail = $true # if enabled $EmailParameters are used (good for testing)
-        DefaultEmail       = 'przemyslaw.klys@evotec.pl' # your default email field (IMPORTANT)
+        Enable                 = $true
+        SendCountMaximum       = 3
+        SendToDefaultEmail     = $true # if enabled $EmailParameters are used (good for testing)
+        DefaultEmail           = 'przemyslaw.klys+testgithub@evotec.pl' # your default email field (IMPORTANT)
+        OverwriteEmailProperty = 'extensionAttribute11'
     }
     SecuritySection                    = @{
         Enable             = $true
         SendCountMaximum   = 3
         SendToDefaultEmail = $true # if enabled $EmailParameters are used (good for testing)
-        DefaultEmail       = 'przemyslaw.klys@evotec.pl' # your default email field (IMPORTANT)
+        DefaultEmail       = 'przemyslaw.klys+testgithub@evotec.pl' # your default email field (IMPORTANT)
         AttachCSV          = $true
     }
     AdminSection                       = @{
         Enable  = $true # doesn't processes this section at all
-        Email   = 'przemyslaw.klys@evotec.pl'
+        Email   = 'przemyslaw.klys+testgithub@evotec.pl'
         Subject = "[Reporting Evotec] Summary of password reminders"
         Manager = [ordered] @{
             DisplayName  = 'Administrators'
-            EmailAddress = 'przemyslaw.klys@evotec.pl'
+            EmailAddress = 'przemyslaw.klys+testgithub@evotec.pl'
         }
-
     }
     Rules                              = @(
         # rules are new way to define things. You can define more than one rule and limit it per group/ou
@@ -178,7 +179,7 @@ $PasswordSolution = [ordered] @{
                     Enable        = $true
                     Manager       = [ordered] @{
                         DisplayName  = 'ITR01 Service Desk'
-                        EmailAddress = 'przemyslaw.klys@evotec.pl'
+                        EmailAddress = 'przemyslaw.klys+testgithub@evotec.pl'
                     }
                     Disabled      = $true
                     Missing       = $true
@@ -250,7 +251,7 @@ $PasswordSolution = [ordered] @{
                     Enable        = $false
                     Manager       = [ordered] @{
                         DisplayName  = 'ITR01 Service Desk'
-                        EmailAddress = 'przemyslaw.klys@evotec.pl'
+                        EmailAddress = 'przemyslaw.klys+testgithub@evotec.pl'
                     }
                     Disabled      = $true
                     Missing       = $true
@@ -341,7 +342,7 @@ $PasswordSolution = [ordered] @{
                     Enable    = $true
                     Manager   = [ordered] @{
                         DisplayName  = 'IT Security'
-                        EmailAddress = 'przemyslaw.klys@evotec.pl'
+                        EmailAddress = 'przemyslaw.klys+testgithub@evotec.pl'
                     }
                     Reminders = @{
                         OnDayOfMonth = @{
@@ -357,7 +358,7 @@ $PasswordSolution = [ordered] @{
                     Enable        = $true
                     Manager       = [ordered] @{
                         DisplayName  = 'ITR01 Service Desk'
-                        EmailAddress = 'przemyslaw.klys@evotec.pl'
+                        EmailAddress = 'przemyslaw.klys+testgithub@evotec.pl'
                     }
                     Disabled      = $true
                     Missing       = $true
