@@ -15,7 +15,7 @@ Scan Active Directory forest for all users and their password expiration date
 ```
 Find-Password [[-Forest] <String>] [[-ExcludeDomains] <String[]>] [[-IncludeDomains] <String[]>]
  [[-ExtendedForestInformation] <IDictionary>] [[-OverwriteEmailProperty] <String>]
- [[-ReturnObjectsType] <String[]>] [<CommonParameters>]
+ [[-ReturnObjectsType] <String[]>] [[-RulesProperties] <String[]>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -116,6 +116,21 @@ Aliases:
 Required: False
 Position: 7
 Default value: @('Users', 'Contacts')
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RulesProperties
+{{ Fill RulesProperties Description }}
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 9
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
