@@ -38,7 +38,8 @@
         [Parameter(DontShow)][string] $HashtableField = 'DistinguishedName',
         [ValidateSet('Users', 'Contacts')][string[]] $ReturnObjectsType = @('Users', 'Contacts'),
         [Parameter(DontShow)][switch] $AsHashTableObject,
-        [Parameter(DontShow)][string[]] $AddEmptyProperties = @()
+        [Parameter(DontShow)][string[]] $AddEmptyProperties = @(),
+        [Parameter()][string[]] $RulesProperties
     )
     $Today = Get-Date
 
@@ -47,10 +48,21 @@
         'userAccountControl'
         'msExchMailboxGuid'
         'pwdLastSet', 'ObjectClass'
+        'LastLogonDate'
         if ($OverwriteEmailProperty) {
             $OverwriteEmailProperty
         }
+        foreach ($Rule in $RulesProperties) {
+            $Rule
+        }
     )
+    $Properties = $Properties | Sort-Object -Unique
+    # lets build extended properties that need
+    [Array] $ExtendedProperties = foreach ($Rule in $RulesProperties) {
+        $Rule
+    }
+    [Array] $ExtendedProperties = $ExtendedProperties | Sort-Object -Unique
+
     $PropertiesContacts = @(
         'SamAccountName', 'CanonicalName', 'WhenChanged', 'WhenChanged', 'DisplayName', 'DistinguishedName', 'Name', 'Mail', 'TargetAddress', 'ObjectClass'
     )
@@ -228,6 +240,11 @@
         } else {
             $HasMailbox = $false
         }
+        if ($User.LastLogonDate) {
+            $LastLogonDays = $( - $($User.LastLogonDate - $Today).Days)
+        } else {
+            $LastLogonDays = $null
+        }
         if ($AddEmptyProperties.Count -gt 0) {
             $StartUser = [ordered] @{
                 UserPrincipalName    = $User.UserPrincipalName
@@ -246,6 +263,8 @@
                 PasswordLastSet      = $User.PasswordLastSet
                 PasswordNotRequired  = $User.PasswordNotRequired
                 PasswordNeverExpires = $PasswordNeverExpires
+                LastLogonDate        = $User.LastLogonDate
+                LastLogonDays        = $LastLogonDays
             }
             foreach ($Property in $AddEmptyProperties) {
                 $StartUser.$Property = $null
@@ -287,6 +306,8 @@
                 PasswordLastSet       = $User.PasswordLastSet
                 PasswordNotRequired   = $User.PasswordNotRequired
                 PasswordNeverExpires  = $PasswordNeverExpires
+                LastLogonDate         = $User.LastLogonDate
+                LastLogonDays         = $LastLogonDays
                 Manager               = $Manager
                 ManagerDisplayName    = $ManagerDisplayName
                 ManagerSamAccountName = $ManagerSamAccountName
@@ -307,6 +328,9 @@
         }
         foreach ($Property in $ConditionProperties) {
             $MyUser["$Property"] = $User.$Property
+        }
+        foreach ($E in $ExtendedProperties) {
+            $MyUser[$E] = $User.$E
         }
         if ($HashtableField -eq 'NetBiosSamAccountName') {
             $HashField = $DNSNetBios[$MyUser.Domain] + '\' + $MyUser.SamAccountName
@@ -346,6 +370,8 @@
                 PasswordLastSet       = $null
                 PasswordNotRequired   = $null
                 PasswordNeverExpires  = $null
+                LastLogonDate         = $null
+                LastLogonDays         = $null
                 Manager               = $null
                 ManagerDisplayName    = $null
                 ManagerSamAccountName = $null
@@ -362,6 +388,11 @@
                 DistinguishedName     = $Contact.DistinguishedName
                 ManagerDN             = $null
                 Type                  = 'Contact'
+            }
+            # this allows to extend the object with custom properties requested by user
+            # especially custom extensions for use within rules
+            foreach ($E in $ExtendedProperties) {
+                $MyUser[$E] = $User.$E
             }
             if ($HashtableField -eq 'NetBiosSamAccountName') {
                 # Contacts do not have NetBiosSamAccountName
