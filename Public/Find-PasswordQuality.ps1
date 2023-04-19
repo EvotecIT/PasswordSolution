@@ -96,10 +96,10 @@
         DefaultComputerPassword                = $PasswordsInHash.DefaultComputerPassword.Count
         DefaultComputerPasswordEnabledOnly     = 0
         DefaultComputerPasswordDisabledOnly    = 0
-        PasswordNotRequired                    = $PasswordsInHash.PasswordNotRequired.Count
+        PasswordNotRequired                    = 0 # $PasswordsInHash.PasswordNotRequired.Count
         PasswordNotRequiredEnabledOnly         = 0
         PasswordNotRequiredDisabledOnly        = 0
-        PasswordNeverExpires                   = $PasswordsInHash.PasswordNeverExpires.Count
+        PasswordNeverExpires                   = 0 #$PasswordsInHash.PasswordNeverExpires.Count
         PasswordNeverExpiresEnabledOnly        = 0
         PasswordNeverExpiresDisabledOnly       = 0
         PreAuthNotRequired                     = $PasswordsInHash.PreAuthNotRequired.Count
@@ -114,10 +114,33 @@
     }
 
     $OutputUsers = foreach ($User in $AllUsers.Keys) {
+        if ($AllUsers[$User].PasswordNotRequired) {
+            $QualityStatistics.PasswordNotRequired++
+            if ($AllUsers[$User].Enabled -eq $true) {
+                $QualityStatistics.PasswordNotRequiredEnabledOnly++
+            } else {
+                $QualityStatistics.PasswordNotRequiredDisabledOnly++
+            }
+        }
+        if ($AllUsers[$User].PasswordNeverExpires) {
+            $QualityStatistics.PasswordNeverExpires++
+            if ($AllUsers[$User].Enabled -eq $true) {
+                $QualityStatistics.PasswordNeverExpiresEnabledOnly++
+            } else {
+                $QualityStatistics.PasswordNeverExpiresDisabledOnly++
+            }
+        }
         foreach ($Property in $PasswordsInHash.Keys) {
             if ($Property -eq 'DuplicatePasswordGroups') {
                 if ($PasswordGroupsUsers[$User]) {
                     $AllUsers[$User][$Property] = $PasswordGroupsUsers[$User]
+                    if ($AllUsers[$User].Enabled -eq $true) {
+                        $QualityStatistics["$($Property)EnabledOnly"]++
+                        $QualityStatistics.DuplicatePasswordUsersEnabledOnly++
+                    } else {
+                        $QualityStatistics["$($Property)DisabledOnly"]++
+                        $QualityStatistics.DuplicatePasswordUsersDisabledOnly++
+                    }
                 } else {
                     $AllUsers[$User][$Property] = ''
                 }
