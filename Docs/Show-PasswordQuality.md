@@ -14,7 +14,7 @@ schema: 2.0.0
 
 ```
 Show-PasswordQuality [[-FilePath] <String>] [-DontShow] [-Online] [[-WeakPasswords] <String[]>]
- [-SeparateDuplicateGroups] [<CommonParameters>]
+ [-SeparateDuplicateGroups] [-PassThru] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -93,6 +93,21 @@ Accept wildcard characters: False
 
 ### -SeparateDuplicateGroups
 If specified, report will show duplicate groups separately, one group per tab.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru
+{{ Fill PassThru Description }}
 
 ```yaml
 Type: SwitchParameter
