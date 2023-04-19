@@ -1,5 +1,8 @@
 ﻿# PasswordSolution Release History
 
+## 0.0.35 - 2023.04.19
+- Small fix to report
+
 ## 0.0.34 - 2023.04.19
 - Fixes reporting of quality passwords in overview, charts
 - Removed tables for Duplicate Groups in favor of single table (1000 tabs don't seem to work in HTML 🤯)

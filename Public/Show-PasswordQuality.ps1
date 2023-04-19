@@ -195,7 +195,7 @@
             } -ScrollX -ExcludeProperty 'RuleName', 'RuleOptions'
 
         }
-        if ($AdvancedReport) {
+        if ($SeparateDuplicateGroups) {
             New-HTMLSection -HeaderText "Duplicate Password Groups" {
                 $TotalDuplicateGroups = 0
                 $EnabledUsersInDuplicateGroups = 0
