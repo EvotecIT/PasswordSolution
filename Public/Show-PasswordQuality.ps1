@@ -42,7 +42,8 @@
         [switch] $DontShow,
         [switch] $Online,
         [string[]] $WeakPasswords,
-        [switch] $SeparateDuplicateGroups
+        [switch] $SeparateDuplicateGroups,
+        [switch] $PassThru
     )
     $TimeStart = Start-TimeLog
     $Script:Reporting = [ordered] @{}
@@ -94,12 +95,11 @@
                     New-HTMLText -Text "Here's a short overview of what this report shows:" -Color Blue -FontSize 12px
                     New-HTMLText -LineBreak
                     New-HTMLList {
-                        foreach ($Statistic in $Statistics.Keys | Where-Object { -not $_.EndsWith('Only') }) {
+                        foreach ($Statistic in $Statistics.Keys | Where-Object { $_ -notlike '*EnabledOnly' -and $_ -notlike '*DisabledOnly' } ) {
                             $ValueTotal = $Statistics[$Statistic]
                             if ($Statistic -eq "DuplicatePasswordGroups") {
                                 $ValueEnabled = $Statistics['DuplicatePasswordUsersEnabledOnly']
                                 $ValueDisabled = $Statistics['DuplicatePasswordUsersDisabledOnly']
-
                                 New-HTMLListItem -Text @(
                                     "$($Statistic)",
                                     " property shows there are "
@@ -108,6 +108,17 @@
                                 ) -Color Blue, None, Salmon, None, LightSkyBlue, None -FontWeight bold, normal, bold, normal, bold, normal
                             } elseif ($Statistic -eq 'DuplicatePasswordUsers') {
 
+                                $ValueEnabled = $Statistics['DuplicatePasswordUsersEnabledOnly']
+                                $ValueDisabled = $Statistics['DuplicatePasswordUsersDisabledOnly']
+
+                                New-HTMLListItem -Text @(
+                                    "$($Statistic)",
+                                    " property shows there are "
+                                    "$ValueEnabled"
+                                    " enabled "
+                                    $ValueDisabled
+                                    " accounts having duplicate passwords with other accounts."
+                                ) -Color Blue, None, Salmon, None, LightSkyBlue, None -FontWeight bold, normal, bold, normal, bold, normal
                             } else {
                                 $ValueEnabled = $Statistics[$Statistic + 'EnabledOnly']
                                 $ValueDisabled = $Statistics[$Statistic + 'DisabledOnly']
@@ -132,11 +143,15 @@
                     New-ChartBarOptions -Type barStacked
                     New-ChartAxisY -LabelMaxWidth 250 -Show -LabelAlign left
                     New-ChartLegend -LegendPosition bottom -HorizontalAlign center -Color Alizarin, LightSkyBlue -Names 'Enabled', 'Disabled'
-                    foreach ($Statistic in $Statistics.Keys | Where-Object { -not $_.EndsWith('Only') }) {
-                        $ValueEnabled = $Statistics[$Statistic + 'EnabledOnly']
-                        $ValueDisabled = $Statistics[$Statistic + 'DisabledOnly']
-                        #$ValueTotal = $Statistics[$Statistic]
-                        New-ChartBar -Name $Statistic -Value @($ValueEnabled, $ValueDisabled)
+                    foreach ($Statistic in $Statistics.Keys | Where-Object { $_ -notlike '*EnabledOnly' -and $_ -notlike '*DisabledOnly' } ) {
+                        if ($Statistic -eq "DuplicatePasswordGroups") {
+                            $ValueTotal = $Statistics[$Statistic]
+                            New-ChartBar -Name $Statistic -Value @($ValueTotal, 0)
+                        } else {
+                            $ValueEnabled = $Statistics[$Statistic + 'EnabledOnly']
+                            $ValueDisabled = $Statistics[$Statistic + 'DisabledOnly']
+                            New-ChartBar -Name $Statistic -Value @($ValueEnabled, $ValueDisabled)
+                        }
                     }
                     # # Define event
                     # New-ChartEvent -DataTableID 'NewIDtoSearchInChart' -ColumnID 0
@@ -180,64 +195,95 @@
             } -ScrollX -ExcludeProperty 'RuleName', 'RuleOptions'
 
         }
-        New-HTMLSection -HeaderText "Duplicate Password Groups" {
-            $TotalDuplicateGroups = 0
-            $EnabledUsersInDuplicateGroups = 0
-            $DisabledUsersInDuplicateGroups = 0
-            $DuplicateGroups = [ordered] @{}
-            foreach ($User in $Users) {
+        if ($AdvancedReport) {
+            New-HTMLSection -HeaderText "Duplicate Password Groups" {
+                $TotalDuplicateGroups = 0
+                $EnabledUsersInDuplicateGroups = 0
+                $DisabledUsersInDuplicateGroups = 0
+                $DuplicateGroups = [ordered] @{}
+                foreach ($User in $Users) {
 
-                if ($User.DuplicatePasswordGroups) {
-                    if ($User.Enabled) {
-                        $EnabledUsersInDuplicateGroups++
-                    } else {
-                        $DisabledUsersInDuplicateGroups++
-                    }
-                    if (-not $DuplicateGroups[$User.DuplicatePasswordGroups]) {
-                        $DuplicateGroups[$User.DuplicatePasswordGroups] = [System.Collections.Generic.List[pscustomobject]]::new()
-                    }
-                    $DuplicateGroups[$User.DuplicatePasswordGroups].Add($User)
-                }
-            }
-            $TotalDuplicateGroups = $DuplicateGroups.Keys.Count
-
-            New-HTMLContainer {
-
-                New-HTMLSection {
-                    New-HTMLPanel {
-                        New-HTMLToast -TextHeader 'Total Duplicate Groups' -Text "Groups of users to review: $TotalDuplicateGroups" -BarColorLeft MayaBlue -IconSolid info-circle -IconColor MayaBlue
-                    } -Invisible
-                    New-HTMLPanel {
-                        New-HTMLToast -TextHeader 'Enabled Users' -Text "Users with duplicate password that are enabled: $EnabledUsersInDuplicateGroups" -BarColorLeft OrangeRed -IconSolid info-circle -IconColor OrangeRed
-                    } -Invisible
-                    New-HTMLPanel {
-                        New-HTMLToast -TextHeader 'Disabled Users' -Text "Users with duplicate password that are disabled: $DisabledUsersInDuplicateGroups" -BarColorLeft OrangePeel -IconSolid info-circle -IconColor OrangePeel
-                    } -Invisible
-                } -Invisible
-
-                New-HTMLSection -Invisible {
-
-                    New-HTMLTabPanel {
-                        foreach ($DuplicateGroup in $DuplicateGroups.Keys | Sort-Object) {
-                            New-HTMLTab -Name "$DuplicateGroup ($($DuplicateGroups[$DuplicateGroup].Count))" {
-                                New-HTMLTable -DataTable $DuplicateGroups[$DuplicateGroup] {
-                                    New-HTMLTableCondition -Name 'Enabled' -ComparisonType string -Operator eq -Value $true -BackgroundColor LimeGreen -FailBackgroundColor BlizzardBlue
-                                    New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType number -Operator lt -Value 30 -BackgroundColor LimeGreen -HighlightHeaders LastLogonDays, LastLogonDate
-                                    New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType number -Operator gt -Value 30 -BackgroundColor Orange -HighlightHeaders LastLogonDays, LastLogonDate
-                                    New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType number -Operator gt -Value 60 -BackgroundColor Alizarin -HighlightHeaders LastLogonDays, LastLogonDate
-                                    New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType string -Operator eq -Value '' -BackgroundColor None -HighlightHeaders LastLogonDays, LastLogonDate
-                                    New-HTMLTableCondition -Name 'PasswordLastChangedDays' -ComparisonType number -Operator ge -Value 0 -BackgroundColor LimeGreen -HighlightHeaders PasswordLastSet, PasswordLastChangedDays
-                                    New-HTMLTableCondition -Name 'PasswordLastChangedDays' -ComparisonType number -Operator gt -Value 300 -BackgroundColor Orange -HighlightHeaders PasswordLastSet, PasswordLastChangedDays
-                                    New-HTMLTableCondition -Name 'PasswordLastChangedDays' -ComparisonType number -Operator gt -Value 360 -BackgroundColor Alizarin -HighlightHeaders PasswordLastSet, PasswordLastChangedDays
-                                    New-HTMLTableCondition -Name 'PasswordNotRequired' -ComparisonType string -Operator eq -Value $false -BackgroundColor LimeGreen -FailBackgroundColor Alizarin
-                                    New-HTMLTableCondition -Name 'PasswordExpired' -ComparisonType string -Operator eq -Value $false -BackgroundColor LimeGreen -FailBackgroundColor Alizarin -HighlightHeaders PasswordExpired, DaysToExpire, DateExpiry
-
-                                    foreach ($Property in $PropertiesHighlight) {
-                                        New-HTMLTableCondition -Name $Property -ComparisonType string -Operator eq -Value $true -BackgroundColor Salmon -FailBackgroundColor LightGreen
-                                    }
-                                } -Filtering -Title "Duplicate Password Group: $DuplicateGroup" -ScrollX -ExcludeProperty 'RuleName', 'RuleOptions'
+                    if ($User.DuplicatePasswordGroups) {
+                        if ($User.Enabled) {
+                            $EnabledUsersInDuplicateGroups++
+                        } else {
+                            $DisabledUsersInDuplicateGroups++
+                        }
+                        if (-not $DuplicateGroups[$User.DuplicatePasswordGroups]) {
+                            $DuplicateGroups[$User.DuplicatePasswordGroups] = [PSCustomObject] @{
+                                GroupName             = $User.DuplicatePasswordGroups
+                                UsersInGroup          = 0
+                                Users                 = [System.Collections.Generic.List[string]]::new()
+                                UsersBySamAccountName = [System.Collections.Generic.List[string]]::new()
+                                UsersByUPN            = [System.Collections.Generic.List[string]]::new()
+                                UsersByEmail          = [System.Collections.Generic.List[string]]::new()
                             }
                         }
+                        $DuplicateGroups[$User.DuplicatePasswordGroups].Users.Add($User.DisplayName)
+                        $DuplicateGroups[$User.DuplicatePasswordGroups].UsersByEmail.Add($User.EmailAddress)
+                        $DuplicateGroups[$User.DuplicatePasswordGroups].UsersByUPN.Add($User.UserPrincipalName)
+                        $DuplicateGroups[$User.DuplicatePasswordGroups].UsersBySamAccountName.Add($User.SamAccountName)
+                    }
+                }
+                $TotalDuplicateGroups = $DuplicateGroups.Keys.Count
+
+                foreach ($Group in $DuplicateGroups.Values) {
+                    $Group.UsersInGroup = $Group.Users.Count
+                }
+
+                New-HTMLContainer {
+                    New-HTMLSection {
+                        New-HTMLPanel {
+                            New-HTMLToast -TextHeader 'Total Duplicate Groups' -Text "Groups of users to review: $TotalDuplicateGroups" -BarColorLeft MayaBlue -IconSolid info-circle -IconColor MayaBlue
+                        } -Invisible
+                        New-HTMLPanel {
+                            New-HTMLToast -TextHeader 'Enabled Users' -Text "Users with duplicate password that are enabled: $EnabledUsersInDuplicateGroups" -BarColorLeft OrangeRed -IconSolid info-circle -IconColor OrangeRed
+                        } -Invisible
+                        New-HTMLPanel {
+                            New-HTMLToast -TextHeader 'Disabled Users' -Text "Users with duplicate password that are disabled: $DisabledUsersInDuplicateGroups" -BarColorLeft OrangePeel -IconSolid info-circle -IconColor OrangePeel
+                        } -Invisible
+                    } -Invisible
+
+                    New-HTMLSection -Invisible {
+                        New-HTMLTable -DataTable $DuplicateGroups.Values {
+                            # New-HTMLTableCondition -Name 'Enabled' -ComparisonType string -Operator eq -Value $true -BackgroundColor LimeGreen -FailBackgroundColor BlizzardBlue
+                            # New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType number -Operator lt -Value 30 -BackgroundColor LimeGreen -HighlightHeaders LastLogonDays, LastLogonDate
+                            # New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType number -Operator gt -Value 30 -BackgroundColor Orange -HighlightHeaders LastLogonDays, LastLogonDate
+                            # New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType number -Operator gt -Value 60 -BackgroundColor Alizarin -HighlightHeaders LastLogonDays, LastLogonDate
+                            # New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType string -Operator eq -Value '' -BackgroundColor None -HighlightHeaders LastLogonDays, LastLogonDate
+                            # New-HTMLTableCondition -Name 'PasswordLastChangedDays' -ComparisonType number -Operator ge -Value 0 -BackgroundColor LimeGreen -HighlightHeaders PasswordLastSet, PasswordLastChangedDays
+                            # New-HTMLTableCondition -Name 'PasswordLastChangedDays' -ComparisonType number -Operator gt -Value 300 -BackgroundColor Orange -HighlightHeaders PasswordLastSet, PasswordLastChangedDays
+                            # New-HTMLTableCondition -Name 'PasswordLastChangedDays' -ComparisonType number -Operator gt -Value 360 -BackgroundColor Alizarin -HighlightHeaders PasswordLastSet, PasswordLastChangedDays
+                            # New-HTMLTableCondition -Name 'PasswordNotRequired' -ComparisonType string -Operator eq -Value $false -BackgroundColor LimeGreen -FailBackgroundColor Alizarin
+                            # New-HTMLTableCondition -Name 'PasswordExpired' -ComparisonType string -Operator eq -Value $false -BackgroundColor LimeGreen -FailBackgroundColor Alizarin -HighlightHeaders PasswordExpired, DaysToExpire, DateExpiry
+
+                            # foreach ($Property in $PropertiesHighlight) {
+                            #     New-HTMLTableCondition -Name $Property -ComparisonType string -Operator eq -Value $true -BackgroundColor Salmon -FailBackgroundColor LightGreen
+                            # }
+                        } -Filtering -Title "Duplicate Password Group: $DuplicateGroup" -ScrollX -ExcludeProperty 'RuleName', 'RuleOptions'
+
+                        # New-HTMLTabPanel {
+                        #     foreach ($DuplicateGroup in $DuplicateGroups.Keys | Sort-Object) {
+                        #         New-HTMLTab -Name "$DuplicateGroup ($($DuplicateGroups[$DuplicateGroup].Count))" {
+                        #             New-HTMLTable -DataTable $DuplicateGroups[$DuplicateGroup] {
+                        #                 New-HTMLTableCondition -Name 'Enabled' -ComparisonType string -Operator eq -Value $true -BackgroundColor LimeGreen -FailBackgroundColor BlizzardBlue
+                        #                 New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType number -Operator lt -Value 30 -BackgroundColor LimeGreen -HighlightHeaders LastLogonDays, LastLogonDate
+                        #                 New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType number -Operator gt -Value 30 -BackgroundColor Orange -HighlightHeaders LastLogonDays, LastLogonDate
+                        #                 New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType number -Operator gt -Value 60 -BackgroundColor Alizarin -HighlightHeaders LastLogonDays, LastLogonDate
+                        #                 New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType string -Operator eq -Value '' -BackgroundColor None -HighlightHeaders LastLogonDays, LastLogonDate
+                        #                 New-HTMLTableCondition -Name 'PasswordLastChangedDays' -ComparisonType number -Operator ge -Value 0 -BackgroundColor LimeGreen -HighlightHeaders PasswordLastSet, PasswordLastChangedDays
+                        #                 New-HTMLTableCondition -Name 'PasswordLastChangedDays' -ComparisonType number -Operator gt -Value 300 -BackgroundColor Orange -HighlightHeaders PasswordLastSet, PasswordLastChangedDays
+                        #                 New-HTMLTableCondition -Name 'PasswordLastChangedDays' -ComparisonType number -Operator gt -Value 360 -BackgroundColor Alizarin -HighlightHeaders PasswordLastSet, PasswordLastChangedDays
+                        #                 New-HTMLTableCondition -Name 'PasswordNotRequired' -ComparisonType string -Operator eq -Value $false -BackgroundColor LimeGreen -FailBackgroundColor Alizarin
+                        #                 New-HTMLTableCondition -Name 'PasswordExpired' -ComparisonType string -Operator eq -Value $false -BackgroundColor LimeGreen -FailBackgroundColor Alizarin -HighlightHeaders PasswordExpired, DaysToExpire, DateExpiry
+
+                        #                 foreach ($Property in $PropertiesHighlight) {
+                        #                     New-HTMLTableCondition -Name $Property -ComparisonType string -Operator eq -Value $true -BackgroundColor Salmon -FailBackgroundColor LightGreen
+                        #                 }
+                        #             } -Filtering -Title "Duplicate Password Group: $DuplicateGroup" -ScrollX -ExcludeProperty 'RuleName', 'RuleOptions'
+                        #         }
+                        #     }
+                        # }
                     }
                 }
             }
@@ -249,4 +295,8 @@
     Write-Color '[i]', ' Time to generate HTML ', $EndLogHTML -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
     Write-Color '[i]', ' Time to generate ', $EndLog -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
     Write-Color '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
+
+    if ($PassThru) {
+        $PasswordQuality
+    }
 }
