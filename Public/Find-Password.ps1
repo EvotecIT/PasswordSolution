@@ -44,11 +44,14 @@
     $Today = Get-Date
 
     $Properties = @(
-        'Manager', 'DisplayName', 'GivenName', 'Surname', 'SamAccountName', 'EmailAddress', 'msDS-UserPasswordExpiryTimeComputed', 'PasswordExpired', 'PasswordLastSet', 'PasswordNotRequired', 'Enabled', 'PasswordNeverExpires', 'Mail', 'MemberOf', 'LastLogonDate', 'Name'
+        'Manager', 'DisplayName', 'GivenName', 'Surname', 'SamAccountName', 'EmailAddress',
+        'msDS-UserPasswordExpiryTimeComputed', 'PasswordExpired', 'PasswordLastSet', 'PasswordNotRequired',
+        'Enabled', 'PasswordNeverExpires', 'Mail', 'MemberOf', 'LastLogonDate', 'Name'
         'userAccountControl'
         'msExchMailboxGuid'
         'pwdLastSet', 'ObjectClass'
         'LastLogonDate'
+        'Country'
         if ($OverwriteEmailProperty) {
             $OverwriteEmailProperty
         }
@@ -245,6 +248,16 @@
         } else {
             $LastLogonDays = $null
         }
+
+        if ($User.Country) {
+            $Country = Convert-CountryCodeToCountry -CountryCode $User.Country
+            $CountryCode = $User.Country
+        } else {
+            $Country = 'Unknown'
+            $CountryCode = 'Unknown'
+        }
+
+
         if ($AddEmptyProperties.Count -gt 0) {
             $StartUser = [ordered] @{
                 UserPrincipalName    = $User.UserPrincipalName
@@ -285,6 +298,8 @@
                 MemberOf              = $User.MemberOf
                 DistinguishedName     = $User.DistinguishedName
                 ManagerDN             = $User.Manager
+                Country               = $Country
+                CountryCode           = $CountryCode
                 Type                  = 'User'
             }
             $MyUser = $StartUser + $EndUser
@@ -323,6 +338,8 @@
                 MemberOf              = $User.MemberOf
                 DistinguishedName     = $User.DistinguishedName
                 ManagerDN             = $User.Manager
+                Country               = $Country
+                CountryCode           = $CountryCode
                 Type                  = 'User'
             }
         }
@@ -387,6 +404,8 @@
                 MemberOf              = $Contact.MemberOf
                 DistinguishedName     = $Contact.DistinguishedName
                 ManagerDN             = $null
+                Country               = $null
+                CountryCode           = $null
                 Type                  = 'Contact'
             }
             # this allows to extend the object with custom properties requested by user
