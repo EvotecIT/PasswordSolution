@@ -21,12 +21,35 @@
 
 # PasswordSolution
 
-PasswordSolution is a PowerShell module that provides Password Expiry notifications to users, managers, security and administrators. It's very configurable and was designed for enterprise use.
+**PasswordSolution** is a PowerShell module that provides Password Expiry notifications to users, managers, security and administrators. It's very configurable and was designed for enterprise use.
 
 ## Features
 
-- Find all users with passwords that are expiring and send notifications
-- Find and asses password quality of users in a forest
+- Find all users with passwords that are expiring and send notifications including service accounts, admin accounts and accounts that never expire
+- Find and asses password quality of users in an Active Directory forest.
+
+## Support This Project
+
+If you find this project helpful, please consider supporting its development.
+Your sponsorship will help the maintainers dedicate more time to maintenance and new feature development for everyone.
+
+It takes a lot of time and effort to create and maintain this project.
+By becoming a sponsor, you can help ensure that it stays free and accessible to everyone who needs it.
+
+To become a sponsor, you can choose from the following options:
+
+ - [Become a sponsor via GitHub Sponsors :heart:](https://github.com/sponsors/PrzemyslawKlys)
+ - [Become a sponsor via PayPal :heart:](https://paypal.me/PrzemyslawKlys)
+
+Your sponsorship is completely optional and not required for using this project.
+We want this project to remain open-source and available for anyone to use for free,
+regardless of whether they choose to sponsor it or not.
+
+If you work for a company that uses our .NET libraries or PowerShell Modules,
+please consider asking your manager or marketing team if your company would be interested in supporting this project.
+Your company's support can help us continue to maintain and improve this project for the benefit of everyone.
+
+Thank you for considering supporting this project!
 
 ## Installing
 
@@ -38,12 +61,13 @@ Install-Module -Name PasswordSolution -AllowClobber -Force -Verbose
 ```
 
 If you want to use Password Quality checks you need to install DSInternals manually.
+Due to sensitive nature of the module it's not included in the package.
 
 ```powershell
 Install-Module DSInternals -Force -Verbose
 ```
 
-Force and AllowClobber aren't necessary, but they do skip errors in case some appear.
+Force and AllowClobber aren't necessary, but they do skip errors in case some appear, and they do update module if newer version is available.
 
 ## Updating
 
