@@ -18,7 +18,8 @@
     If specified report will use CDN for JS and CSS files.
     If not specified, it will merge all CSS and JS files into one HTML file.
     This makes the file at least 3MB bigger, even if there is very small amount of data.
-    Keep in mindd that this report can be created without internet access, just that using it with -Online switch will require internet access.
+    Keep in mind that this report can be created without internet access,
+    just that opening it in a browser with -Online switch will require internet access.
 
     .PARAMETER WeakPasswords
     List of weak passwords that should be checked for.
@@ -38,23 +39,35 @@
     #>
     [CmdletBinding()]
     param(
+        [alias('ForestName')][string] $Forest,
+        [string[]] $ExcludeDomains,
+        [alias('Domain', 'Domains')][string[]] $IncludeDomains,
+        [System.Collections.IDictionary] $ExtendedForestInformation,
         [string] $FilePath,
         [switch] $DontShow,
         [switch] $Online,
         [string[]] $WeakPasswords,
         [switch] $SeparateDuplicateGroups,
         [switch] $PassThru,
-        [switch] $AddWorldMap
+        [switch] $AddWorldMap,
+        [alias('LogFile')][string] $LogPath,
+        [switch] $LogShowTime,
+        [string] $LogTimeFormat = "yyyy-MM-dd HH:mm:ss"
     )
     $TimeStart = Start-TimeLog
     $Script:Reporting = [ordered] @{}
     $Script:Reporting['Version'] = Get-GitHubVersion -Cmdlet 'Show-PasswordQuality' -RepositoryOwner 'evotecit' -RepositoryName 'PasswordSolution'
 
+    Write-Color -Text '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
 
-    Write-Color '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
+    Set-LoggingCapabilities -LogPath $LogPath -LogMaximum $LogMaximum -ShowTime:$LogShowTime.IsPresent -TimeFormat $TimeFormat
+    # since the first entry didn't go to log file, this will
+    Write-Color -InformationAction SilentlyContinue -Text '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta -NoConsoleOutput
+
     Write-Color '[i]', ' Gathering passwords data' -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
+    Write-Color '[i]', ' Using provided ', $WeakPasswords.Count, " weak passwords to verify against." -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
     $TimeStartPasswords = Start-TimeLog
-    $PasswordQuality = Find-PasswordQuality -IncludeStatistics -WeakPasswords $WeakPasswords
+    $PasswordQuality = Find-PasswordQuality -IncludeStatistics -WeakPasswords $WeakPasswords -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
     if (-not $PasswordQuality) {
         # most likely DSInternals not installed
         return
@@ -66,6 +79,7 @@
     $Continents = $PasswordQuality.StatisticsContinents
 
     $EndLogPasswords = Stop-TimeLog -Time $TimeStartPasswords -Option OneLiner
+
     Write-Color '[i]', ' Time to gather passwords data ', $EndLogPasswords -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
 
     $TimeStartHTML = Start-TimeLog
@@ -87,17 +101,26 @@
             }
         }
 
+        Write-Color -Text '[i] ', 'Generating summary statistics' -Color Yellow, DarkGray
+
         New-HTMLSection {
             New-HTMLSection -Invisible {
                 New-HTMLPanel -Invisible {
                     New-HTMLText -Text @(
-                        "This report shows current status of a forest."
-                        "It focuses on the password quality that users are using across domain. "
-
+                        "This report shows current status of an Active Directory forest $($PasswordQuality.Forest)."
+                        "It focuses on the password quality of users in the following domains: "
                     ) -FontSize 12px
-                    New-HTMLText -LineBreak
-                    New-HTMLText -Text "Here's a short overview of what this report shows:" -Color Blue -FontSize 12px
-                    New-HTMLText -LineBreak
+                    New-HTMLList {
+                        foreach ($Domain in $PasswordQuality.Domains) {
+                            New-HTMLListItem -Text $Domain -Color Blue
+                        }
+                    } -FontSize 12px
+                    New-HTMLText -Text @(
+                        "This report uses ", $WeakPasswords.Count, " weak passwords to check for, as provided during runtime."
+                    ) -FontSize 12px -Color None, Red, None -FontWeight normal, bold, normal
+                    #New-HTMLText -LineBreak
+                    New-HTMLText -Text "Here's a short overview of what this report shows:" -Color None -FontSize 12px
+                    #New-HTMLText -LineBreak
                     New-HTMLList {
                         foreach ($Statistic in $Statistics.Keys | Where-Object { $_ -notlike '*EnabledOnly' -and $_ -notlike '*DisabledOnly' } ) {
                             $ValueTotal = $Statistics[$Statistic]
@@ -179,6 +202,9 @@
             'SmartCardUsersWithPassword'
             #'DuplicatePasswordGroups'
         )
+
+        Write-Color -Text '[i] ', 'Generating users table with all information' -Color Yellow, DarkGray
+
         New-HTMLSection -HeaderText "Password Quality" {
             New-HTMLTable -DataTable $Users -Filtering {
                 New-HTMLTableCondition -Name 'Enabled' -ComparisonType string -Operator eq -Value $true -BackgroundColor LimeGreen -FailBackgroundColor BlizzardBlue
@@ -281,7 +307,7 @@
                                                 New-HTMLText -Text @(
                                                     'Unknown / Unavailable'
                                                     '<br>'
-                                                    "Duplicate passwords count: $($CountriesCodes['DuplicatePasswordUsers'][$Country])"
+                                                    "Users with duplicate passwords $($CountriesCodes['DuplicatePasswordUsers'][$Country])"
                                                 ) -Color Black, Black, Blue -FontWeight bold, normal, normal -SkipParagraph -FontSize 15px, 14px, 14px
                                             }
                                         } else {
@@ -289,7 +315,7 @@
                                                 New-HTMLText -Text @(
                                                     Convert-CountryCodeToCountry -CountryCode $Country
                                                     '<br>'
-                                                    "Duplicate passwords count: $($CountriesCodes['DuplicatePasswordUsers'][$Country])"
+                                                    "Users with duplicate passwords $($CountriesCodes['DuplicatePasswordUsers'][$Country])"
                                                 ) -Color Black, Black, Blue -FontWeight bold, normal, normal -SkipParagraph -FontSize 15px, 14px, 14px
                                             }
                                         }
@@ -303,7 +329,7 @@
                                     New-MapLegendSlice -Type 'Area' -Label 'Duplicate between 16 and 30' -Min 16 -Max 30 -SliceColor 'CarnationPink' -StrokeWidth 0
                                     New-MapLegendSlice -Type 'Area' -Label 'Duplicate between 31 and 50' -Min 31 -Max 50 -SliceColor 'OrangeRed' -StrokeWidth 0
                                     New-MapLegendSlice -Type 'Area' -Label 'Duplicate over 50' -Min 51 -Max 300 -SliceColor 'Scarlet' -StrokeWidth 0
-                                } -ShowAreaLegend -AreaTitle "Duplicate Passwords Users"
+                                } -ShowAreaLegend #-AreaTitle "Duplicate Passwords Users"
                             }
                         }
                     }
@@ -313,6 +339,61 @@
                     New-HTMLTab -Name 'Duplicate Passwords Per Continent' {
                         New-HTMLTable -DataTable $Continents['DuplicatePasswordUsers'] -Filtering
                     }
+                }
+            }
+            Write-Color -Text '[i] ', 'Generating weak password map' -Color Yellow, DarkGray
+            New-HTMLSection -HeaderText 'Weak Password Per Country' {
+                New-HTMLTabPanel {
+                    New-HTMLTab -Name 'Map showing weak password per country' {
+                        New-HTMLSection -Invisible {
+                            New-HTMLPanel {
+                                New-HTMLMap -Map world_countries {
+                                    # add the map areas
+                                    # we will add unknown countries to the Greenland area
+                                    foreach ($Country in $CountriesCodes['WeakPassword'].Keys) {
+                                        if ($Country -eq 'Unknown') {
+                                            New-MapArea -Area 'GL' -Value $CountriesCodes['WeakPassword'][$Country] -Tooltip {
+                                                New-HTMLText -Text @(
+                                                    'Unknown / Unavailable'
+                                                    '<br>'
+                                                    "Users with weak passwords $($CountriesCodes['WeakPassword'][$Country])"
+                                                ) -Color Black, Black, Blue -FontWeight bold, normal, normal -SkipParagraph -FontSize 15px, 14px, 14px
+                                            }
+                                        } else {
+                                            New-MapArea -Area $Country -Value $CountriesCodes['WeakPassword'][$Country] -Tooltip {
+                                                New-HTMLText -Text @(
+                                                    Convert-CountryCodeToCountry -CountryCode $Country
+                                                    '<br>'
+                                                    "Users with weak passwords $($CountriesCodes['WeakPassword'][$Country])"
+                                                ) -Color Black, Black, Blue -FontWeight bold, normal, normal -SkipParagraph -FontSize 15px, 14px, 14px
+                                            }
+                                        }
+                                    }
+                                    # configure legend
+                                    New-MapLegendOption -Type 'Area' -Mode horizontal
+                                    New-MapLegendOption -Type 'Plot' -Mode horizontal
+                                    # add legend
+                                    New-MapLegendSlice -Type 'Area' -Label 'Weak passwords up to 5' -Min 0 -Max 5 -SliceColor 'Bisque' -StrokeWidth 0
+                                    New-MapLegendSlice -Type 'Area' -Label 'Weak between 5 and 15' -Min 6 -Max 15 -SliceColor 'Amber' -StrokeWidth 0
+                                    New-MapLegendSlice -Type 'Area' -Label 'Weak between 16 and 30' -Min 16 -Max 30 -SliceColor 'CarnationPink' -StrokeWidth 0
+                                    New-MapLegendSlice -Type 'Area' -Label 'Weak between 31 and 50' -Min 31 -Max 50 -SliceColor 'OrangeRed' -StrokeWidth 0
+                                    New-MapLegendSlice -Type 'Area' -Label 'Weak over 50' -Min 51 -Max 300 -SliceColor 'Scarlet' -StrokeWidth 0
+                                } -ShowAreaLegend #-AreaTitle "Weak Password Users"
+                            }
+                        }
+                    }
+                    New-HTMLTab -Name 'Weak Password Per Country' {
+                        New-HTMLTable -DataTable $Countries['WeakPassword'] -Filtering
+                    }
+                    New-HTMLTab -Name 'Weak Password Per Continent' {
+                        New-HTMLTable -DataTable $Continents['WeakPassword'] -Filtering
+                    }
+                }
+            }
+            if ($LogPath -and (Test-Path -LiteralPath $LogPath)) {
+                $LogContent = Get-Content -Raw -LiteralPath $LogPath
+                New-HTMLSection -Name 'Log' {
+                    New-HTMLCodeBlock -Code $LogContent -Style generic
                 }
             }
         }
