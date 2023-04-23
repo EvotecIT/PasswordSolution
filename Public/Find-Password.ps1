@@ -77,7 +77,7 @@
     if (-not $Cache) {
         $Cache = [ordered] @{ }
     }
-    Write-Color -Text "[i] Discovering forest information" -Color White, Yellow, White, Yellow, White, Yellow, White
+    Write-Color -Text '[i] ', "Discovering forest information" -Color Yellow, White
     $ForestInformation = Get-WinADForestDetails -PreferWritable -Extended -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
 
     # lets get domain name / netbios hashtable for easy use
@@ -87,10 +87,10 @@
     }
 
     [Array] $Users = foreach ($Domain in $ForestInformation.Domains) {
-        Write-Color -Text "[i] Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color White, Yellow, White, Yellow, White, Yellow, White
+        Write-Color -Text "[i] ", "Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color Yellow, White, Yellow, White
         $Server = $ForestInformation['QueryServers'][$Domain]['HostName'][0]
 
-        Write-Color -Text "[i] Getting users from ", "$($Domain)", " using ", $Server -Color White, Yellow, White, Yellow, White, Yellow, White
+        Write-Color -Text "[i] ", "Getting users from ", "$($Domain)", " using ", $Server -Color Yellow, White, Yellow, White
         try {
             Get-ADUser -Server $Server -Filter '*' -Properties $Properties -ErrorAction Stop
         } catch {
@@ -104,10 +104,10 @@
 
     if ($ReturnObjectsType -contains 'Contacts') {
         [Array] $Contacts = foreach ($Domain in $ForestInformation.Domains) {
-            Write-Color -Text "[i] Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color White, Yellow, White, Yellow, White, Yellow, White
+            Write-Color -Text "[i] ", "Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color Yellow, White, Yellow, White
             $Server = $ForestInformation['QueryServers'][$Domain]['HostName'][0]
 
-            Write-Color -Text "[i] Getting contacts from ", "$($Domain)", " using ", $Server -Color White, Yellow, White, Yellow, White, Yellow, White
+            Write-Color -Text "[i] ", "Getting contacts from ", "$($Domain)", " using ", $Server -Color Yellow, White, Yellow, White
             try {
                 Get-ADObject -LDAPFilter "objectClass=Contact" -Server $Server -Properties $PropertiesContacts -ErrorAction Stop
             } catch {
@@ -120,7 +120,7 @@
         }
     }
 
-    Write-Color -Text "[i] Preparing all users for password expirations in forest ", $Forest.Name -Color White, Yellow, White, Yellow, White, Yellow, White
+    Write-Color -Text "[i] ", "Preparing all users for password expirations in forest ", $Forest.Name -Color Yellow, White, Yellow, White
     $CountUsers = 0
     foreach ($User in $Users) {
         $CountUsers++
