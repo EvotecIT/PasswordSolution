@@ -51,6 +51,7 @@
         [switch] $PassThru,
         [switch] $AddWorldMap,
         [alias('LogFile')][string] $LogPath,
+        [int] $LogMaximum,
         [switch] $LogShowTime,
         [string] $LogTimeFormat = "yyyy-MM-dd HH:mm:ss"
     )
@@ -242,7 +243,9 @@
                         if (-not $DuplicateGroups[$User.DuplicatePasswordGroups]) {
                             $DuplicateGroups[$User.DuplicatePasswordGroups] = [PSCustomObject] @{
                                 GroupName             = $User.DuplicatePasswordGroups
-                                UsersInGroup          = 0
+                                UsersTotal            = 0
+                                UsersEnabled          = 0
+                                UsersDisabled         = 0
                                 Users                 = [System.Collections.Generic.List[string]]::new()
                                 Country               = [System.Collections.Generic.List[string]]::new()
                                 UsersBySamAccountName = [System.Collections.Generic.List[string]]::new()
@@ -250,7 +253,14 @@
                                 UsersByEmail          = [System.Collections.Generic.List[string]]::new()
                             }
                         }
-                        $DuplicateGroups[$User.DuplicatePasswordGroups].Users.Add($User.DisplayName)
+                        $DuplicateGroups[$User.DuplicatePasswordGroups].Users.Add($User.Name)
+                        if ($User.Enabled) {
+                            $DuplicateGroups[$User.DuplicatePasswordGroups].UsersEnabled++
+                        } else {
+                            $DuplicateGroups[$User.DuplicatePasswordGroups].UsersDisabled++
+                        }
+                        $DuplicateGroups[$User.DuplicatePasswordGroups].UsersTotal++
+
                         if ($User.EmailAddress) {
                             $DuplicateGroups[$User.DuplicatePasswordGroups].UsersByEmail.Add($User.EmailAddress)
                         }
@@ -267,7 +277,7 @@
                 $TotalDuplicateGroups = $DuplicateGroups.Keys.Count
 
                 foreach ($Group in $DuplicateGroups.Values) {
-                    $Group.UsersInGroup = $Group.Users.Count
+                    # $Group.UsersTotal = $Group.Users.Count
                     $Group.Country = $Group.Country | Select-Object -Unique
                 }
 
@@ -284,10 +294,32 @@
                         } -Invisible
                     } -Invisible
 
+                    New-HTMLText -Text @(
+                        'The following table shows the users that have the same password as other users in the same group. '
+                        'The table is sortable and filterable. '
+                        'The table also shows the country of the user. '
+                        'The table also shows the email address, UPN and SamAccountName of the user.'
+                    ) -FontSize 12px
+
                     New-HTMLSection -Invisible {
-                        New-HTMLTable -DataTable $DuplicateGroups.Values {
-                        } -Filtering -Title "Duplicate Password Group: $DuplicateGroup" -ScrollX -ExcludeProperty 'RuleName', 'RuleOptions', 'Type', 'CountryCode'
+                        New-HTMLTable -DataTable $DuplicateGroups.Values -Filtering -Title "Duplicate Password Group: $DuplicateGroup" {
+
+                        }-ScrollX -ExcludeProperty 'RuleName', 'RuleOptions', 'Type', 'CountryCode'
                     }
+
+                    New-HTMLText -Text @(
+                        "Please NOTE: "
+                        "number of "
+                        "users"
+                        " , may not be the same as the number of users in "
+                        "UsersBySamAccountName"
+                        ", "
+                        "UsersByUpn"
+                        " or "
+                        "UsersByEmail"
+                        " columns. We only show users with email address, UPN or SamAccountName if it exists. "
+                        "If the account doesn't have email, UPN or SamAccountName, we don't show it in the table."
+                    ) -FontSize 12px -FontWeight bold, normal, bold, normal, bold, normal, bold, normal, bold, normal, normal
                 }
             }
         }
@@ -330,6 +362,9 @@
                                     New-MapLegendSlice -Type 'Area' -Label 'Duplicate between 31 and 50' -Min 31 -Max 50 -SliceColor 'OrangeRed' -StrokeWidth 0
                                     New-MapLegendSlice -Type 'Area' -Label 'Duplicate over 50' -Min 51 -Max 300 -SliceColor 'Scarlet' -StrokeWidth 0
                                 } -ShowAreaLegend #-AreaTitle "Duplicate Passwords Users"
+                                New-HTMLText -Text @(
+                                    "The map shows the number of users with duplicate passwords per country. The legend shows the number of users with duplicate passwords per color."
+                                ) -FontSize 12px
                             }
                         }
                     }
