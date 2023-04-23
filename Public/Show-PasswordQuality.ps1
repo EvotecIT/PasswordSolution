@@ -43,7 +43,8 @@
         [switch] $Online,
         [string[]] $WeakPasswords,
         [switch] $SeparateDuplicateGroups,
-        [switch] $PassThru
+        [switch] $PassThru,
+        [switch] $AddWorldMap
     )
     $TimeStart = Start-TimeLog
     $Script:Reporting = [ordered] @{}
@@ -60,6 +61,9 @@
     }
     $Users = $PasswordQuality.Users
     $Statistics = $PasswordQuality.Statistics
+    $Countries = $PasswordQuality.StatisticsCountry
+    $CountriesCodes = $PasswordQuality.StatisticsCountryCode
+    $Continents = $PasswordQuality.StatisticsContinents
 
     $EndLogPasswords = Stop-TimeLog -Time $TimeStartPasswords -Option OneLiner
     Write-Color '[i]', ' Time to gather passwords data ', $EndLogPasswords -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
@@ -164,7 +168,7 @@
             'LMHash'
             'EmptyPassword'
             'WeakPassword'
-            'DefaultComputerPassword'
+            #'DefaultComputerPassword'
             #'PasswordNotRequired'
             #'PasswordNeverExpires'
             'AESKeysMissing'
@@ -196,13 +200,13 @@
 
         }
         if ($SeparateDuplicateGroups) {
+            Write-Color -Text '[i] ', 'Generating duplicate password groups section' -Color Yellow, DarkGray
             New-HTMLSection -HeaderText "Duplicate Password Groups" {
                 $TotalDuplicateGroups = 0
                 $EnabledUsersInDuplicateGroups = 0
                 $DisabledUsersInDuplicateGroups = 0
                 $DuplicateGroups = [ordered] @{}
                 foreach ($User in $Users) {
-
                     if ($User.DuplicatePasswordGroups) {
                         if ($User.Enabled) {
                             $EnabledUsersInDuplicateGroups++
@@ -214,21 +218,31 @@
                                 GroupName             = $User.DuplicatePasswordGroups
                                 UsersInGroup          = 0
                                 Users                 = [System.Collections.Generic.List[string]]::new()
+                                Country               = [System.Collections.Generic.List[string]]::new()
                                 UsersBySamAccountName = [System.Collections.Generic.List[string]]::new()
                                 UsersByUPN            = [System.Collections.Generic.List[string]]::new()
                                 UsersByEmail          = [System.Collections.Generic.List[string]]::new()
                             }
                         }
                         $DuplicateGroups[$User.DuplicatePasswordGroups].Users.Add($User.DisplayName)
-                        $DuplicateGroups[$User.DuplicatePasswordGroups].UsersByEmail.Add($User.EmailAddress)
-                        $DuplicateGroups[$User.DuplicatePasswordGroups].UsersByUPN.Add($User.UserPrincipalName)
-                        $DuplicateGroups[$User.DuplicatePasswordGroups].UsersBySamAccountName.Add($User.SamAccountName)
+                        if ($User.EmailAddress) {
+                            $DuplicateGroups[$User.DuplicatePasswordGroups].UsersByEmail.Add($User.EmailAddress)
+                        }
+                        if ($User.UserPrincipalName) {
+                            $DuplicateGroups[$User.DuplicatePasswordGroups].UsersByUPN.Add($User.UserPrincipalName)
+                        }
+                        if ($User.SamAccountName) {
+                            $DuplicateGroups[$User.DuplicatePasswordGroups].UsersBySamAccountName.Add($User.SamAccountName)
+                        }
+                        $DuplicateGroups[$User.DuplicatePasswordGroups].Country.Add($User.Country)
                     }
                 }
+
                 $TotalDuplicateGroups = $DuplicateGroups.Keys.Count
 
                 foreach ($Group in $DuplicateGroups.Values) {
                     $Group.UsersInGroup = $Group.Users.Count
+                    $Group.Country = $Group.Country | Select-Object -Unique
                 }
 
                 New-HTMLContainer {
@@ -246,44 +260,58 @@
 
                     New-HTMLSection -Invisible {
                         New-HTMLTable -DataTable $DuplicateGroups.Values {
-                            # New-HTMLTableCondition -Name 'Enabled' -ComparisonType string -Operator eq -Value $true -BackgroundColor LimeGreen -FailBackgroundColor BlizzardBlue
-                            # New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType number -Operator lt -Value 30 -BackgroundColor LimeGreen -HighlightHeaders LastLogonDays, LastLogonDate
-                            # New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType number -Operator gt -Value 30 -BackgroundColor Orange -HighlightHeaders LastLogonDays, LastLogonDate
-                            # New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType number -Operator gt -Value 60 -BackgroundColor Alizarin -HighlightHeaders LastLogonDays, LastLogonDate
-                            # New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType string -Operator eq -Value '' -BackgroundColor None -HighlightHeaders LastLogonDays, LastLogonDate
-                            # New-HTMLTableCondition -Name 'PasswordLastChangedDays' -ComparisonType number -Operator ge -Value 0 -BackgroundColor LimeGreen -HighlightHeaders PasswordLastSet, PasswordLastChangedDays
-                            # New-HTMLTableCondition -Name 'PasswordLastChangedDays' -ComparisonType number -Operator gt -Value 300 -BackgroundColor Orange -HighlightHeaders PasswordLastSet, PasswordLastChangedDays
-                            # New-HTMLTableCondition -Name 'PasswordLastChangedDays' -ComparisonType number -Operator gt -Value 360 -BackgroundColor Alizarin -HighlightHeaders PasswordLastSet, PasswordLastChangedDays
-                            # New-HTMLTableCondition -Name 'PasswordNotRequired' -ComparisonType string -Operator eq -Value $false -BackgroundColor LimeGreen -FailBackgroundColor Alizarin
-                            # New-HTMLTableCondition -Name 'PasswordExpired' -ComparisonType string -Operator eq -Value $false -BackgroundColor LimeGreen -FailBackgroundColor Alizarin -HighlightHeaders PasswordExpired, DaysToExpire, DateExpiry
-
-                            # foreach ($Property in $PropertiesHighlight) {
-                            #     New-HTMLTableCondition -Name $Property -ComparisonType string -Operator eq -Value $true -BackgroundColor Salmon -FailBackgroundColor LightGreen
-                            # }
-                        } -Filtering -Title "Duplicate Password Group: $DuplicateGroup" -ScrollX -ExcludeProperty 'RuleName', 'RuleOptions'
-
-                        # New-HTMLTabPanel {
-                        #     foreach ($DuplicateGroup in $DuplicateGroups.Keys | Sort-Object) {
-                        #         New-HTMLTab -Name "$DuplicateGroup ($($DuplicateGroups[$DuplicateGroup].Count))" {
-                        #             New-HTMLTable -DataTable $DuplicateGroups[$DuplicateGroup] {
-                        #                 New-HTMLTableCondition -Name 'Enabled' -ComparisonType string -Operator eq -Value $true -BackgroundColor LimeGreen -FailBackgroundColor BlizzardBlue
-                        #                 New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType number -Operator lt -Value 30 -BackgroundColor LimeGreen -HighlightHeaders LastLogonDays, LastLogonDate
-                        #                 New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType number -Operator gt -Value 30 -BackgroundColor Orange -HighlightHeaders LastLogonDays, LastLogonDate
-                        #                 New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType number -Operator gt -Value 60 -BackgroundColor Alizarin -HighlightHeaders LastLogonDays, LastLogonDate
-                        #                 New-HTMLTableCondition -Name 'LastLogonDays' -ComparisonType string -Operator eq -Value '' -BackgroundColor None -HighlightHeaders LastLogonDays, LastLogonDate
-                        #                 New-HTMLTableCondition -Name 'PasswordLastChangedDays' -ComparisonType number -Operator ge -Value 0 -BackgroundColor LimeGreen -HighlightHeaders PasswordLastSet, PasswordLastChangedDays
-                        #                 New-HTMLTableCondition -Name 'PasswordLastChangedDays' -ComparisonType number -Operator gt -Value 300 -BackgroundColor Orange -HighlightHeaders PasswordLastSet, PasswordLastChangedDays
-                        #                 New-HTMLTableCondition -Name 'PasswordLastChangedDays' -ComparisonType number -Operator gt -Value 360 -BackgroundColor Alizarin -HighlightHeaders PasswordLastSet, PasswordLastChangedDays
-                        #                 New-HTMLTableCondition -Name 'PasswordNotRequired' -ComparisonType string -Operator eq -Value $false -BackgroundColor LimeGreen -FailBackgroundColor Alizarin
-                        #                 New-HTMLTableCondition -Name 'PasswordExpired' -ComparisonType string -Operator eq -Value $false -BackgroundColor LimeGreen -FailBackgroundColor Alizarin -HighlightHeaders PasswordExpired, DaysToExpire, DateExpiry
-
-                        #                 foreach ($Property in $PropertiesHighlight) {
-                        #                     New-HTMLTableCondition -Name $Property -ComparisonType string -Operator eq -Value $true -BackgroundColor Salmon -FailBackgroundColor LightGreen
-                        #                 }
-                        #             } -Filtering -Title "Duplicate Password Group: $DuplicateGroup" -ScrollX -ExcludeProperty 'RuleName', 'RuleOptions'
-                        #         }
-                        #     }
-                        # }
+                        } -Filtering -Title "Duplicate Password Group: $DuplicateGroup" -ScrollX -ExcludeProperty 'RuleName', 'RuleOptions', 'Type', 'CountryCode'
+                    }
+                }
+            }
+        }
+        if ($AddWorldMap) {
+            Write-Color -Text '[i] ', 'Generating duplicate passwords map' -Color Yellow, DarkGray
+            New-HTMLSection -HeaderText 'Duplicate Passwords Per Country' {
+                New-HTMLTabPanel {
+                    New-HTMLTab -Name 'Map showing duplicate passwords per country' {
+                        New-HTMLSection -Invisible {
+                            New-HTMLPanel {
+                                New-HTMLMap -Map world_countries {
+                                    # add the map areas
+                                    # we will add unknown countries to the Greenland area
+                                    foreach ($Country in $CountriesCodes['DuplicatePasswordUsers'].Keys) {
+                                        if ($Country -eq 'Unknown') {
+                                            New-MapArea -Area 'GL' -Value $CountriesCodes['DuplicatePasswordUsers'][$Country] -Tooltip {
+                                                New-HTMLText -Text @(
+                                                    'Unknown / Unavailable'
+                                                    '<br>'
+                                                    "Duplicate passwords count: $($CountriesCodes['DuplicatePasswordUsers'][$Country])"
+                                                ) -Color Black, Black, Blue -FontWeight bold, normal, normal -SkipParagraph -FontSize 15px, 14px, 14px
+                                            }
+                                        } else {
+                                            New-MapArea -Area $Country -Value $CountriesCodes['DuplicatePasswordUsers'][$Country] -Tooltip {
+                                                New-HTMLText -Text @(
+                                                    Convert-CountryCodeToCountry -CountryCode $Country
+                                                    '<br>'
+                                                    "Duplicate passwords count: $($CountriesCodes['DuplicatePasswordUsers'][$Country])"
+                                                ) -Color Black, Black, Blue -FontWeight bold, normal, normal -SkipParagraph -FontSize 15px, 14px, 14px
+                                            }
+                                        }
+                                    }
+                                    # configure legend
+                                    New-MapLegendOption -Type 'Area' -Mode horizontal
+                                    New-MapLegendOption -Type 'Plot' -Mode horizontal
+                                    # add legend
+                                    New-MapLegendSlice -Type 'Area' -Label 'Duplicate passwords up to 5' -Min 0 -Max 5 -SliceColor 'Bisque' -StrokeWidth 0
+                                    New-MapLegendSlice -Type 'Area' -Label 'Duplicate between 5 and 15' -Min 6 -Max 15 -SliceColor 'Amber' -StrokeWidth 0
+                                    New-MapLegendSlice -Type 'Area' -Label 'Duplicate between 16 and 30' -Min 16 -Max 30 -SliceColor 'CarnationPink' -StrokeWidth 0
+                                    New-MapLegendSlice -Type 'Area' -Label 'Duplicate between 31 and 50' -Min 31 -Max 50 -SliceColor 'OrangeRed' -StrokeWidth 0
+                                    New-MapLegendSlice -Type 'Area' -Label 'Duplicate over 50' -Min 51 -Max 300 -SliceColor 'Scarlet' -StrokeWidth 0
+                                } -ShowAreaLegend -AreaTitle "Duplicate Passwords Users"
+                            }
+                        }
+                    }
+                    New-HTMLTab -Name 'Duplicate Passwords Per Country' {
+                        New-HTMLTable -DataTable $Countries['DuplicatePasswordUsers'] -Filtering
+                    }
+                    New-HTMLTab -Name 'Duplicate Passwords Per Continent' {
+                        New-HTMLTable -DataTable $Continents['DuplicatePasswordUsers'] -Filtering
                     }
                 }
             }
