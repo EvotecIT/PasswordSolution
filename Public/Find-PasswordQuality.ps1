@@ -53,7 +53,7 @@
     Write-Color -Text "[i] Testing password quality" -Color Yellow, Gray, White, Yellow, White, Yellow, White
     $Quality = $PasswordQuality | Test-PasswordQuality @testPasswordQualitySplat -IncludeDisabledAccounts
 
-    Write-Color -Text "[i] Processing results" -Color Yellow, Gray, White, Yellow, White, Yellow, White
+    Write-Color -Text "[i] Processing results, merging data from DSInternals" -Color Yellow, Gray, White, Yellow, White, Yellow, White
     foreach ($Property in $Quality.PSObject.Properties.Name) {
         $PasswordsInHash[$Property] = $Quality.$Property
     }
