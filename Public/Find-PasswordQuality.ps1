@@ -10,7 +10,7 @@
         'LMHash'
         'EmptyPassword'
         'WeakPassword'
-        'DefaultComputerPassword'
+        #'DefaultComputerPassword'
         #'PasswordNotRequired'
         #'PasswordNeverExpires'
         'AESKeysMissing'
@@ -93,9 +93,9 @@
         WeakPassword                           = $PasswordsInHash.WeakPassword.Count
         WeakPasswordEnabledOnly                = 0
         WeakPasswordDisabledOnly               = 0
-        DefaultComputerPassword                = $PasswordsInHash.DefaultComputerPassword.Count
-        DefaultComputerPasswordEnabledOnly     = 0
-        DefaultComputerPasswordDisabledOnly    = 0
+        #DefaultComputerPassword                = $PasswordsInHash.DefaultComputerPassword.Count
+        #DefaultComputerPasswordEnabledOnly     = 0
+        #DefaultComputerPasswordDisabledOnly    = 0
         PasswordNotRequired                    = 0 # $PasswordsInHash.PasswordNotRequired.Count
         PasswordNotRequiredEnabledOnly         = 0
         PasswordNotRequiredDisabledOnly        = 0
@@ -112,8 +112,29 @@
         SmartCardUsersWithPasswordEnabledOnly  = 0
         SmartCardUsersWithPasswordDisabledOnly = 0
     }
+    $CountryStatistics = [ordered] @{
+        DuplicatePasswordUsers = [ordered] @{}
+        WeakPassword           = [ordered] @{}
+    }
+    $ContinentStatistics = [ordered] @{
+        DuplicatePasswordUsers = [ordered] @{}
+        WeakPassword           = [ordered] @{}
+    }
+    $CountryCodeStatistics = [ordered] @{
+        DuplicatePasswordUsers = [ordered] @{}
+        WeakPassword           = [ordered] @{}
+    }
+    $CountryToContinent = Convert-CountryToContinent -ReturnHashTable
 
     $OutputUsers = foreach ($User in $AllUsers.Keys) {
+        if ($AllUsers[$User].Country) {
+            $Continent = $CountryToContinent[$AllUsers[$User].Country]
+            if (-not $Continent) {
+                $Continent = 'Unknown'
+            }
+        } else {
+            $Continent = 'Unknown'
+        }
         if ($AllUsers[$User].PasswordNotRequired) {
             $QualityStatistics.PasswordNotRequired++
             if ($AllUsers[$User].Enabled -eq $true) {
@@ -141,6 +162,11 @@
                         $QualityStatistics["$($Property)DisabledOnly"]++
                         $QualityStatistics.DuplicatePasswordUsersDisabledOnly++
                     }
+                    # we keep stats per country for weak passwords and duplicate passwords
+                    $CountryStatistics['DuplicatePasswordUsers'][$AllUsers[$User].Country]++
+                    $ContinentStatistics['DuplicatePasswordUsers'][$Continent]++
+                    $CountryCodeStatistics['DuplicatePasswordUsers'][$AllUsers[$User].CountryCode]++
+
                 } else {
                     $AllUsers[$User][$Property] = ''
                 }
@@ -152,6 +178,12 @@
                     } else {
                         $QualityStatistics["$($Property)DisabledOnly"]++
                     }
+                    # we keep stats per country for weak passwords and duplicate passwords
+                    if ($Property -eq 'WeakPassword') {
+                        $CountryStatistics[$Property][$AllUsers[$User].Country]++
+                        $ContinentStatistics[$Property][$Continent]++
+                        $CountryCodeStatistics[$Property][$AllUsers[$User].CountryCode]++
+                    }
                 } else {
                     $AllUsers[$User][$Property] = $false
                 }
@@ -161,8 +193,11 @@
     }
     if ($IncludeStatistics) {
         [ordered] @{
-            Statistics = $QualityStatistics
-            Users      = $OutputUsers
+            Statistics            = $QualityStatistics
+            StatisticsCountry     = $CountryStatistics
+            StatisticsCountryCode = $CountryCodeStatistics
+            StatisticsContinents  = $ContinentStatistics
+            Users                 = $OutputUsers
         }
     } else {
         $OutputUsers
