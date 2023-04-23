@@ -2,3 +2,6 @@
 
 $Users = Find-PasswordQuality
 $Users | Format-Table
+
+#$Users = Find-PasswordQuality -IncludeDomains 'ad.evotec.pl'
+#$Users | Format-Table
