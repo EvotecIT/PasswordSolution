@@ -1,4 +1,5 @@
-﻿Import-Module .\PasswordSolution.psd1 -Force
+﻿Clear-Host
+Import-Module .\PasswordSolution.psd1 -Force
 
 #Show-PasswordQuality -FilePath $PSScriptRoot\Reporting\PasswordQuality.html -Online -WeakPasswords "Test1", "Test2", "Test3" -Verbose
 $showPasswordQualitySplat = @{
@@ -12,4 +13,4 @@ $showPasswordQualitySplat = @{
     Online                  = $true
 }
 
-Show-PasswordQuality @showPasswordQualitySplat
+Show-PasswordQuality @showPasswordQualitySplat -LogMaximum 5
