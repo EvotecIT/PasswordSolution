@@ -1,8 +1,47 @@
 ﻿function Find-PasswordQuality {
+    <#
+    .SYNOPSIS
+    Scan Active Directory forest for asses password quality of users
+
+    .DESCRIPTION
+    Scan Active Directory forest for asses password quality of users including weak passwords, duplicate groups and more.
+
+    .PARAMETER WeakPasswords
+    List of weak passwords to check against
+
+    .PARAMETER IncludeStatistics
+    Include statistics in output
+
+    .PARAMETER Forest
+    Target different Forest, by default current forest is used
+
+    .PARAMETER ExcludeDomains
+    Exclude domain from search, by default whole forest is scanned
+
+    .PARAMETER IncludeDomains
+    Include only specific domains, by default whole forest is scanned
+
+    .PARAMETER ExtendedForestInformation
+    Ability to provide Forest Information from another command to speed up processing
+
+    .EXAMPLE
+    Find-PasswordQuality -WeakPasswords "Test1", "Test2", "Test3"
+
+    .EXAMPLE
+    Find-PasswordQuality -WeakPasswords "Test1", "Test2", "Test3" -IncludeStatistics
+
+    .NOTES
+    General notes
+    #>
     [CmdletBinding()]
     param(
         [string[]] $WeakPasswords,
-        [switch] $IncludeStatistics
+        [switch] $IncludeStatistics,
+
+        [alias('ForestName')][string] $Forest,
+        [string[]] $ExcludeDomains,
+        [alias('Domain', 'Domains')][string[]] $IncludeDomains,
+        [System.Collections.IDictionary] $ExtendedForestInformation
     )
 
     $PropertiesToAdd = @(
@@ -27,7 +66,7 @@
         Write-Color -Text "[e] ", "DSInternals module is not installed. Please install it using Install-Module DSInternals -Verbose" -Color Yellow, Red
         return
     }
-    $AllUsers = Find-Password -AsHashTable -HashtableField NetBiosSamAccountName -ReturnObjectsType Users -AsHashTableObject -AddEmptyProperties $PropertiesToAdd
+    $AllUsers = Find-Password -AsHashTable -HashtableField NetBiosSamAccountName -ReturnObjectsType Users -AsHashTableObject -AddEmptyProperties $PropertiesToAdd -Forest $Forest -IncludeDomains $IncludeDomains -ExcludeDomains $ExcludeDomains
 
     Write-Color -Text "[i] ", "Discovering forest information" -Color Yellow, Gray, White, Yellow, White, Yellow, White
     $ForestInformation = Get-WinADForestDetails -PreferWritable -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
@@ -193,6 +232,8 @@
     }
     if ($IncludeStatistics) {
         [ordered] @{
+            Forest                = $ForestInformation.Forest
+            Domains               = $ForestInformation.Domains
             Statistics            = $QualityStatistics
             StatisticsCountry     = $CountryStatistics
             StatisticsCountryCode = $CountryCodeStatistics
