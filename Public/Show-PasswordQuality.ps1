@@ -223,7 +223,7 @@
                     New-HTMLTableCondition -Name $Property -ComparisonType string -Operator eq -Value $true -BackgroundColor Salmon -FailBackgroundColor LightGreen
                 }
                 New-HTMLTableCondition -Name 'DuplicatePasswordGroups' -ComparisonType string -Operator ne -Value "" -BackgroundColor Orange -FailBackgroundColor LightGreen
-            } -ScrollX -ExcludeProperty 'RuleName', 'RuleOptions'
+            } -ScrollX -ExcludeProperty 'RuleName', 'RuleOptions', 'CountryCode', 'Type', 'ManagerDN', 'DistinguishedName', 'MemberOf'
 
         }
         if ($SeparateDuplicateGroups) {
