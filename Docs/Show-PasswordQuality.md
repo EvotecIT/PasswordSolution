@@ -13,8 +13,10 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Show-PasswordQuality [[-FilePath] <String>] [-DontShow] [-Online] [[-WeakPasswords] <String[]>]
- [-SeparateDuplicateGroups] [-PassThru] [<CommonParameters>]
+Show-PasswordQuality [[-Forest] <String>] [[-ExcludeDomains] <String[]>] [[-IncludeDomains] <String[]>]
+ [[-ExtendedForestInformation] <IDictionary>] [[-FilePath] <String>] [-DontShow] [-Online]
+ [[-WeakPasswords] <String[]>] [-SeparateDuplicateGroups] [-PassThru] [-AddWorldMap] [[-LogPath] <String>]
+ [[-LogMaximum] <Int32>] [-LogShowTime] [[-LogTimeFormat] <String>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -31,6 +33,66 @@ PS C:\> {{ Add example code here }}
 
 ## PARAMETERS
 
+### -Forest
+{{ Fill Forest Description }}
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: ForestName
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExcludeDomains
+{{ Fill ExcludeDomains Description }}
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeDomains
+{{ Fill IncludeDomains Description }}
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: Domain, Domains
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExtendedForestInformation
+{{ Fill ExtendedForestInformation Description }}
+
+```yaml
+Type: IDictionary
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 4
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -FilePath
 {{ Fill FilePath Description }}
 
@@ -40,7 +102,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 1
+Position: 5
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -85,7 +147,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 2
+Position: 6
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -117,6 +179,81 @@ Aliases:
 Required: False
 Position: Named
 Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AddWorldMap
+{{ Fill AddWorldMap Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LogPath
+{{ Fill LogPath Description }}
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: LogFile
+
+Required: False
+Position: 7
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LogMaximum
+{{ Fill LogMaximum Description }}
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 8
+Default value: 0
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LogShowTime
+{{ Fill LogShowTime Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LogTimeFormat
+{{ Fill LogTimeFormat Description }}
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 9
+Default value: Yyyy-MM-dd HH:mm:ss
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

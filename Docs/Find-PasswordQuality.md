@@ -13,7 +13,9 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Find-PasswordQuality [[-WeakPasswords] <String[]>] [-IncludeStatistics] [<CommonParameters>]
+Find-PasswordQuality [[-WeakPasswords] <String[]>] [-IncludeStatistics] [[-Forest] <String>]
+ [[-ExcludeDomains] <String[]>] [[-IncludeDomains] <String[]>] [[-ExtendedForestInformation] <IDictionary>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,6 +32,21 @@ PS C:\> {{ Add example code here }}
 
 ## PARAMETERS
 
+### -WeakPasswords
+{{ Fill WeakPasswords Description }}
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -IncludeStatistics
 {{ Fill IncludeStatistics Description }}
 
@@ -45,8 +62,23 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WeakPasswords
-{{ Fill WeakPasswords Description }}
+### -Forest
+Target different Forest, by default current forest is used
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: ForestName
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExcludeDomains
+Exclude domain from search, by default whole forest is scanned
 
 ```yaml
 Type: String[]
@@ -54,7 +86,37 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 0
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeDomains
+Include only specific domains, by default whole forest is scanned
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: Domain, Domains
+
+Required: False
+Position: 4
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExtendedForestInformation
+Ability to provide Forest Information from another command to speed up processing
+
+```yaml
+Type: IDictionary
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 5
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
