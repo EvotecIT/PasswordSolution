@@ -246,12 +246,16 @@
                                 UsersTotal            = 0
                                 UsersEnabled          = 0
                                 UsersDisabled         = 0
+                                WeakPassword          = $false
                                 Users                 = [System.Collections.Generic.List[string]]::new()
                                 Country               = [System.Collections.Generic.List[string]]::new()
                                 UsersBySamAccountName = [System.Collections.Generic.List[string]]::new()
                                 UsersByUPN            = [System.Collections.Generic.List[string]]::new()
                                 UsersByEmail          = [System.Collections.Generic.List[string]]::new()
                             }
+                        }
+                        if ($User.WeakPassword) {
+                            $DuplicateGroups[$User.DuplicatePasswordGroups].WeakPassword = $true
                         }
                         $DuplicateGroups[$User.DuplicatePasswordGroups].Users.Add($User.Name)
                         if ($User.Enabled) {
@@ -303,7 +307,7 @@
 
                     New-HTMLSection -Invisible {
                         New-HTMLTable -DataTable $DuplicateGroups.Values -Filtering -Title "Duplicate Password Group: $DuplicateGroup" {
-
+                            New-HTMLTableCondition -Name 'WeakPassword' -ComparisonType string -Operator eq -Value $true -BackgroundColor Salmon -FailBackgroundColor LightBlue
                         }-ScrollX -ExcludeProperty 'RuleName', 'RuleOptions', 'Type', 'CountryCode'
                     }
 
