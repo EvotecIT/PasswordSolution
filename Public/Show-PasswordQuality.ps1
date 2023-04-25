@@ -359,8 +359,8 @@
                                     New-MapLegendSlice -Type 'Area' -Label 'Duplicate passwords up to 5' -Min 0 -Max 5 -SliceColor 'Bisque' -StrokeWidth 0
                                     New-MapLegendSlice -Type 'Area' -Label 'Duplicate between 5 and 15' -Min 6 -Max 15 -SliceColor 'Amber' -StrokeWidth 0
                                     New-MapLegendSlice -Type 'Area' -Label 'Duplicate between 16 and 30' -Min 16 -Max 30 -SliceColor 'CarnationPink' -StrokeWidth 0
-                                    New-MapLegendSlice -Type 'Area' -Label 'Duplicate between 31 and 50' -Min 31 -Max 50 -SliceColor 'OrangeRed' -StrokeWidth 0
-                                    New-MapLegendSlice -Type 'Area' -Label 'Duplicate over 50' -Min 51 -Max 300 -SliceColor 'Scarlet' -StrokeWidth 0
+                                    New-MapLegendSlice -Type 'Area' -Label 'Duplicate between 31 and 50' -Min 31 -Max 50 -SliceColor 'BrinkPink' -StrokeWidth 0
+                                    New-MapLegendSlice -Type 'Area' -Label 'Duplicate over 50' -Min 51 -SliceColor 'Red' -StrokeWidth 0
                                 } -ShowAreaLegend #-AreaTitle "Duplicate Passwords Users"
                                 New-HTMLText -Text @(
                                     "The map shows the number of users with duplicate passwords per country. The legend shows the number of users with duplicate passwords per color."
@@ -411,8 +411,8 @@
                                     New-MapLegendSlice -Type 'Area' -Label 'Weak passwords up to 5' -Min 0 -Max 5 -SliceColor 'Bisque' -StrokeWidth 0
                                     New-MapLegendSlice -Type 'Area' -Label 'Weak between 5 and 15' -Min 6 -Max 15 -SliceColor 'Amber' -StrokeWidth 0
                                     New-MapLegendSlice -Type 'Area' -Label 'Weak between 16 and 30' -Min 16 -Max 30 -SliceColor 'CarnationPink' -StrokeWidth 0
-                                    New-MapLegendSlice -Type 'Area' -Label 'Weak between 31 and 50' -Min 31 -Max 50 -SliceColor 'OrangeRed' -StrokeWidth 0
-                                    New-MapLegendSlice -Type 'Area' -Label 'Weak over 50' -Min 51 -Max 300 -SliceColor 'Scarlet' -StrokeWidth 0
+                                    New-MapLegendSlice -Type 'Area' -Label 'Weak between 31 and 50' -Min 31 -Max 50 -SliceColor 'BrinkPink' -StrokeWidth 0
+                                    New-MapLegendSlice -Type 'Area' -Label 'Weak over 50' -Min 51 -SliceColor 'Red' -StrokeWidth 0
                                 } -ShowAreaLegend #-AreaTitle "Weak Password Users"
                             }
                         }
