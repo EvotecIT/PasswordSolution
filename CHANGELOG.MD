@@ -1,10 +1,15 @@
 ﻿# PasswordSolution Release History
 
+## 0.0.37 - 2023.04.25
+- Improve `Maps` in Password Quality
+- Improve colors, add column to a report
+
 ## 0.0.36 - 2023.04.24
 - Added `Maps` to Password Quality
 - Improved reporting in Password Quality with countries for Weak Passwords and Duplicate Groups
 - Added Logs to Password Quality
 - Minor improvements to reporting
+- Make report much smaller
 
 ## 0.0.35 - 2023.04.19
 - Small fix to report
