@@ -163,7 +163,7 @@
         DuplicatePasswordUsers = [ordered] @{}
         WeakPassword           = [ordered] @{}
     }
-    $CountryToContinent = Convert-CountryToContinent -ReturnHashTable
+    $CountryToContinent = Convert-CountryToContinent
 
     $OutputUsers = foreach ($User in $AllUsers.Keys) {
         if ($AllUsers[$User].Country) {
