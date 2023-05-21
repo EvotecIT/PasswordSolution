@@ -14,7 +14,7 @@
         [string[]] $IncludeGroup,
         [string[]] $ExcludeGroup,
 
-        [parameter(Mandatory)][alias('ExpirationDays', 'Days')][int[]] $ReminderDays,
+        [parameter(Mandatory)][alias('ExpirationDays', 'Days')][Array] $ReminderDays,
 
         [switch] $ManagerReminder,
 
