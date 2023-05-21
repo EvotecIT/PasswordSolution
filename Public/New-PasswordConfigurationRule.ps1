@@ -1,4 +1,103 @@
 ﻿function New-PasswordConfigurationRule {
+    <#
+    .SYNOPSIS
+    Short description
+
+    .DESCRIPTION
+    Long description
+
+    .PARAMETER ReminderConfiguration
+    Parameter description
+
+    .PARAMETER Name
+    Parameter description
+
+    .PARAMETER Enable
+    Parameter description
+
+    .PARAMETER IncludeExpiring
+    Parameter description
+
+    .PARAMETER IncludePasswordNeverExpires
+    Parameter description
+
+    .PARAMETER PasswordNeverExpiresDays
+    Parameter description
+
+    .PARAMETER IncludeNameProperties
+    Parameter description
+
+    .PARAMETER IncludeName
+    Parameter description
+
+    .PARAMETER IncludeOU
+    Parameter description
+
+    .PARAMETER ExcludeOU
+    Parameter description
+
+    .PARAMETER IncludeGroup
+    Parameter description
+
+    .PARAMETER ExcludeGroup
+    Parameter description
+
+    .PARAMETER ReminderDays
+    Parameter description
+
+    .PARAMETER ManagerReminder
+    Parameter description
+
+    .PARAMETER ManagerNotCompliant
+    Parameter description
+
+    .PARAMETER ManagerNotCompliantDisplayName
+    Parameter description
+
+    .PARAMETER ManagerNotCompliantEmailAddress
+    Parameter description
+
+    .PARAMETER ManagerNotCompliantDisabled
+    Parameter description
+
+    .PARAMETER ManagerNotCompliantMissing
+    Parameter description
+
+    .PARAMETER ManagerNotCompliantMissingEmail
+    Parameter description
+
+    .PARAMETER ManagerNotCompliantLastLogonDays
+    Parameter description
+
+    .PARAMETER SecurityEscalation
+    Parameter description
+
+    .PARAMETER SecurityEscalationDisplayName
+    Parameter description
+
+    .PARAMETER SecurityEscalationEmailAddress
+    Parameter description
+
+    .PARAMETER OverwriteEmailProperty
+    Parameter description
+
+    .PARAMETER OverwriteManagerProperty
+    Parameter description
+
+    .PARAMETER OverwriteManagerPropertyName
+    Parameter description
+
+    .PARAMETER ProcessManagersOnly
+    This parameters is used to process users, but only managers will be notified.
+    Sending emails to users within the rule will be skipped completly.
+    This is useful if users would have email addresses, that would normally trigger an email to them.
+
+    .EXAMPLE
+    An example
+
+    .NOTES
+    General notes
+    #>
     [CmdletBinding()]
     param(
         [scriptblock] $ReminderConfiguration,
@@ -29,21 +128,35 @@
 
         [switch] $SecurityEscalation,
         [string] $SecurityEscalationDisplayName,
-        [string] $SecurityEscalationEmailAddress
+        [string] $SecurityEscalationEmailAddress,
+
+        [string] $OverwriteEmailProperty,
+        [string] $OverwriteManagerProperty,
+        [string] $OverwriteManagerPropertyName,
+
+        [switch] $ProcessManagersOnly
+
     )
 
     $Output = [ordered] @{
-        Name                        = $Name
-        Enable                      = $Enable.IsPresent
-        IncludeExpiring             = $IncludeExpiring.IsPresent
-        IncludePasswordNeverExpires = $IncludePasswordNeverExpires.IsPresent
-        Reminders                   = $ReminderDays
-        PasswordNeverExpiresDays    = $PasswordNeverExpiresDays
-        IncludeNameProperties       = $IncludeNameProperties
-        IncludeName                 = $IncludeName
-        IncludeOU                   = $IncludeOU
-        ExcludeOU                   = $ExcludeOU
-        SendToManager               = [ordered] @{}
+        Name                         = $Name
+        Enable                       = $Enable.IsPresent
+        IncludeExpiring              = $IncludeExpiring.IsPresent
+        IncludePasswordNeverExpires  = $IncludePasswordNeverExpires.IsPresent
+        Reminders                    = $ReminderDays
+        PasswordNeverExpiresDays     = $PasswordNeverExpiresDays
+        IncludeNameProperties        = $IncludeNameProperties
+        IncludeName                  = $IncludeName
+        IncludeOU                    = $IncludeOU
+        ExcludeOU                    = $ExcludeOU
+        SendToManager                = [ordered] @{}
+
+        ProcessManagersOnly          = $ProcessManagersOnly.IsPresent
+
+        OverwriteEmailProperty       = $OverwriteEmailProperty
+        # properties to overwrite manager based on different field
+        OverwriteManagerProperty     = $OverwriteManagerProperty
+        OverwriteManagerPropertyName = $OverwriteManagerPropertyName
     }
     $Output.SendToManager['Manager'] = [ordered] @{
         Enable    = $false
