@@ -21,6 +21,9 @@
     .PARAMETER OverwriteEmailProperty
     Overwrite EmailAddress property with different property name
 
+    .PARAMETER RulesProperties
+    Add additional properties to be returned from rules
+
     .EXAMPLE
     Find-Password | ft
 
@@ -39,7 +42,7 @@
         [ValidateSet('Users', 'Contacts')][string[]] $ReturnObjectsType = @('Users', 'Contacts'),
         [Parameter(DontShow)][switch] $AsHashTableObject,
         [Parameter(DontShow)][string[]] $AddEmptyProperties = @(),
-        [Parameter()][string[]] $RulesProperties
+        [Parameter(DontShow)][string[]] $RulesProperties
     )
     $Today = Get-Date
 
