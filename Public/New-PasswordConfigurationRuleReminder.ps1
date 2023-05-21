@@ -8,7 +8,7 @@
 
         [Parameter(Mandatory, ParameterSetName = 'DayOfWeek')]
         [Parameter(Mandatory, ParameterSetName = 'DayOfMonth')]
-        [alias('ConditionDays', 'Days')][int[]] $ExpirationDays,
+        [alias('ConditionDays', 'Days')][Array] $ExpirationDays,
 
         [Parameter(Mandatory, ParameterSetName = 'DayOfWeek')]
         [ValidateSet(
@@ -19,10 +19,10 @@
             'Friday',
             'Saturday',
             'Sunday'
-        )][string[]] $DayOfWeek,
+        )][Array] $DayOfWeek,
 
         [Parameter(Mandatory, ParameterSetName = 'DayOfMonth')]
-        [int[]] $DayOfMonth,
+        [Array] $DayOfMonth,
 
         [Parameter(ParameterSetName = 'DayOfWeek')]
         [Parameter(ParameterSetName = 'DayOfMonth')]
