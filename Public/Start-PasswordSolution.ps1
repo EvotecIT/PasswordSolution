@@ -78,30 +78,31 @@
     .NOTES
     General notes
     #>
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'DSL')]
     param(
-        [Parameter(Mandatory)][System.Collections.IDictionary] $EmailParameters,
-        [string] $OverwriteEmailProperty,
-        [Parameter(Mandatory)][System.Collections.IDictionary] $UserSection,
-        [Parameter(Mandatory)][System.Collections.IDictionary] $ManagerSection,
-        [Parameter(Mandatory)][System.Collections.IDictionary] $SecuritySection,
-        [Parameter(Mandatory)][System.Collections.IDictionary] $AdminSection,
-        [Parameter(Mandatory)][Array] $Rules,
-        [scriptblock] $TemplatePreExpiry,
-        [string] $TemplatePreExpirySubject,
-        [scriptblock] $TemplatePostExpiry,
-        [string] $TemplatePostExpirySubject,
-        [Parameter(Mandatory)][scriptblock] $TemplateManager,
-        [Parameter(Mandatory)][string] $TemplateManagerSubject,
-        [Parameter(Mandatory)][scriptblock] $TemplateSecurity,
-        [Parameter(Mandatory)][string] $TemplateSecuritySubject,
-        [Parameter(Mandatory)][scriptblock] $TemplateManagerNotCompliant,
-        [Parameter(Mandatory)][string] $TemplateManagerNotCompliantSubject,
-        [Parameter(Mandatory)][scriptblock] $TemplateAdmin,
-        [Parameter(Mandatory)][string] $TemplateAdminSubject,
-        [Parameter()][System.Collections.IDictionary] $Logging = @{},
-        [Array] $HTMLReports,
-        [string] $SearchPath
+        [Parameter(ParameterSetName = 'DSL', Position = 0)][scriptblock] $ConfigurationDSL,
+        [Parameter(Mandatory, ParameterSetName = 'Legacy')][System.Collections.IDictionary] $EmailParameters,
+        [Parameter(ParameterSetName = 'Legacy')][string] $OverwriteEmailProperty,
+        [Parameter(Mandatory, ParameterSetName = 'Legacy')][System.Collections.IDictionary] $UserSection,
+        [Parameter(Mandatory, ParameterSetName = 'Legacy')][System.Collections.IDictionary] $ManagerSection,
+        [Parameter(Mandatory, ParameterSetName = 'Legacy')][System.Collections.IDictionary] $SecuritySection,
+        [Parameter(Mandatory, ParameterSetName = 'Legacy')][System.Collections.IDictionary] $AdminSection,
+        [Parameter(Mandatory, ParameterSetName = 'Legacy')][Array] $Rules,
+        [Parameter(ParameterSetName = 'Legacy')][scriptblock] $TemplatePreExpiry,
+        [Parameter(ParameterSetName = 'Legacy')][string] $TemplatePreExpirySubject,
+        [Parameter(ParameterSetName = 'Legacy')][scriptblock] $TemplatePostExpiry,
+        [Parameter(ParameterSetName = 'Legacy')][string] $TemplatePostExpirySubject,
+        [Parameter(Mandatory, ParameterSetName = 'Legacy')][scriptblock] $TemplateManager,
+        [Parameter(Mandatory, ParameterSetName = 'Legacy')][string] $TemplateManagerSubject,
+        [Parameter(Mandatory, ParameterSetName = 'Legacy')][scriptblock] $TemplateSecurity,
+        [Parameter(Mandatory, ParameterSetName = 'Legacy')][string] $TemplateSecuritySubject,
+        [Parameter(Mandatory, ParameterSetName = 'Legacy')][scriptblock] $TemplateManagerNotCompliant,
+        [Parameter(Mandatory, ParameterSetName = 'Legacy')][string] $TemplateManagerNotCompliantSubject,
+        [Parameter(Mandatory, ParameterSetName = 'Legacy')][scriptblock] $TemplateAdmin,
+        [Parameter(Mandatory, ParameterSetName = 'Legacy')][string] $TemplateAdminSubject,
+        [Parameter(ParameterSetName = 'Legacy')][System.Collections.IDictionary] $Logging = @{},
+        [Parameter(ParameterSetName = 'Legacy')][Array] $HTMLReports,
+        [Parameter(ParameterSetName = 'Legacy')][string] $SearchPath
     )
     $TimeStart = Start-TimeLog
     $Script:Reporting = [ordered] @{}
@@ -124,9 +125,70 @@
     $Summary['NotifySecurity'] = [ordered] @{}
     $Summary['Rules'] = [ordered] @{}
 
-
     $AllSkipped = [ordered] @{}
     $Locations = [ordered] @{}
+
+    if (-not $HTMLReports) {
+        $HTMLReports = [System.Collections.Generic.List[System.Collections.IDictionary]]::new()
+    }
+    if (-not $Rules) {
+        $Rules = [System.Collections.Generic.List[System.Collections.IDictionary]]::new()
+    }
+
+    if ($ConfigurationDSL) {
+        try {
+            $ConfigurationExecuted = & $ConfigurationDSL
+            foreach ($Configuration in $ConfigurationExecuted) {
+                if ($Configuration.Type -eq 'PasswordConfigurationOption') {
+                    if ($Configuration.Settings.SearchPath) {
+                        $SearchPath = $Configuration.Settings.SearchPath
+                    }
+                    foreach ($Setting in $Configuration.Settings.Keys) {
+                        if ($Setting -notin 'SearchPath') {
+                            $Logging[$Setting] = $Configuration.Settings[$Setting]
+                        }
+                    }
+                } elseif ($Configuration.Type -eq 'PasswordConfigurationEmail') {
+                    $EmailParameters = $Configuration.Settings
+                } elseif ($Configuration.Type -eq 'PasswordConfigurationTypeUser') {
+                    $UserSection = $Configuration.Settings
+                } elseif ($Configuration.Type -eq 'PasswordConfigurationTypeManager') {
+                    $ManagerSection = $Configuration.Settings
+                } elseif ($Configuration.Type -eq 'PasswordConfigurationTypeSecurity') {
+                    $SecuritySection = $Configuration.Settings
+                } elseif ($Configuration.Type -eq 'PasswordConfigurationReport') {
+                    foreach ($Setting in $Configuration.Settings.Keys) {
+                        $HTMLReports.Add($Configuration.Settings[$Setting])
+                    }
+                } elseif ($Configuration.Type -eq 'PasswordConfigurationRule') {
+                    foreach ($Setting in $Configuration.Settings.Keys) {
+                        $Rules.Add($Configuration.Settings[$Setting])
+                    }
+                } elseif ($Configuration.Type -eq "PasswordConfigurationTemplatePreExpiry") {
+                    $TemplatePreExpiry = $Configuration.Settings.Template
+                    $TemplatePreExpirySubject = $Configuration.Settings.Subject
+                } elseif ($Configuration.Type -eq "PasswordConfigurationTemplatePreExpiry") {
+                    $TemplatePostExpiry = $Configuration.Settings.Template
+                    $TemplatePostExpirySubject = $Configuration.Settings.Subject
+                } elseif ($Configuration.Type -eq "PasswordConfigurationTemplateManager") {
+                    $TemplateManager = $Configuration.Settings.Template
+                    $TemplateManagerSubject = $Configuration.Settings.Subject
+                } elseif ($Configuration.Type -eq "PasswordConfigurationTemplateSecurity") {
+                    $TemplateSecurity = $Configuration.Settings.Template
+                    $TemplateSecuritySubject = $Configuration.Settings.Subject
+                } elseif ($Configuration.Type -eq "PasswordConfigurationTemplateManagerNotCompliant") {
+                    $TemplateManagerNotCompliant = $Configuration.Settings.Template
+                    $TemplateManagerNotCompliantSubject = $Configuration.Settings.Subject
+                } elseif ($Configuration.Type -eq "PasswordConfigurationTemplateAdmin") {
+                    $TemplateAdmin = $Configuration.Settings.Template
+                    $TemplateAdminSubject = $Configuration.Settings.Subject
+                }
+            }
+        } catch {
+            Write-Color -Text "[e]", " Processing configuration failed because of error: ", $_.Exception.Message -Color Yellow, White, Red
+            return
+        }
+    }
 
     Write-Color -Text "[i]", " Starting process to find expiring users" -Color Yellow, White, Green, White, Green, White, Green, White
     $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty
