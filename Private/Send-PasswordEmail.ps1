@@ -90,7 +90,7 @@
             $EmailParameters.Attachment = @()
         }
         try {
-            Send-EmailMessage @EmailParameters -ErrorAction Stop
+            Send-EmailMessage @EmailParameters -ErrorAction Stop -WarningAction SilentlyContinue
         } catch {
             if ($_.Exception.Message -like "*Credential*") {
                 Write-Color -Text "[e] " , "Failed to send email to $($EmailParameters.EmailParameters) because error: $($_.Exception.Message)" -Color Yellow, White, Red
