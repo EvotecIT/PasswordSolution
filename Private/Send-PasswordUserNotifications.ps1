@@ -47,7 +47,7 @@
                 } elseif ($TemplatePreExpirySubject) {
                     $EmailSplat.Subject = $TemplatePreExpirySubject
                 } else {
-                    $EmailSplat.Subject = '[Password] Your password will expire on $DateExpiry ($TimeToExpire days)'
+                    $EmailSplat.Subject = '[Password] Your password will expire on $DateExpiry ($DaysToExpire days)'
                 }
             } else {
                 if ($Notify.Rule.TemplatePostExpiry) {
@@ -64,7 +64,7 @@
                 } elseif ($TemplatePostExpirySubject) {
                     $EmailSplat.Subject = $TemplatePostExpirySubject
                 } else {
-                    $EmailSplat.Subject = '[Password] Your password expired on $DateExpiry ($TimeToExpire days ago)'
+                    $EmailSplat.Subject = '[Password] Your password expired on $DateExpiry ($DaysToExpire days ago)'
                 }
             }
             $EmailSplat.User = $Notify.User
