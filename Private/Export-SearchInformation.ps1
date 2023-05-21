@@ -3,14 +3,17 @@
     param(
         [string] $SearchPath,
         [System.Collections.IDictionary] $SummarySearch,
-        [string] $Today
+        [string] $Today,
+        [Array] $SummaryUsersEmails,
+        [Array] $SummaryManagersEmails,
+        [Array] $SummaryEscalationEmails
     )
 
     if ($SearchPath) {
         Write-Color -Text "[i]" , " Saving Search report " -Color White, Yellow, Green
-        $SummarySearch['EmailSent'][$Today] = $SummaryUsersEmails
-        $SummarySearch['EmailEscalations'][$Today] = $SummaryEscalationEmails
-        $SummarySearch['EmailManagers'][$Today] = $SummaryManagersEmails
+        $SummarySearch['EmailSent'][$Today] += $SummaryUsersEmails
+        $SummarySearch['EmailEscalations'][$Today] += $SummaryEscalationEmails
+        $SummarySearch['EmailManagers'][$Today] += $SummaryManagersEmails
 
         try {
             $SummarySearch | Export-Clixml -LiteralPath $SearchPath -ErrorAction Stop
