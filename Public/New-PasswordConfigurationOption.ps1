@@ -11,7 +11,9 @@
         [switch] $NotifyOnUserSend             , #= $true
         [switch] $NotifyOnUserMatchingRule     , #= $true
         [switch] $NotifyOnUserDaysToExpireNull , #= $true
-        [string] $SearchPath
+        [string] $SearchPath,
+        [string] $EmailDateFormat,
+        [switch] $EmailDateFormatUTCConversion
     )
 
     $Output = [ordered] @{
@@ -28,6 +30,9 @@
             NotifyOnUserMatchingRule     = $NotifyOnUserMatchingRule.IsPresent
             NotifyOnUserDaysToExpireNull = $NotifyOnUserDaysToExpireNull.IsPresent
             SearchPath                   = $SearchPath
+            # conversion for DateExpiry/PasswordLastSet only
+            EmailDateFormat              = $EmailDateFormat
+            EmailDateFormatUTCConversion = $EmailDateFormatUTCConversion.IsPresent
         }
     }
     Remove-EmptyValue -Hashtable $Output.Settings

@@ -65,6 +65,9 @@
             $EmailSplat.ManagedUsersManagerNotCompliant = $ManagedUsersManagerNotCompliant
             $EmailSplat.EmailParameters = $EmailParameters
 
+            $EmailSplat.EmailDateFormat = $Logging.EmailDateFormat
+            $EmailSplat.EmailDateFormatUTCConversion = $Logging.EmailDateFormatUTCConversion
+
             if ($ManagerSection.SendToDefaultEmail -ne $true) {
                 $EmailSplat.EmailParameters.To = $ManagerUser.EmailAddress
             } else {

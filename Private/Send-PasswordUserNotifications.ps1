@@ -70,6 +70,9 @@
             $EmailSplat.User = $Notify.User
             $EmailSplat.EmailParameters = $EmailParameters
 
+            $EmailSplat.EmailDateFormat = $Logging.EmailDateFormat
+            $EmailSplat.EmailDateFormatUTCConversion = $Logging.EmailDateFormatUTCConversion
+
             if ($UserSection.SendToDefaultEmail -ne $true) {
                 $EmailSplat.EmailParameters.To = $Notify.User.EmailAddress
             } else {

@@ -48,6 +48,9 @@
             #$EmailSplat.ManagedUsersManagerMissingEmail = $ManagedUsersManagerMissingEmail
             $EmailSplat.EmailParameters = $EmailParameters
 
+            $EmailSplat.EmailDateFormat = $Logging.EmailDateFormat
+            $EmailSplat.EmailDateFormatUTCConversion = $Logging.EmailDateFormatUTCConversion
+
             if ($SecuritySection.SendToDefaultEmail -ne $true) {
                 $EmailSplat.EmailParameters.To = $ManagerUser.EmailAddress
             } else {

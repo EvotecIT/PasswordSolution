@@ -6,7 +6,8 @@
         $TemplateAdminSubject,
         $TimeEnd,
         $EmailParameters,
-        $HtmlAttachments
+        $HtmlAttachments,
+        $Logging
     )
 
     if ($AdminSection.Enable) {
@@ -31,6 +32,9 @@
             $EmailSplat.EmailParameters = $EmailParameters
 
             $EmailSplat.EmailParameters.To = $AdminSection.Manager.EmailAddress
+
+            $EmailSplat.EmailDateFormat = $Logging.EmailDateFormat
+            $EmailSplat.EmailDateFormatUTCConversion = $Logging.EmailDateFormatUTCConversion
 
             if ($HtmlAttachments.Count -gt 0) {
                 $EmailSplat.Attachments = $HtmlAttachments
