@@ -1,24 +1,23 @@
 ﻿function New-HTMLReport {
     [CmdletBinding()]
     param(
-        $Report,
-        $EmailParameters,
-        $Logging,
-        $FilePath,
-        $SearchPath,
-        $Rules,
-        $UserSection,
-        $ManagerSection,
-        $SecuritySection,
-        $AdminSection,
-        $CachedUsers,
-        $Summary,
-        $SummaryUsersEmails,
-        $SummaryManagersEmails,
-        $SummaryEscalationEmails,
-        $SummarySearch,
-        $Locations,
-        $AllSkipped
+        [System.Collections.IDictionary] $Report,
+        [System.Collections.IDictionary] $EmailParameters,
+        [System.Collections.IDictionary] $Logging,
+        [string] $SearchPath,
+        [Array] $Rules,
+        [System.Collections.IDictionary]  $UserSection,
+        [System.Collections.IDictionary]  $ManagerSection,
+        [System.Collections.IDictionary]  $SecuritySection,
+        [System.Collections.IDictionary] $AdminSection,
+        [System.Collections.IDictionary] $CachedUsers,
+        [System.Collections.IDictionary] $Summary,
+        [Array] $SummaryUsersEmails,
+        [Array] $SummaryManagersEmails,
+        [Array] $SummaryEscalationEmails,
+        [System.Collections.IDictionary] $SummarySearch,
+        [System.Collections.IDictionary] $Locations,
+        [System.Collections.IDictionary] $AllSkipped
     )
     $TranslateOperators = @{
         'lt' = 'Less than'
@@ -96,7 +95,7 @@
                                 #>
                         New-HTMLSection -HeaderText "Other" {
                             New-HTMLList {
-                                New-HTMLListItem -Text 'FilePath', ": ", $FilePath -FontWeight normal, normal, bold
+                                New-HTMLListItem -Text 'FilePath', ": ", $Report.FilePath -FontWeight normal, normal, bold
                                 New-HTMLListItem -Text 'SearchPath', ": ", $SearchPath -FontWeight normal, normal, bold
                             }
                         }
@@ -444,7 +443,7 @@
                 $Color = 'Amaranth'
                 $IconSolid = 'stop-circle'
             }
-            New-HTMLTab -Name 'Users notified' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
+            New-HTMLTab -Name 'Email Sent History' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
                 New-HTMLTable -DataTable $UsersSent {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
