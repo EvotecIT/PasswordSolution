@@ -24,11 +24,17 @@
     .PARAMETER PasswordNeverExpiresDays
     Parameter description
 
-    .PARAMETER IncludeNameProperties
-    Parameter description
-
     .PARAMETER IncludeName
-    Parameter description
+    Include user in rule if any of the properties match the value of Name in the properties defined in IncludeNameProperties
+
+    .PARAMETER IncludeNameProperties
+    Include user in rule if any of the properties match the value as defined in IncludeName
+
+    .PARAMETER ExcludeName
+    Exclude user from rule if any of the properties match the value of Name in the properties defined in ExcludeNameProperties
+
+    .PARAMETER ExcludeNameProperties
+    Exclude user from rule if any of the properties match the value as defined in ExcludeName
 
     .PARAMETER IncludeOU
     Parameter description
@@ -108,6 +114,10 @@
         [nullable[int]]$PasswordNeverExpiresDays,
         [string[]] $IncludeNameProperties,
         [string[]] $IncludeName,
+
+        [string[]] $ExcludeNameProperties,
+        [string[]] $ExcludeName,
+
         [string[]] $IncludeOU,
         [string[]] $ExcludeOU,
         [string[]] $IncludeGroup,

@@ -1,7 +1,7 @@
 ﻿function Invoke-PasswordRuleProcessing {
     [CmdletBinding()]
     param(
-        $Rule,
+        [System.Collections.IDictionary] $Rule,
         [System.Collections.IDictionary] $Summary,
         [System.Collections.IDictionary] $CachedUsers,
         [System.Collections.IDictionary] $AllSkipped,
@@ -94,6 +94,23 @@
                     continue
                 }
             }
+            if ($Rule.ExcludeName.Count -gt 0) {
+                $ExcludeName = $false
+                foreach ($Name in $Rule.ExcludeName) {
+                    foreach ($Property in $Rule.ExcludeNameProperties) {
+                        if ($User.$Property -like $Name) {
+                            $ExcludeName = $true
+                            break
+                        }
+                    }
+                    if ($ExcludeName) {
+                        break
+                    }
+                }
+                if ($ExcludeName) {
+                    continue
+                }
+            }
             if ($Summary['Notify'][$User.DistinguishedName] -and $Summary['Notify'][$User.DistinguishedName].ProcessManagersOnly -ne $true) {
                 # User already exists in the notifications - rules are overlapping, we only take the first one
                 # We also check for ProcessManagersOnly because we don't want first rule to ignore any other rules for users
@@ -174,6 +191,19 @@
                     if ($Logging.NotifyOnUserMatchingRule) {
                         Write-Color -Text "[i]", " User ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire, " " -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
                     }
+
+                    # This is required for email notification to different email address
+                    # User wanted to use different email address for notifications based on external property such as
+                    # employeeID, employeeNumber, extensionAttributes, etc.
+                    # normally this wouldn't be required if it's global setting, but if only a handful of users need to have their address changed
+                    # the per rule overwriteemailproperty should be used
+                    if ($Rule.OverwriteEmailProperty) {
+                        $NewPropertyWithEmail = $Rule.OverwriteEmailProperty
+                        if ($NewPropertyWithEmail -and $User.$NewPropertyWithEmail) {
+                            $User.EmailAddress = $User.$NewPropertyWithEmail
+                        }
+                    }
+
                     $Summary['Notify'][$User.DistinguishedName] = [ordered] @{
                         User                = $User
                         Rule                = $Rule
