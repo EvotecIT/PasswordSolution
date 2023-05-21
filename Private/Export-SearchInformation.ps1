@@ -11,10 +11,15 @@
 
     if ($SearchPath) {
         Write-Color -Text "[i]" , " Saving Search report " -Color White, Yellow, Green
-        $SummarySearch['EmailSent'][$Today] += $SummaryUsersEmails
-        $SummarySearch['EmailEscalations'][$Today] += $SummaryEscalationEmails
-        $SummarySearch['EmailManagers'][$Today] += $SummaryManagersEmails
-
+        if ($SummaryUsersEmails) {
+            $SummarySearch['EmailSent'][$Today] += $SummaryUsersEmails
+        }
+        if ($SummaryEscalationEmails) {
+            $SummarySearch['EmailEscalations'][$Today] += $SummaryEscalationEmails
+        }
+        if ($SummaryManagersEmails) {
+            $SummarySearch['EmailManagers'][$Today] += $SummaryManagersEmails
+        }
         try {
             $SummarySearch | Export-Clixml -LiteralPath $SearchPath -ErrorAction Stop
         } catch {
