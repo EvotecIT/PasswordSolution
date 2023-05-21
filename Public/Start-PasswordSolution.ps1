@@ -128,13 +128,6 @@
     $AllSkipped = [ordered] @{}
     $Locations = [ordered] @{}
 
-    if (-not $HTMLReports) {
-        $HTMLReports = [System.Collections.Generic.List[System.Collections.IDictionary]]::new()
-    }
-    if (-not $Rules) {
-        $Rules = [System.Collections.Generic.List[System.Collections.IDictionary]]::new()
-    }
-
     if ($ConfigurationDSL) {
         try {
             $ConfigurationExecuted = & $ConfigurationDSL
@@ -157,13 +150,9 @@
                 } elseif ($Configuration.Type -eq 'PasswordConfigurationTypeSecurity') {
                     $SecuritySection = $Configuration.Settings
                 } elseif ($Configuration.Type -eq 'PasswordConfigurationReport') {
-                    foreach ($Setting in $Configuration.Settings.Keys) {
-                        $HTMLReports.Add($Configuration.Settings[$Setting])
-                    }
+                    $HTMLReports += $Configuration.Settings
                 } elseif ($Configuration.Type -eq 'PasswordConfigurationRule') {
-                    foreach ($Setting in $Configuration.Settings.Keys) {
-                        $Rules.Add($Configuration.Settings[$Setting])
-                    }
+                    $Rules += $Configuration.Settings[$Setting]
                 } elseif ($Configuration.Type -eq "PasswordConfigurationTemplatePreExpiry") {
                     $TemplatePreExpiry = $Configuration.Settings.Template
                     $TemplatePreExpirySubject = $Configuration.Settings.Subject
