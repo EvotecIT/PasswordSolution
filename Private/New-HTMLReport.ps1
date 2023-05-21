@@ -41,6 +41,11 @@
 
     # Create report
     New-HTML {
+        New-HTMLTabStyle -BorderRadius 0px -TextTransform capitalize -BackgroundColorActive SlateGrey
+        New-HTMLSectionStyle -BorderRadius 0px -HeaderBackGroundColor Grey -RemoveShadow
+        New-HTMLPanelStyle -BorderRadius 0px
+        New-HTMLTableOption -DataStore JavaScript -BoolAsString -ArrayJoinString ', ' -ArrayJoin
+
         New-HTMLHeader {
             New-HTMLSection -Invisible {
                 New-HTMLSection {
@@ -51,7 +56,6 @@
                 } -JustifyContent flex-end -Invisible
             }
         }
-        New-TableOption -DataStore JavaScript -ArrayJoin -BoolAsString
         if ($Report.ShowConfiguration) {
             New-HTMLTab -Name "About" {
                 New-HTMLTab -Name "Configuration" {
