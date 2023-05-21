@@ -4,9 +4,7 @@
         [Parameter(Mandatory)][ValidateSet('User', 'Manager', 'Security', 'Admin')][string] $Type,
         [switch] $Enable,
         [int] $SendCountMaximum,
-        #$SendToDefaultEmail,
         [string] $DefaultEmail,
-        [string] $OverwriteEmailProperty,
         [switch] $AttachCSV
     )
 
@@ -15,7 +13,7 @@
         Settings = @{
             Enable                 = $Enable.IsPresent
             SendCountMaximum       = $SendCountMaximum
-            #SendToDefaultEmail = $SendToDefaultEmail.IsPresent
+            SendToDefaultEmail     = if ($DefaultEmail) { $true } else { $false }
             DefaultEmail           = $DefaultEmail
             OverwriteEmailProperty = $OverwriteEmailProperty
             AttachCSV              = $AttachCSV.IsPresent
