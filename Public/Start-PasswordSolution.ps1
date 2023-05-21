@@ -166,7 +166,7 @@
                 } elseif ($Configuration.Type -eq "PasswordConfigurationTemplatePreExpiry") {
                     $TemplatePreExpiry = $Configuration.Settings.Template
                     $TemplatePreExpirySubject = $Configuration.Settings.Subject
-                } elseif ($Configuration.Type -eq "PasswordConfigurationTemplatePreExpiry") {
+                } elseif ($Configuration.Type -eq "PasswordConfigurationTemplatePostExpiry") {
                     $TemplatePostExpiry = $Configuration.Settings.Template
                     $TemplatePostExpirySubject = $Configuration.Settings.Subject
                 } elseif ($Configuration.Type -eq "PasswordConfigurationTemplateManager") {
