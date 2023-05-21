@@ -19,7 +19,7 @@
             EmailManagers    = [ordered] @{}
             EmailEscalations = [ordered] @{}
         }
-    } 
+    }
     $SummarySearch
 
 }
