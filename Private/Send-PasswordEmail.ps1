@@ -60,6 +60,15 @@
         } else {
             $EmailParameters.Attachment = @()
         }
-        Send-EmailMessage @EmailParameters
+        try {
+            Send-EmailMessage @EmailParameters -ErrorAction Stop
+        } catch {
+            if ($_.Exception.Message -like "*Credential*") {
+                Write-Color -Text "[e] " , "Failed to send email to $($EmailParameters.EmailParameters) because error: $($_.Exception.Message)" -Color Yellow, White, Red
+                Write-Color -Text "[i] " , "Please make sure you have valid credentials in your configuration file (graph encryption issue?)" -Color Yellow, White, Red
+            } else {
+                Write-Color -Text "[e] " , "Failed to send email to $($EmailParameters.EmailParameters) because error: $($_.Exception.Message)" -Color Yellow, White, Red
+            }
+        }
     }
 }
