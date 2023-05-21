@@ -5,59 +5,133 @@ online version:
 schema: 2.0.0
 ---
 
-# Start-PasswordSolution
+# New-PasswordConfigurationRule
 
 ## SYNOPSIS
-Starts Password Expiry Notifications for the whole forest
+{{ Fill in the Synopsis }}
 
 ## SYNTAX
 
 ```
-Start-PasswordSolution [-EmailParameters] <IDictionary> [[-OverwriteEmailProperty] <String>]
- [-UserSection] <IDictionary> [-ManagerSection] <IDictionary> [-SecuritySection] <IDictionary>
- [-AdminSection] <IDictionary> [-Rules] <Array> [[-TemplatePreExpiry] <ScriptBlock>]
- [[-TemplatePreExpirySubject] <String>] [[-TemplatePostExpiry] <ScriptBlock>]
- [[-TemplatePostExpirySubject] <String>] [-TemplateManager] <ScriptBlock> [-TemplateManagerSubject] <String>
- [-TemplateSecurity] <ScriptBlock> [-TemplateSecuritySubject] <String>
- [-TemplateManagerNotCompliant] <ScriptBlock> [-TemplateManagerNotCompliantSubject] <String>
- [-TemplateAdmin] <ScriptBlock> [-TemplateAdminSubject] <String> [[-Logging] <IDictionary>]
- [[-HTMLReports] <Array>] [[-SearchPath] <String>] [<CommonParameters>]
+New-PasswordConfigurationRule [[-ReminderConfiguration] <ScriptBlock>] [[-Name] <String>] [-Enable]
+ [-IncludeExpiring] [[-IncludePasswordNeverExpires] <Boolean>] [[-PasswordNeverExpiresDays] <Int32>]
+ [[-IncludeNameProperties] <String[]>] [[-IncludeName] <String[]>] [[-IncludeOU] <String[]>]
+ [[-ExcludeOU] <String[]>] [-ManagerReminder] [-ManagerNotCompliant]
+ [[-ManagerNotCompliantDisplayName] <String>] [[-ManagerNotCompliantEmailAddress] <String>]
+ [-ManagerNotCompliantDisabled] [-ManagerNotCompliantMissing] [-ManagerNotCompliantMissingEmail]
+ [[-ManagerNotCompliantLastLogonDays] <Int32>] [-SecurityEscalation]
+ [[-SecurityEscalationDisplayName] <String>] [[-SecurityEscalationEmailAddress] <String>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Starts Password Expiry Notifications for the whole forest
+{{ Fill in the Description }}
 
 ## EXAMPLES
 
-### EXAMPLE 1
+### Example 1
+```powershell
+PS C:\> {{ Add example code here }}
 ```
-An example
-```
+
+{{ Add example description here }}
 
 ## PARAMETERS
 
-### -EmailParameters
-Parameters for Email.
-Uses Mailozaurr splatting behind the scenes, so it supports all options that Mailozaurr does.
+### -Enable
+{{ Fill Enable Description }}
 
 ```yaml
-Type: IDictionary
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 
-Required: True
-Position: 1
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -OverwriteEmailProperty
-Property responsible for overwriting the default email field in Active Directory.
-Useful when the password notification has to go somewhere else than users email address.
+### -ExcludeOU
+{{ Fill ExcludeOU Description }}
 
 ```yaml
-Type: String
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 7
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeExpiring
+{{ Fill IncludeExpiring Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeName
+{{ Fill IncludeName Description }}
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 5
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeNameProperties
+{{ Fill IncludeNameProperties Description }}
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 4
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeOU
+{{ Fill IncludeOU Description }}
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 6
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludePasswordNeverExpires
+{{ Fill IncludePasswordNeverExpires Description }}
+
+```yaml
+Type: Boolean
 Parameter Sets: (All)
 Aliases:
 
@@ -68,86 +142,41 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -UserSection
-Parameter description
+### -ManagerNotCompliant
+{{ Fill ManagerNotCompliant Description }}
 
 ```yaml
-Type: IDictionary
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 
-Required: True
-Position: 3
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ManagerSection
-Parameter description
+### -ManagerNotCompliantDisabled
+{{ Fill ManagerNotCompliantDisabled Description }}
 
 ```yaml
-Type: IDictionary
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 
-Required: True
-Position: 4
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SecuritySection
-Parameter description
+### -ManagerNotCompliantDisplayName
+{{ Fill ManagerNotCompliantDisplayName Description }}
 
 ```yaml
-Type: IDictionary
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 5
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -AdminSection
-Parameter description
-
-```yaml
-Type: IDictionary
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 6
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Rules
-Parameter description
-
-```yaml
-Type: Array
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 7
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TemplatePreExpiry
-Parameter description
-
-```yaml
-Type: ScriptBlock
+Type: String
 Parameter Sets: (All)
 Aliases:
 
@@ -158,8 +187,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -TemplatePreExpirySubject
-Parameter description
+### -ManagerNotCompliantEmailAddress
+{{ Fill ManagerNotCompliantEmailAddress Description }}
 
 ```yaml
 Type: String
@@ -173,11 +202,11 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -TemplatePostExpiry
-Parameter description
+### -ManagerNotCompliantLastLogonDays
+{{ Fill ManagerNotCompliantLastLogonDays Description }}
 
 ```yaml
-Type: ScriptBlock
+Type: Int32
 Parameter Sets: (All)
 Aliases:
 
@@ -188,8 +217,113 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -TemplatePostExpirySubject
-Parameter description
+### -ManagerNotCompliantMissing
+{{ Fill ManagerNotCompliantMissing Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ManagerNotCompliantMissingEmail
+{{ Fill ManagerNotCompliantMissingEmail Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ManagerReminder
+{{ Fill ManagerReminder Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+{{ Fill Name Description }}
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PasswordNeverExpiresDays
+{{ Fill PasswordNeverExpiresDays Description }}
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ReminderConfiguration
+{{ Fill ReminderConfiguration Description }}
+
+```yaml
+Type: ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SecurityEscalation
+{{ Fill SecurityEscalation Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SecurityEscalationDisplayName
+{{ Fill SecurityEscalationDisplayName Description }}
 
 ```yaml
 Type: String
@@ -203,166 +337,16 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -TemplateManager
-Parameter description
+### -SecurityEscalationEmailAddress
+{{ Fill SecurityEscalationEmailAddress Description }}
 
 ```yaml
-Type: ScriptBlock
+Type: String
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: 12
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TemplateManagerSubject
-Parameter description
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 13
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TemplateSecurity
-Parameter description
-
-```yaml
-Type: ScriptBlock
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 14
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TemplateSecuritySubject
-Parameter description
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 15
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TemplateManagerNotCompliant
-Parameter description
-
-```yaml
-Type: ScriptBlock
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 16
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TemplateManagerNotCompliantSubject
-Parameter description
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 17
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TemplateAdmin
-Parameter description
-
-```yaml
-Type: ScriptBlock
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 18
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TemplateAdminSubject
-Parameter description
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 19
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Logging
-Parameter description
-
-```yaml
-Type: IDictionary
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 20
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -HTMLReports
-Parameter description
-
-```yaml
-Type: Array
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 21
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -SearchPath
-Parameter description
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 22
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -373,9 +357,11 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
+### None
+
 ## OUTPUTS
 
+### System.Object
 ## NOTES
-General notes
 
 ## RELATED LINKS
