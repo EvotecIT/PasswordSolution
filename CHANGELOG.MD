@@ -1,5 +1,11 @@
 ﻿# PasswordSolution Release History
 
+## 1.0.0
+- Improves exclusions https://github.com/EvotecIT/PasswordSolution/issues/7
+- Simplifies configuration https://github.com/EvotecIT/PasswordSolution/issues/8
+- Improves configuration https://github.com/EvotecIT/PasswordSolution/issues/3
+- Improves configuration https://github.com/EvotecIT/PasswordSolution/issues/6
+
 ## 0.0.37 - 2023.04.25
 - Improve `Maps` in Password Quality
 - Improve colors, add column to a report
