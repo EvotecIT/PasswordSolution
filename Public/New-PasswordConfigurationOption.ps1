@@ -13,7 +13,8 @@
         [switch] $NotifyOnUserDaysToExpireNull , #= $true
         [string] $SearchPath,
         [string] $EmailDateFormat,
-        [switch] $EmailDateFormatUTCConversion
+        [switch] $EmailDateFormatUTCConversion,
+        [string] $OverwriteEmailProperty
     )
 
     $Output = [ordered] @{
@@ -33,6 +34,8 @@
             # conversion for DateExpiry/PasswordLastSet only
             EmailDateFormat              = $EmailDateFormat
             EmailDateFormatUTCConversion = $EmailDateFormatUTCConversion.IsPresent
+            # email property conversion (global)
+            OverwriteEmailProperty       = $OverwriteEmailProperty
         }
     }
     Remove-EmptyValue -Hashtable $Output.Settings
