@@ -6,6 +6,9 @@
     .DESCRIPTION
     Starts Password Expiry Notifications for the whole forest
 
+    .PARAMETER ConfigurationDSL
+    Parameter description
+
     .PARAMETER EmailParameters
     Parameters for Email. Uses Mailozaurr splatting behind the scenes, so it supports all options that Mailozaurr does.
 
@@ -128,6 +131,13 @@
     $AllSkipped = [ordered] @{}
     $Locations = [ordered] @{}
 
+    if (-not $Rules) {
+        $Rules = @() # not worth the effort for generic list
+    }
+    if (-not $HTMLReports) {
+        $HTMLReports = @() # not worth the effort for generic list
+    }
+
     if ($ConfigurationDSL) {
         try {
             $ConfigurationExecuted = & $ConfigurationDSL
@@ -152,7 +162,7 @@
                 } elseif ($Configuration.Type -eq 'PasswordConfigurationReport') {
                     $HTMLReports += $Configuration.Settings
                 } elseif ($Configuration.Type -eq 'PasswordConfigurationRule') {
-                    $Rules += $Configuration.Settings[$Setting]
+                    $Rules += $Configuration.Settings
                 } elseif ($Configuration.Type -eq "PasswordConfigurationTemplatePreExpiry") {
                     $TemplatePreExpiry = $Configuration.Settings.Template
                     $TemplatePreExpirySubject = $Configuration.Settings.Subject
@@ -174,13 +184,19 @@
                 }
             }
         } catch {
-            Write-Color -Text "[e]", " Processing configuration failed because of error: ", $_.Exception.Message -Color Yellow, White, Red
+            Write-Color -Text "[e]", " Processing configuration failed because of error in line ", $_.InvocationInfo.ScriptLineNumber, " in ", $_.InvocationInfo.InvocationName, " with message: ", $_.Exception.Message -Color Yellow, White, Red
             return
         }
     }
 
     Write-Color -Text "[i]", " Starting process to find expiring users" -Color Yellow, White, Green, White, Green, White, Green, White
     $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty
+
+    if ($Rules.Count -eq 0) {
+        Write-Color -Text "[e]", " No rules found. Please add some rules to configuration" -Color Yellow, White, Red
+        return
+    }
+
     foreach ($Rule in $Rules) {
         $SplatProcessingRule = [ordered] @{
             Rule        = $Rule
