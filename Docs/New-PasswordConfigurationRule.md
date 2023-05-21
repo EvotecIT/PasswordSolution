@@ -13,14 +13,17 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-New-PasswordConfigurationRule [[-ReminderConfiguration] <ScriptBlock>] [[-Name] <String>] [-Enable]
- [-IncludeExpiring] [[-IncludePasswordNeverExpires] <Boolean>] [[-PasswordNeverExpiresDays] <Int32>]
- [[-IncludeNameProperties] <String[]>] [[-IncludeName] <String[]>] [[-IncludeOU] <String[]>]
- [[-ExcludeOU] <String[]>] [-ManagerReminder] [-ManagerNotCompliant]
+New-PasswordConfigurationRule [[-ReminderConfiguration] <ScriptBlock>] [-Name] <String> [-Enable]
+ [-IncludeExpiring] [-IncludePasswordNeverExpires] [[-PasswordNeverExpiresDays] <Int32>]
+ [[-IncludeNameProperties] <String[]>] [[-IncludeName] <String[]>] [[-ExcludeNameProperties] <String[]>]
+ [[-ExcludeName] <String[]>] [[-IncludeOU] <String[]>] [[-ExcludeOU] <String[]>] [[-IncludeGroup] <String[]>]
+ [[-ExcludeGroup] <String[]>] [-ReminderDays] <Array> [-ManagerReminder] [-ManagerNotCompliant]
  [[-ManagerNotCompliantDisplayName] <String>] [[-ManagerNotCompliantEmailAddress] <String>]
  [-ManagerNotCompliantDisabled] [-ManagerNotCompliantMissing] [-ManagerNotCompliantMissingEmail]
  [[-ManagerNotCompliantLastLogonDays] <Int32>] [-SecurityEscalation]
- [[-SecurityEscalationDisplayName] <String>] [[-SecurityEscalationEmailAddress] <String>] [<CommonParameters>]
+ [[-SecurityEscalationDisplayName] <String>] [[-SecurityEscalationEmailAddress] <String>]
+ [[-OverwriteEmailProperty] <String>] [[-OverwriteManagerProperty] <String>]
+ [[-OverwriteManagerPropertyName] <String>] [-ProcessManagersOnly] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -37,6 +40,36 @@ PS C:\> {{ Add example code here }}
 
 ## PARAMETERS
 
+### -ReminderConfiguration
+{{ Fill ReminderConfiguration Description }}
+
+```yaml
+Type: ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+{{ Fill Name Description }}
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Enable
 {{ Fill Enable Description }}
 
@@ -47,21 +80,6 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ExcludeOU
-{{ Fill ExcludeOU Description }}
-
-```yaml
-Type: String[]
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 7
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -82,16 +100,31 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -IncludeName
-{{ Fill IncludeName Description }}
+### -IncludePasswordNeverExpires
+{{ Fill IncludePasswordNeverExpires Description }}
 
 ```yaml
-Type: String[]
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 5
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PasswordNeverExpiresDays
+{{ Fill PasswordNeverExpiresDays Description }}
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 3
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -112,8 +145,23 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -IncludeOU
-{{ Fill IncludeOU Description }}
+### -IncludeName
+{{ Fill IncludeName Description }}
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 5
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExcludeNameProperties
+Exclude user from rule if any of the properties match the value as defined in ExcludeName
 
 ```yaml
 Type: String[]
@@ -127,23 +175,98 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -IncludePasswordNeverExpires
-{{ Fill IncludePasswordNeverExpires Description }}
+### -ExcludeName
+Exclude user from rule if any of the properties match the value of Name in the properties defined in ExcludeNameProperties
 
 ```yaml
-Type: Boolean
+Type: String[]
 Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 2
+Position: 7
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ManagerNotCompliant
-{{ Fill ManagerNotCompliant Description }}
+### -IncludeOU
+{{ Fill IncludeOU Description }}
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 8
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExcludeOU
+{{ Fill ExcludeOU Description }}
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 9
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeGroup
+Parameter description
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 10
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExcludeGroup
+Parameter description
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 11
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ReminderDays
+Parameter description
+
+```yaml
+Type: Array
+Parameter Sets: (All)
+Aliases: ExpirationDays, Days
+
+Required: True
+Position: 12
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ManagerReminder
+{{ Fill ManagerReminder Description }}
 
 ```yaml
 Type: SwitchParameter
@@ -157,8 +280,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ManagerNotCompliantDisabled
-{{ Fill ManagerNotCompliantDisabled Description }}
+### -ManagerNotCompliant
+{{ Fill ManagerNotCompliant Description }}
 
 ```yaml
 Type: SwitchParameter
@@ -181,7 +304,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 8
+Position: 13
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -196,22 +319,22 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 9
+Position: 14
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ManagerNotCompliantLastLogonDays
-{{ Fill ManagerNotCompliantLastLogonDays Description }}
+### -ManagerNotCompliantDisabled
+{{ Fill ManagerNotCompliantDisabled Description }}
 
 ```yaml
-Type: Int32
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 10
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -247,38 +370,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ManagerReminder
-{{ Fill ManagerReminder Description }}
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Name
-{{ Fill Name Description }}
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 1
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -PasswordNeverExpiresDays
-{{ Fill PasswordNeverExpiresDays Description }}
+### -ManagerNotCompliantLastLogonDays
+{{ Fill ManagerNotCompliantLastLogonDays Description }}
 
 ```yaml
 Type: Int32
@@ -286,22 +379,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 3
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ReminderConfiguration
-{{ Fill ReminderConfiguration Description }}
-
-```yaml
-Type: ScriptBlock
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 0
+Position: 15
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -331,7 +409,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 11
+Position: 16
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -346,8 +424,70 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 12
+Position: 17
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OverwriteEmailProperty
+Parameter description
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 18
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OverwriteManagerProperty
+Parameter description
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 19
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OverwriteManagerPropertyName
+Parameter description
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 20
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProcessManagersOnly
+This parameters is used to process users, but only managers will be notified.
+Sending emails to users within the rule will be skipped completly.
+This is useful if users would have email addresses, that would normally trigger an email to them.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

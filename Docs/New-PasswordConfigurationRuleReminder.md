@@ -12,22 +12,21 @@ schema: 2.0.0
 
 ## SYNTAX
 
+### Daily (Default)
+```
+New-PasswordConfigurationRuleReminder -Type <String> [<CommonParameters>]
+```
+
 ### DayOfMonth
 ```
-New-PasswordConfigurationRuleReminder -Type <String> -ReminderOn <Int32[]> -DayOfMonth <Int32[]>
+New-PasswordConfigurationRuleReminder -Type <String> -ExpirationDays <Array> -DayOfMonth <Array>
  [-ComparisonType <String>] [<CommonParameters>]
 ```
 
 ### DayOfWeek
 ```
-New-PasswordConfigurationRuleReminder -Type <String> -ReminderOn <Int32[]> -DayOfWeek <String[]>
+New-PasswordConfigurationRuleReminder -Type <String> -ExpirationDays <Array> -DayOfWeek <Array>
  [-ComparisonType <String>] [<CommonParameters>]
-```
-
-### Daily
-```
-New-PasswordConfigurationRuleReminder -Type <String> -ReminderOn <Int32[]> [-ComparisonType <String>]
- [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -49,7 +48,7 @@ PS C:\> {{ Add example code here }}
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: DayOfMonth, DayOfWeek
 Aliases:
 Accepted values: lt, gt, eq, in
 
@@ -64,7 +63,7 @@ Accept wildcard characters: False
 {{ Fill DayOfMonth Description }}
 
 ```yaml
-Type: Int32[]
+Type: Array
 Parameter Sets: DayOfMonth
 Aliases:
 
@@ -79,7 +78,7 @@ Accept wildcard characters: False
 {{ Fill DayOfWeek Description }}
 
 ```yaml
-Type: String[]
+Type: Array
 Parameter Sets: DayOfWeek
 Aliases:
 Accepted values: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
@@ -91,13 +90,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ReminderOn
-{{ Fill ReminderOn Description }}
+### -ExpirationDays
+{{ Fill ExpirationDays Description }}
 
 ```yaml
-Type: Int32[]
-Parameter Sets: (All)
-Aliases:
+Type: Array
+Parameter Sets: DayOfMonth, DayOfWeek
+Aliases: ConditionDays, Days
 
 Required: True
 Position: Named
@@ -113,7 +112,7 @@ Accept wildcard characters: False
 Type: String
 Parameter Sets: (All)
 Aliases:
-Accepted values: User, Manager, ManagerNotCompliant, Security
+Accepted values: Manager, ManagerNotCompliant, Security
 
 Required: True
 Position: Named

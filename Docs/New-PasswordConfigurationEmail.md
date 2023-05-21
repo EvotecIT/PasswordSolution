@@ -18,7 +18,8 @@ New-PasswordConfigurationEmail [-Server <String>] [-Port <Int32>] -From <Object>
  [-Priority <String>] [-DeliveryNotificationOption <String[]>]
  [-DeliveryStatusNotificationType <DeliveryStatusNotificationType>] [-Credential <PSCredential>]
  [-SecureSocketOptions <SecureSocketOptions>] [-UseSsl] [-SkipCertificateRevocation]
- [-SkipCertificateValidatation] [-Timeout <Int32>] [-LocalDomain <String>] [<CommonParameters>]
+ [-SkipCertificateValidatation] [-Timeout <Int32>] [-LocalDomain <String>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### oAuth
@@ -27,7 +28,8 @@ New-PasswordConfigurationEmail [-Server <String>] [-Port <Int32>] -From <Object>
  [-Priority <String>] [-DeliveryNotificationOption <String[]>]
  [-DeliveryStatusNotificationType <DeliveryStatusNotificationType>] [-Credential <PSCredential>]
  [-SecureSocketOptions <SecureSocketOptions>] [-UseSsl] [-SkipCertificateRevocation]
- [-SkipCertificateValidatation] [-Timeout <Int32>] [-oAuth2] [-LocalDomain <String>] [<CommonParameters>]
+ [-SkipCertificateValidatation] [-Timeout <Int32>] [-oAuth2] [-LocalDomain <String>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### SecureString
@@ -36,27 +38,28 @@ New-PasswordConfigurationEmail [-Server <String>] [-Port <Int32>] -From <Object>
  [-Priority <String>] [-DeliveryNotificationOption <String[]>]
  [-DeliveryStatusNotificationType <DeliveryStatusNotificationType>] [-Username <String>] [-Password <String>]
  [-SecureSocketOptions <SecureSocketOptions>] [-UseSsl] [-SkipCertificateRevocation]
- [-SkipCertificateValidatation] [-Timeout <Int32>] [-AsSecureString] [-LocalDomain <String>]
- [<CommonParameters>]
+ [-SkipCertificateValidatation] [-Timeout <Int32>] [-AsSecureString] [-LocalDomain <String>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ### SendGrid
 ```
 New-PasswordConfigurationEmail -From <Object> [-ReplyTo <String>] [-Priority <String>]
- -Credential <PSCredential> [-SendGrid] [-SeparateTo] [<CommonParameters>]
+ -Credential <PSCredential> [-SendGrid] [-SeparateTo] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### MgGraphRequest
 ```
 New-PasswordConfigurationEmail -From <Object> [-ReplyTo <String>] [-Priority <String>] [-RequestReadReceipt]
- [-RequestDeliveryReceipt] [-Graph] [-MgGraphRequest] [-DoNotSaveToSentItems] [<CommonParameters>]
+ [-RequestDeliveryReceipt] [-Graph] [-MgGraphRequest] [-DoNotSaveToSentItems] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### Graph
 ```
 New-PasswordConfigurationEmail -From <Object> [-ReplyTo <String>] [-Priority <String>]
  -Credential <PSCredential> [-RequestReadReceipt] [-RequestDeliveryReceipt] [-Graph] [-DoNotSaveToSentItems]
- [<CommonParameters>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -80,6 +83,21 @@ PS C:\> {{ Add example code here }}
 Type: SwitchParameter
 Parameter Sets: SecureString
 Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
 
 Required: False
 Position: Named
@@ -441,6 +459,21 @@ Accept wildcard characters: False
 Type: String
 Parameter Sets: SecureString
 Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
 
 Required: False
 Position: Named

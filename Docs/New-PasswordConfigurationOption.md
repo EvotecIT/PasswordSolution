@@ -16,7 +16,7 @@ schema: 2.0.0
 New-PasswordConfigurationOption [-ShowTime] [[-LogFile] <String>] [[-TimeFormat] <String>]
  [[-LogMaximum] <Int32>] [-NotifyOnSkipUserManagerOnly] [-NotifyOnSecuritySend] [-NotifyOnManagerSend]
  [-NotifyOnUserSend] [-NotifyOnUserMatchingRule] [-NotifyOnUserDaysToExpireNull] [[-SearchPath] <String>]
- [<CommonParameters>]
+ [[-EmailDateFormat] <String>] [-EmailDateFormatUTCConversion] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -32,6 +32,36 @@ PS C:\> {{ Add example code here }}
 {{ Add example description here }}
 
 ## PARAMETERS
+
+### -EmailDateFormat
+{{ Fill EmailDateFormat Description }}
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 4
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EmailDateFormatUTCConversion
+{{ Fill EmailDateFormatUTCConversion Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 
 ### -LogFile
 {{ Fill LogFile Description }}

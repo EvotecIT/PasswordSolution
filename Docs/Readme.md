@@ -32,6 +32,9 @@ Searches thru XML logs created by Password Solution
 ### [New-PasswordConfigurationRule](New-PasswordConfigurationRule.md)
 {{ Fill in the Synopsis }}
 
+### [New-PasswordConfigurationRuleReminder](New-PasswordConfigurationRuleReminder.md)
+{{ Fill in the Synopsis }}
+
 ### [New-PasswordConfigurationTemplate](New-PasswordConfigurationTemplate.md)
 {{ Fill in the Synopsis }}
 

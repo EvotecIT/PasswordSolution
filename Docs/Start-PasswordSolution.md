@@ -12,16 +12,21 @@ Starts Password Expiry Notifications for the whole forest
 
 ## SYNTAX
 
+### DSL (Default)
 ```
-Start-PasswordSolution [-EmailParameters] <IDictionary> [[-OverwriteEmailProperty] <String>]
- [-UserSection] <IDictionary> [-ManagerSection] <IDictionary> [-SecuritySection] <IDictionary>
- [-AdminSection] <IDictionary> [-Rules] <Array> [[-TemplatePreExpiry] <ScriptBlock>]
- [[-TemplatePreExpirySubject] <String>] [[-TemplatePostExpiry] <ScriptBlock>]
- [[-TemplatePostExpirySubject] <String>] [-TemplateManager] <ScriptBlock> [-TemplateManagerSubject] <String>
- [-TemplateSecurity] <ScriptBlock> [-TemplateSecuritySubject] <String>
- [-TemplateManagerNotCompliant] <ScriptBlock> [-TemplateManagerNotCompliantSubject] <String>
- [-TemplateAdmin] <ScriptBlock> [-TemplateAdminSubject] <String> [[-Logging] <IDictionary>]
- [[-HTMLReports] <Array>] [[-SearchPath] <String>] [<CommonParameters>]
+Start-PasswordSolution [[-ConfigurationDSL] <ScriptBlock>] [<CommonParameters>]
+```
+
+### Legacy
+```
+Start-PasswordSolution -EmailParameters <IDictionary> [-OverwriteEmailProperty <String>]
+ -UserSection <IDictionary> -ManagerSection <IDictionary> -SecuritySection <IDictionary>
+ -AdminSection <IDictionary> -Rules <Array> [-TemplatePreExpiry <ScriptBlock>]
+ [-TemplatePreExpirySubject <String>] [-TemplatePostExpiry <ScriptBlock>] [-TemplatePostExpirySubject <String>]
+ -TemplateManager <ScriptBlock> -TemplateManagerSubject <String> -TemplateSecurity <ScriptBlock>
+ -TemplateSecuritySubject <String> -TemplateManagerNotCompliant <ScriptBlock>
+ -TemplateManagerNotCompliantSubject <String> -TemplateAdmin <ScriptBlock> -TemplateAdminSubject <String>
+ [-Logging <IDictionary>] [-HTMLReports <Array>] [-SearchPath <String>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -36,17 +41,32 @@ An example
 
 ## PARAMETERS
 
+### -ConfigurationDSL
+Parameter description
+
+```yaml
+Type: ScriptBlock
+Parameter Sets: DSL
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -EmailParameters
 Parameters for Email.
 Uses Mailozaurr splatting behind the scenes, so it supports all options that Mailozaurr does.
 
 ```yaml
 Type: IDictionary
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: True
-Position: 1
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -58,11 +78,11 @@ Useful when the password notification has to go somewhere else than users email 
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: False
-Position: 2
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -73,11 +93,11 @@ Parameter description
 
 ```yaml
 Type: IDictionary
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: True
-Position: 3
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -88,11 +108,11 @@ Parameter description
 
 ```yaml
 Type: IDictionary
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: True
-Position: 4
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -103,11 +123,11 @@ Parameter description
 
 ```yaml
 Type: IDictionary
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: True
-Position: 5
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -118,11 +138,11 @@ Parameter description
 
 ```yaml
 Type: IDictionary
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: True
-Position: 6
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -133,11 +153,11 @@ Parameter description
 
 ```yaml
 Type: Array
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: True
-Position: 7
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -148,11 +168,11 @@ Parameter description
 
 ```yaml
 Type: ScriptBlock
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: False
-Position: 8
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -163,11 +183,11 @@ Parameter description
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: False
-Position: 9
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -178,11 +198,11 @@ Parameter description
 
 ```yaml
 Type: ScriptBlock
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: False
-Position: 10
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -193,11 +213,11 @@ Parameter description
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: False
-Position: 11
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -208,11 +228,11 @@ Parameter description
 
 ```yaml
 Type: ScriptBlock
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: True
-Position: 12
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -223,11 +243,11 @@ Parameter description
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: True
-Position: 13
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -238,11 +258,11 @@ Parameter description
 
 ```yaml
 Type: ScriptBlock
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: True
-Position: 14
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -253,11 +273,11 @@ Parameter description
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: True
-Position: 15
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -268,11 +288,11 @@ Parameter description
 
 ```yaml
 Type: ScriptBlock
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: True
-Position: 16
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -283,11 +303,11 @@ Parameter description
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: True
-Position: 17
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -298,11 +318,11 @@ Parameter description
 
 ```yaml
 Type: ScriptBlock
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: True
-Position: 18
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -313,11 +333,11 @@ Parameter description
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: True
-Position: 19
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -328,11 +348,11 @@ Parameter description
 
 ```yaml
 Type: IDictionary
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: False
-Position: 20
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -343,11 +363,11 @@ Parameter description
 
 ```yaml
 Type: Array
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: False
-Position: 21
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -358,11 +378,11 @@ Parameter description
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: Legacy
 Aliases:
 
 Required: False
-Position: 22
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False

@@ -14,7 +14,7 @@ schema: 2.0.0
 
 ```
 New-PasswordConfigurationType [-Type] <String> [-Enable] [[-SendCountMaximum] <Int32>]
- [[-DefaultEmail] <String>] [[-OverwriteEmailProperty] <String>] [-AttachCSV] [<CommonParameters>]
+ [[-DefaultEmail] <String>] [-AttachCSV] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -71,21 +71,6 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -OverwriteEmailProperty
-{{ Fill OverwriteEmailProperty Description }}
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 3
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
