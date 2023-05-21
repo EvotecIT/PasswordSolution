@@ -443,7 +443,7 @@
                 $Color = 'Amaranth'
                 $IconSolid = 'stop-circle'
             }
-            New-HTMLTab -Name 'Email Sent History' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
+            New-HTMLTab -Name 'History Emails To Users' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
                 New-HTMLTable -DataTable $UsersSent {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
@@ -462,7 +462,7 @@
                 $Color = 'Amaranth'
                 $IconSolid = 'stop-circle'
             }
-            New-HTMLTab -Name 'Email sent to manager' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
+            New-HTMLTab -Name 'History Emails To Managers' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
                 New-HTMLTable -DataTable $ShowSearchManagers {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
@@ -478,7 +478,7 @@
                 $Color = 'Amaranth'
                 $IconSolid = 'stop-circle'
             }
-            New-HTMLTab -Name 'Email sent to Security' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
+            New-HTMLTab -Name 'History Email To Security' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
                 New-HTMLTable -DataTable $ShowSearchEscalations {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
@@ -511,6 +511,9 @@
         }
         if ($Report.ShowSkippedLocations) {
             New-HTMLTab -Name 'Skipped Locations' -IconSolid building {
+                New-HTMLPanel -AlignContentText center {
+                    New-HTMLText -FontSize 15pt -Text "Users in those Organizational Units have no password date set. This means account running expiration checks doesn't have permissions or acccout never had password set or account is set to change password on logon. "
+                } -Invisible
                 New-HTMLTable -DataTable $Locations.Values -Filtering {
                     New-TableHeader -ResponsiveOperations none -Names 'Names', 'NamesExpired'
                 }
