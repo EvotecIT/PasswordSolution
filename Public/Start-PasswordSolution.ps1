@@ -120,8 +120,6 @@
     # since the first entry didn't go to log file, this will
     Write-Color -Text '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta -NoConsoleOutput
 
-    $SummarySearch = Import-SearchInformation -SearchPath $SearchPath
-
     $Summary = [ordered] @{}
     $Summary['Notify'] = [ordered] @{}
     $Summary['NotifyManager'] = [ordered] @{}
@@ -145,9 +143,11 @@
                 if ($Configuration.Type -eq 'PasswordConfigurationOption') {
                     if ($Configuration.Settings.SearchPath) {
                         $SearchPath = $Configuration.Settings.SearchPath
+                    } elseif ($Configuration.Settings.OverwriteEmailProperty) {
+                        $OverwriteEmailProperty = $Configuration.Settings.OverwriteEmailProperty
                     }
                     foreach ($Setting in $Configuration.Settings.Keys) {
-                        if ($Setting -notin 'SearchPath') {
+                        if ($Setting -notin 'SearchPath', 'OverwriteEmailProperty') {
                             $Logging[$Setting] = $Configuration.Settings[$Setting]
                         }
                     }
@@ -188,6 +188,8 @@
             return
         }
     }
+
+    $SummarySearch = Import-SearchInformation -SearchPath $SearchPath
 
     Write-Color -Text "[i]", " Starting process to find expiring users" -Color Yellow, White, Green, White, Green, White, Green, White
     $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty
@@ -247,6 +249,8 @@
 
     $TimeEnd = Stop-TimeLog -Time $TimeStart -Option OneLiner
 
+    Export-SearchInformation -SearchPath $SearchPath -SummarySearch $SummarySearch -Today $Today -SummaryUsersEmails $SummaryUsersEmails -SummaryManagersEmails $SummaryManagersEmails -SummaryEscalationEmails $SummaryEscalationEmails
+
     $HtmlAttachments = [System.Collections.Generic.List[string]]::new()
 
     foreach ($Report in $HTMLReports) {
@@ -255,7 +259,7 @@
                 Report                  = $Report
                 EmailParameters         = $EmailParameters
                 Logging                 = $Logging
-                FilePath                = $FilePath
+                #FilePath                = $FilePath
                 SearchPath              = $SearchPath
                 Rules                   = $Rules
                 UserSection             = $UserSection
@@ -282,8 +286,6 @@
             }
         }
     }
-
-    Export-SearchInformation -SearchPath $SearchPath -SummarySearch $SummarySearch -Today $Today
 
     $AdminSplat = [ordered] @{
         AdminSection         = $AdminSection
