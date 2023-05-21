@@ -726,6 +726,8 @@
             }
         }
     } else {
-        Write-Color -Text "[i]", " Processing rule ", $Rule.Name, ' status: ', $Rule.Enable -Color Red, White, Red, White, Red, White, Red, White
+        if ($null -ne $Rule.Name -and $null -ne $Rule.Enable) {
+            Write-Color -Text "[i]", " Processing rule ", $Rule.Name, ' status: ', $Rule.Enable -Color Red, White, Red, White, Red, White, Red, White
+        }
     }
 }
