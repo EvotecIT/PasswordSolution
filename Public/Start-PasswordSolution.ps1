@@ -189,10 +189,17 @@
         }
     }
 
+    # this is to get properties from rules to be used in building up user output
+    [Array] $ExtendedProperties = foreach ($Rule in $Rules ) {
+        if ($Rule.OverwriteEmailProperty) {
+            $Rule.OverwriteEmailProperty
+        }
+    }
+
     $SummarySearch = Import-SearchInformation -SearchPath $SearchPath
 
     Write-Color -Text "[i]", " Starting process to find expiring users" -Color Yellow, White, Green, White, Green, White, Green, White
-    $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty
+    $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty -RulesProperties $ExtendedProperties
 
     if ($Rules.Count -eq 0) {
         Write-Color -Text "[e]", " No rules found. Please add some rules to configuration" -Color Yellow, White, Red
