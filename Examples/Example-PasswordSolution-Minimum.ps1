@@ -38,14 +38,12 @@ $PasswordSolution = [ordered] @{
         SendCountMaximum       = 3
         SendToDefaultEmail     = $true # if enabled $EmailParameters are used (good for testing)
         DefaultEmail           = 'przemyslaw.klys+testgithub@evotec.pl' # your default email field (IMPORTANT)
-        OverwriteEmailProperty = 'extensionAttribute12'
     }
     ManagerSection                     = @{
         Enable                 = $true
         SendCountMaximum       = 3
         SendToDefaultEmail     = $true # if enabled $EmailParameters are used (good for testing)
         DefaultEmail           = 'przemyslaw.klys+testgithub@evotec.pl' # your default email field (IMPORTANT)
-        OverwriteEmailProperty = 'extensionAttribute11'
     }
     SecuritySection                    = @{
         Enable             = $true
@@ -71,7 +69,7 @@ $PasswordSolution = [ordered] @{
         [ordered] @{
             Name                        = 'Administrative Accounts'
             Enable                      = $false # doesn't processes this section at all if $false
-            Reminders                   = -45, -30, - 15, -7, 0, 1, 2, 3, 7, 15, 30, 60
+            Reminders                   = -45, -30, -15, -7, 0, 1, 2, 3, 7, 15, 30, 60
             #Reminders                   = @(-200..-1), 0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 28, 30, @(30..60), @(61..370)
             # this means we want to process only users that NeverExpire
             IncludeExpiring             = $true
@@ -128,7 +126,7 @@ $PasswordSolution = [ordered] @{
         [ordered] @{
             Name                        = 'ITR01 SVC'
             Enable                      = $false # doesn't processes this section at all if $false
-            Reminders                   = -45, -30, - 15, -7, 0, 1, 2, 3, 7, 15, 30, 60
+            Reminders                   = -45, -30, -15, -7, 0, 1, 2, 3, 7, 15, 30, 60
             IncludeExpiring             = $true
             IncludePasswordNeverExpires = $true
             PasswordNeverExpiresDays    = 360
@@ -200,7 +198,7 @@ $PasswordSolution = [ordered] @{
         [ordered] @{
             Name                        = 'ITR01 USR'
             Enable                      = $false # doesn't processes this section at all if $false
-            Reminders                   = -45, -30, - 15, -7, 0, 1, 2, 3, 7, 15, 30, 60
+            Reminders                   = -45, -30, -15, -7, 0, 1, 2, 3, 7, 15, 30, 60
             #Reminders                   = @(-200..-1), 0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 28, 30, @(30..60), @(61..370)
             # this means we want to process only users that NeverExpire
             IncludeExpiring             = $true
@@ -564,6 +562,8 @@ $PasswordSolution = [ordered] @{
         NotifyOnUserSend             = $true
         NotifyOnUserMatchingRule     = $true
         NotifyOnUserDaysToExpireNull = $true
+        EmailDateFormat              = "yyyy-MM-dd HH:mm:ss"
+        EmailDateFormatUTCConversion = $true
     }
     HTMLReports                        = @(
         # Accepts a list of reports to generate. Can be multiple reprorts having different sections, or just one having it all
