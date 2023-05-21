@@ -38,7 +38,7 @@
                 }
             }
             if ($Rule.IncludeOU.Count -gt 0) {
-                # Rule defined that only user withi specific OU has to be found
+                # Rule defined that only user within specific OU has to be found
                 $FoundOU = $false
                 foreach ($OU in $Rule.IncludeOU) {
                     if ($User.OrganizationalUnit -like $OU) {
@@ -51,7 +51,7 @@
                 }
             }
             if ($Rule.ExcludeGroup.Count -gt 0) {
-                # Rule defined that only user withi specific group has to be found
+                # Rule defined that only user within specific group has to be found
                 $FoundGroup = $false
                 foreach ($Group in $Rule.ExcludeGroup) {
                     if ($User.MemberOf -contains $Group) {
@@ -65,7 +65,7 @@
                 }
             }
             if ($Rule.IncludeGroup.Count -gt 0) {
-                # Rule defined that only user withi specific group has to be found
+                # Rule defined that only user within specific group has to be found
                 $FoundGroup = $false
                 foreach ($Group in $Rule.IncludeGroup) {
                     if ($User.MemberOf -contains $Group) {
