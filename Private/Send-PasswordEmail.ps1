@@ -17,31 +17,39 @@
     )
 
     if ($Template) {
-        if ($EmailDateFormat) {
-            if ($EmailDateFormatUTCConversion) {
-                $PasswordLastSet = $User.PasswordLastSet.ToUniversalTime().ToString($EmailDateFormat)
+        if ($User.PasswordLastSet) {
+            if ($EmailDateFormat) {
+                if ($EmailDateFormatUTCConversion) {
+                    $PasswordLastSet = $User.PasswordLastSet.ToUniversalTime().ToString($EmailDateFormat)
+                } else {
+                    $PasswordLastSet = $User.PasswordLastSet.ToString($EmailDateFormat)
+                }
             } else {
-                $PasswordLastSet = $User.PasswordLastSet.ToString($EmailDateFormat)
+                if ($EmailDateFormatUTCConversion) {
+                    $PasswordLastSet = $User.PasswordLastSet.ToUniversalTime()
+                } else {
+                    $PasswordLastSet = $User.PasswordLastSet
+                }
             }
         } else {
-            if ($EmailDateFormatUTCConversion) {
-                $PasswordLastSet = $User.PasswordLastSet.ToUniversalTime()
-            } else {
-                $PasswordLastSet = $User.PasswordLastSet
-            }
+            $PasswordLastSet = $User.PasswordLastSet
         }
-        if ($EmailDateFormat) {
-            if ($EmailDateFormatUTCConversion) {
-                $ExpiryDate = $User.DateExpiry.ToUniversalTime().ToString($EmailDateFormat)
+        if ($User.DateExpiry) {
+            if ($EmailDateFormat) {
+                if ($EmailDateFormatUTCConversion) {
+                    $ExpiryDate = $User.DateExpiry.ToUniversalTime().ToString($EmailDateFormat)
+                } else {
+                    $ExpiryDate = $User.DateExpiry.ToString($EmailDateFormat)
+                }
             } else {
-                $ExpiryDate = $User.DateExpiry.ToString($EmailDateFormat)
+                if ($EmailDateFormatUTCConversion) {
+                    $ExpiryDate = $User.DateExpiry.ToUniversalTime()
+                } else {
+                    $ExpiryDate = $User.DateExpiry
+                }
             }
         } else {
-            if ($EmailDateFormatUTCConversion) {
-                $ExpiryDate = $User.DateExpiry.ToUniversalTime()
-            } else {
-                $ExpiryDate = $User.DateExpiry
-            }
+            $ExpiryDate = $User.DateExpiry
         }
 
         $SourceParameters = [ordered] @{
