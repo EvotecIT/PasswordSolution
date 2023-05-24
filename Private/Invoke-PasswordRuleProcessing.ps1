@@ -226,6 +226,30 @@
                     }
                 }
             }
+
+            # this is to overwrite manager by using extensionAttribute or any other field in AD
+            # it works on SamAccountName, DistinguishedName only
+            if ($Rule.OverwriteManagerProperty) {
+                $NewPropertyWithManager = $Rule.OverwriteManagerProperty
+                if ($NewPropertyWithManager -and $User.$NewPropertyWithManager) {
+                    $NewManager = $CachedUsers[$User.$NewPropertyWithManager]
+                    if ($NewManager -and $NewManager.Mail -like "*@*") {
+                        $User.ManagerEmail = $NewManager.Mail
+                        $User.Manager = $NewManager.DisplayName
+                        $User.ManagerSamAccountName = $NewManager.SamAccountName
+                        $User.ManagerEnabled = $NewManager.Enabled
+                        $User.ManagerLastLogon = $NewManager.LastLogonDate
+                        if ($User.ManagerLastLogon) {
+                            $User.ManagerLastLogonDays = $( - $($User.ManagerLastLogon - $Today).Days)
+                        } else {
+                            $User.ManagerLastLogonDays = $null
+                        }
+                        $User.ManagerType = $NewManager.ObjectClass
+                        $User.ManagerDN = $NewManager.DistinguishedName
+                    }
+                }
+            }
+
             # Lets find users that we need to notify manager about
             if ($null -ne $User.DaysToExpire -and $Rule.SendToManager) {
                 if ($Rule.SendToManager.Manager -and $Rule.SendToManager.Manager.Enable -eq $true -and $User.ManagerStatus -eq 'Enabled' -and $User.ManagerEmail -like "*@*") {
@@ -352,13 +376,6 @@
                             if ($Logging.NotifyOnUserMatchingRuleForManager) {
                                 Write-Color -Text "[i]", " User (manager rule) ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire, " " -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
                             }
-                            <#
-                                    $Summary['Notify'][$User.DistinguishedName] = [ordered] @{
-                                        User                = $User
-                                        Rule                = $Rule
-                                        ProcessManagersOnly = $Rule.ProcessManagersOnly
-                                    }
-                                    #>
                             # If we need to send an email to manager we need to update rules, just in case the user has not matched for user section
                             if ($Summary['Rules'][$Rule.Name][$User.DistinguishedName]) {
                                 # User exists, update reason
