@@ -20,7 +20,7 @@
     }
     RequiredModules      = @(@{
             ModuleName    = 'PSSharedGoods'
-            ModuleVersion = '0.0.263'
+            ModuleVersion = '0.0.264'
             Guid          = 'ee272aa8-baaa-4edf-9f45-b6d6f7d844fe'
         }, @{
             ModuleName    = 'Mailozaurr'
