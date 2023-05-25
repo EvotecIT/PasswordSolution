@@ -21,6 +21,10 @@
     .PARAMETER OverwriteEmailProperty
     Overwrite EmailAddress property with different property name
 
+    .PARAMETER OverwriteManagerProperty
+    Overwrite Manager property with different property name.
+    Can use DistinguishedName or SamAccountName
+
     .PARAMETER RulesProperties
     Add additional properties to be returned from rules
 
@@ -42,7 +46,8 @@
         [ValidateSet('Users', 'Contacts')][string[]] $ReturnObjectsType = @('Users', 'Contacts'),
         [Parameter(DontShow)][switch] $AsHashTableObject,
         [Parameter(DontShow)][string[]] $AddEmptyProperties = @(),
-        [Parameter(DontShow)][string[]] $RulesProperties
+        [Parameter(DontShow)][string[]] $RulesProperties,
+        [string] $OverwriteManagerProperty
     )
     $Today = Get-Date
 
@@ -57,6 +62,9 @@
         'Country'
         if ($OverwriteEmailProperty) {
             $OverwriteEmailProperty
+        }
+        if ($OverwriteManagerProperty) {
+            $OverwriteManagerProperty
         }
         foreach ($Rule in $RulesProperties) {
             $Rule
@@ -73,12 +81,13 @@
         'SamAccountName', 'CanonicalName', 'WhenChanged', 'WhenChanged', 'DisplayName', 'DistinguishedName', 'Name', 'Mail', 'TargetAddress', 'ObjectClass'
     )
 
-    # We're caching all users to make sure it's speedy gonzales when querying for Managers
-    if (-not $CachedUsers) {
-        $CachedUsers = [ordered] @{ }
-    }
+    # We're caching all users in their inital form to make sure it's speedy gonzales when querying for Managers
     if (-not $Cache) {
         $Cache = [ordered] @{ }
+    }
+    # We're caching all processed users to make sure it's easier later on to find users
+    if (-not $CachedUsers) {
+        $CachedUsers = [ordered] @{ }
     }
     Write-Color -Text '[i] ', "Discovering forest information" -Color Yellow, White
     $ForestInformation = Get-WinADForestDetails -PreferWritable -Extended -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
@@ -103,6 +112,9 @@
     }
     foreach ($User in $Users) {
         $Cache[$User.DistinguishedName] = $User
+        # SAmAccountName will overwrite itself when we have multiple domains and there are duplicates
+        # but sicne we use only on in case manager is used in special fields such as extensionAttribute, it shouldn't affect much
+        $Cache[$User.SamAccountName] = $User
     }
 
     if ($ReturnObjectsType -contains 'Contacts') {
@@ -134,8 +146,36 @@
         $PasswordNeverExpires = $null
         $PasswordAtNextLogon = $null
         $HasMailbox = $null
-        #$UserManager = $Cache["$($User.Manager)"]
-        if ($User.Manager) {
+
+        # This is a special case for users that have a manager in a special field such as extensionAttributes
+        # This is useful for service accounts or other accounts that don't have a manager in AD
+        if ($OverwriteManagerProperty) {
+            # fix this for a user
+            $ManagerTemp = $User.$OverwriteManagerProperty
+            if ($ManagerTemp) {
+                $ManagerSpecial = $Cache[$ManagerTemp]
+            } else {
+                $ManagerSpecial = $null
+            }
+        } else {
+            $ManagerSpecial = $null
+        }
+
+        if ($ManagerSpecial) {
+            # We have manager in different field such as extensionAttribute
+            $Manager = $ManagerSpecial.DisplayName
+            $ManagerSamAccountName = $ManagerSpecial.SamAccountName
+            $ManagerDisplayName = $ManagerSpecial.DisplayName
+            $ManagerEmail = $ManagerSpecial.Mail
+            $ManagerEnabled = $ManagerSpecial.Enabled
+            $ManagerLastLogon = $ManagerSpecial.LastLogonDate
+            if ($ManagerLastLogon) {
+                $ManagerLastLogonDays = $( - $($ManagerLastLogon - $Today).Days)
+            } else {
+                $ManagerLastLogonDays = $null
+            }
+            $ManagerType = $ManagerSpecial.ObjectClass
+        } elseif ($User.Manager) {
             $Manager = $Cache[$User.Manager].DisplayName
             $ManagerSamAccountName = $Cache[$User.Manager].SamAccountName
             $ManagerDisplayName = $Cache[$User.Manager].DisplayName
@@ -182,7 +222,6 @@
         } else {
             $EmailAddress = $User.EmailAddress
         }
-
         if ($User.PasswordLastSet) {
             $PasswordDays = (New-TimeSpan -Start ($User.PasswordLastSet) -End ($Today)).Days
         } else {
