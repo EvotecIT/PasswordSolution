@@ -20,6 +20,27 @@ Searches thru XML logs created by Password Solution
 ### [Find-PasswordQuality](Find-PasswordQuality.md)
 {{ Fill in the Synopsis }}
 
+### [New-PasswordConfigurationEmail](New-PasswordConfigurationEmail.md)
+{{ Fill in the Synopsis }}
+
+### [New-PasswordConfigurationOption](New-PasswordConfigurationOption.md)
+{{ Fill in the Synopsis }}
+
+### [New-PasswordConfigurationReport](New-PasswordConfigurationReport.md)
+{{ Fill in the Synopsis }}
+
+### [New-PasswordConfigurationRule](New-PasswordConfigurationRule.md)
+{{ Fill in the Synopsis }}
+
+### [New-PasswordConfigurationRuleReminder](New-PasswordConfigurationRuleReminder.md)
+{{ Fill in the Synopsis }}
+
+### [New-PasswordConfigurationTemplate](New-PasswordConfigurationTemplate.md)
+{{ Fill in the Synopsis }}
+
+### [New-PasswordConfigurationType](New-PasswordConfigurationType.md)
+{{ Fill in the Synopsis }}
+
 ### [Show-PasswordQuality](Show-PasswordQuality.md)
 {{ Fill in the Synopsis }}
 

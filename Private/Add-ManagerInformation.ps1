@@ -7,9 +7,7 @@
         [Object] $Key,
         [PSCustomObject] $User,
         [PSCustomObject] $Rule
-        # [bool] $Enabled
     )
-    #if ($Enabled) {
     if ($Key) {
         if ($Key -is [string]) {
             $KeyDN = $Key
@@ -53,5 +51,4 @@
             $SummaryDictionary[$KeyDN][$Type][$User.DistinguishedName]['Output'] = [PSCustomObject] $Default
         }
     }
-    # }
 }

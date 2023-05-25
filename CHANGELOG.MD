@@ -1,5 +1,17 @@
 ﻿# PasswordSolution Release History
 
+## 1.0.0
+- Improves exclusions https://github.com/EvotecIT/PasswordSolution/issues/7
+- Simplifies configuration https://github.com/EvotecIT/PasswordSolution/issues/8
+- Improves configuration https://github.com/EvotecIT/PasswordSolution/issues/3
+- Improves configuration https://github.com/EvotecIT/PasswordSolution/issues/6
+- Improve HTML report to be better in naming things
+
+This actually means:
+- We now support DSL language for configuration (see examples)
+- We now support much easier way of building configuration
+- We now support overwrite email property per rule (global still works)
+
 ## 0.0.37 - 2023.04.25
 - Improve `Maps` in Password Quality
 - Improve colors, add column to a report

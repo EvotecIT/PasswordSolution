@@ -63,7 +63,7 @@
 
     Set-LoggingCapabilities -LogPath $LogPath -LogMaximum $LogMaximum -ShowTime:$LogShowTime.IsPresent -TimeFormat $TimeFormat
     # since the first entry didn't go to log file, this will
-    Write-Color -InformationAction SilentlyContinue -Text '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta -NoConsoleOutput
+    Write-Color -Text '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta -NoConsoleOutput
 
     Write-Color '[i]', ' Gathering passwords data' -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
     Write-Color '[i]', ' Using provided ', $WeakPasswords.Count, " weak passwords to verify against." -Color Yellow, DarkGray, Yellow, DarkGray, Magenta

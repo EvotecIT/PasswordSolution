@@ -11,10 +11,47 @@
         [string] $TimeToProcess,
         [Array] $Attachments,
         [System.Collections.IDictionary] $EmailParameters,
-        [string] $Subject
+        [string] $Subject,
+        [string] $EmailDateFormat,
+        [switch] $EmailDateFormatUTCConversion
     )
 
     if ($Template) {
+        if ($User.PasswordLastSet) {
+            if ($EmailDateFormat) {
+                if ($EmailDateFormatUTCConversion) {
+                    $PasswordLastSet = $User.PasswordLastSet.ToUniversalTime().ToString($EmailDateFormat)
+                } else {
+                    $PasswordLastSet = $User.PasswordLastSet.ToString($EmailDateFormat)
+                }
+            } else {
+                if ($EmailDateFormatUTCConversion) {
+                    $PasswordLastSet = $User.PasswordLastSet.ToUniversalTime()
+                } else {
+                    $PasswordLastSet = $User.PasswordLastSet
+                }
+            }
+        } else {
+            $PasswordLastSet = $User.PasswordLastSet
+        }
+        if ($User.DateExpiry) {
+            if ($EmailDateFormat) {
+                if ($EmailDateFormatUTCConversion) {
+                    $ExpiryDate = $User.DateExpiry.ToUniversalTime().ToString($EmailDateFormat)
+                } else {
+                    $ExpiryDate = $User.DateExpiry.ToString($EmailDateFormat)
+                }
+            } else {
+                if ($EmailDateFormatUTCConversion) {
+                    $ExpiryDate = $User.DateExpiry.ToUniversalTime()
+                } else {
+                    $ExpiryDate = $User.DateExpiry
+                }
+            }
+        } else {
+            $ExpiryDate = $User.DateExpiry
+        }
+
         $SourceParameters = [ordered] @{
             ManagerDisplayName                   = $User.DisplayName
             ManagerUsersTable                    = $ManagedUsers
@@ -29,10 +66,10 @@
             Domain                               = $User.Domain                # : ad.evotec.xyz
             Enabled                              = $User.Enabled
             EmailAddress                         = $User.EmailAddress          # :
-            DateExpiry                           = $User.DateExpiry            # :
+            DateExpiry                           = $ExpiryDate            # :
             DaysToExpire                         = $User.DaysToExpire          # :
             PasswordExpired                      = $User.PasswordExpired       # : False
-            PasswordLastSet                      = $User.PasswordLastSet       # : 05.09.2020 11:07:29
+            PasswordLastSet                      = $PasswordLastSet     # : 05.09.2020 11:07:29
             PasswordNotRequired                  = $User.PasswordNotRequired   # : False
             PasswordNeverExpires                 = $User.PasswordNeverExpires  # : True
             ManagerSamAccountName                = $User.ManagerSamAccountName # : przemyslaw.klys
@@ -60,6 +97,15 @@
         } else {
             $EmailParameters.Attachment = @()
         }
-        Send-EmailMessage @EmailParameters
+        try {
+            Send-EmailMessage @EmailParameters -ErrorAction Stop -WarningAction SilentlyContinue
+        } catch {
+            if ($_.Exception.Message -like "*Credential*") {
+                Write-Color -Text "[e] " , "Failed to send email to $($EmailParameters.EmailParameters) because error: $($_.Exception.Message)" -Color Yellow, White, Red
+                Write-Color -Text "[i] " , "Please make sure you have valid credentials in your configuration file (graph encryption issue?)" -Color Yellow, White, Red
+            } else {
+                Write-Color -Text "[e] " , "Failed to send email to $($EmailParameters.EmailParameters) because error: $($_.Exception.Message)" -Color Yellow, White, Red
+            }
+        }
     }
 }
