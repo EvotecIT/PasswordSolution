@@ -86,6 +86,7 @@
         [Parameter(ParameterSetName = 'DSL', Position = 0)][scriptblock] $ConfigurationDSL,
         [Parameter(Mandatory, ParameterSetName = 'Legacy')][System.Collections.IDictionary] $EmailParameters,
         [Parameter(ParameterSetName = 'Legacy')][string] $OverwriteEmailProperty,
+        [Parameter(ParameterSetName = 'Legacy')][string] $OverwriteManagerProperty,
         [Parameter(Mandatory, ParameterSetName = 'Legacy')][System.Collections.IDictionary] $UserSection,
         [Parameter(Mandatory, ParameterSetName = 'Legacy')][System.Collections.IDictionary] $ManagerSection,
         [Parameter(Mandatory, ParameterSetName = 'Legacy')][System.Collections.IDictionary] $SecuritySection,
@@ -129,77 +130,76 @@
     $AllSkipped = [ordered] @{}
     $Locations = [ordered] @{}
 
-    if (-not $Rules) {
-        $Rules = @() # not worth the effort for generic list
+    # lets try to get configuration, and if not provided do some defaults
+    $SplatPasswordConfiguration = [ordered] @{
+        ConfigurationDSL                   = $ConfigurationDSL
+        EmailParameters                    = $EmailParameters
+        OverwriteEmailProperty             = $OverwriteEmailProperty
+        OverwriteManagerProperty           = $OverwriteManagerProperty
+        UserSection                        = $UserSection
+        ManagerSection                     = $ManagerSection
+        SecuritySection                    = $SecuritySection
+        AdminSection                       = $AdminSection
+        Rules                              = $Rules
+        TemplatePreExpiry                  = $TemplatePreExpiry
+        TemplatePreExpirySubject           = $TemplatePreExpirySubject
+        TemplatePostExpiry                 = $TemplatePostExpiry
+        TemplatePostExpirySubject          = $TemplatePostExpirySubject
+        TemplateManager                    = $TemplateManager
+        TemplateManagerSubject             = $TemplateManagerSubject
+        TemplateSecurity                   = $TemplateSecurity
+        TemplateSecuritySubject            = $TemplateSecuritySubject
+        TemplateManagerNotCompliant        = $TemplateManagerNotCompliant
+        TemplateManagerNotCompliantSubject = $TemplateManagerNotCompliantSubject
+        TemplateAdmin                      = $TemplateAdmin
+        TemplateAdminSubject               = $TemplateAdminSubject
+        Logging                            = $Logging
+        HTMLReports                        = $HTMLReports
+        SearchPath                         = $SearchPath
     }
-    if (-not $HTMLReports) {
-        $HTMLReports = @() # not worth the effort for generic list
+    $InitialVariables = Set-PasswordConfiguration @SplatPasswordConfiguration
+    if (-not $InitialVariables) {
+        return
     }
 
-    if ($ConfigurationDSL) {
-        try {
-            $ConfigurationExecuted = & $ConfigurationDSL
-            foreach ($Configuration in $ConfigurationExecuted) {
-                if ($Configuration.Type -eq 'PasswordConfigurationOption') {
-                    if ($Configuration.Settings.SearchPath) {
-                        $SearchPath = $Configuration.Settings.SearchPath
-                    } elseif ($Configuration.Settings.OverwriteEmailProperty) {
-                        $OverwriteEmailProperty = $Configuration.Settings.OverwriteEmailProperty
-                    }
-                    foreach ($Setting in $Configuration.Settings.Keys) {
-                        if ($Setting -notin 'SearchPath', 'OverwriteEmailProperty') {
-                            $Logging[$Setting] = $Configuration.Settings[$Setting]
-                        }
-                    }
-                } elseif ($Configuration.Type -eq 'PasswordConfigurationEmail') {
-                    $EmailParameters = $Configuration.Settings
-                } elseif ($Configuration.Type -eq 'PasswordConfigurationTypeUser') {
-                    $UserSection = $Configuration.Settings
-                } elseif ($Configuration.Type -eq 'PasswordConfigurationTypeManager') {
-                    $ManagerSection = $Configuration.Settings
-                } elseif ($Configuration.Type -eq 'PasswordConfigurationTypeSecurity') {
-                    $SecuritySection = $Configuration.Settings
-                } elseif ($Configuration.Type -eq 'PasswordConfigurationReport') {
-                    $HTMLReports += $Configuration.Settings
-                } elseif ($Configuration.Type -eq 'PasswordConfigurationRule') {
-                    $Rules += $Configuration.Settings
-                } elseif ($Configuration.Type -eq "PasswordConfigurationTemplatePreExpiry") {
-                    $TemplatePreExpiry = $Configuration.Settings.Template
-                    $TemplatePreExpirySubject = $Configuration.Settings.Subject
-                } elseif ($Configuration.Type -eq "PasswordConfigurationTemplatePostExpiry") {
-                    $TemplatePostExpiry = $Configuration.Settings.Template
-                    $TemplatePostExpirySubject = $Configuration.Settings.Subject
-                } elseif ($Configuration.Type -eq "PasswordConfigurationTemplateManager") {
-                    $TemplateManager = $Configuration.Settings.Template
-                    $TemplateManagerSubject = $Configuration.Settings.Subject
-                } elseif ($Configuration.Type -eq "PasswordConfigurationTemplateSecurity") {
-                    $TemplateSecurity = $Configuration.Settings.Template
-                    $TemplateSecuritySubject = $Configuration.Settings.Subject
-                } elseif ($Configuration.Type -eq "PasswordConfigurationTemplateManagerNotCompliant") {
-                    $TemplateManagerNotCompliant = $Configuration.Settings.Template
-                    $TemplateManagerNotCompliantSubject = $Configuration.Settings.Subject
-                } elseif ($Configuration.Type -eq "PasswordConfigurationTemplateAdmin") {
-                    $TemplateAdmin = $Configuration.Settings.Template
-                    $TemplateAdminSubject = $Configuration.Settings.Subject
-                }
-            }
-        } catch {
-            Write-Color -Text "[e]", " Processing configuration failed because of error in line ", $_.InvocationInfo.ScriptLineNumber, " in ", $_.InvocationInfo.InvocationName, " with message: ", $_.Exception.Message -Color Yellow, White, Red
-            return
-        }
-    }
+    $EmailParameters = $InitialVariables.EmailParameters
+    $OverwriteEmailProperty = $InitialVariables.OverwriteEmailProperty
+    $OverwriteManagerProperty = $InitialVariables.OverwriteManagerProperty
+    $UserSection = $InitialVariables.UserSection
+    $ManagerSection = $InitialVariables.ManagerSection
+    $SecuritySection = $InitialVariables.SecuritySection
+    $AdminSection = $InitialVariables.AdminSection
+    $Rules = $InitialVariables.Rules
+    $TemplatePreExpiry = $InitialVariables.TemplatePreExpiry
+    $TemplatePreExpirySubject = $InitialVariables.TemplatePreExpirySubject
+    $TemplatePostExpiry = $InitialVariables.TemplatePostExpiry
+    $TemplatePostExpirySubject = $InitialVariables.TemplatePostExpirySubject
+    $TemplateManager = $InitialVariables.TemplateManager
+    $TemplateManagerSubject = $InitialVariables.TemplateManagerSubject
+    $TemplateSecurity = $InitialVariables.TemplateSecurity
+    $TemplateSecuritySubject = $InitialVariables.TemplateSecuritySubject
+    $TemplateManagerNotCompliant = $InitialVariables.TemplateManagerNotCompliant
+    $TemplateManagerNotCompliantSubject = $InitialVariables.TemplateManagerNotCompliantSubject
+    $TemplateAdmin = $InitialVariables.TemplateAdmin
+    $TemplateAdminSubject = $InitialVariables.TemplateAdminSubject
+    $Logging = $InitialVariables.Logging
+    $HTMLReports = $InitialVariables.HTMLReports
+    $SearchPath = $InitialVariables.SearchPath
 
     # this is to get properties from rules to be used in building up user output
     [Array] $ExtendedProperties = foreach ($Rule in $Rules ) {
         if ($Rule.OverwriteEmailProperty) {
             $Rule.OverwriteEmailProperty
         }
+        if ($Rule.OverwriteManagerProperty) {
+            $Rule.OverwriteManagerProperty
+        }
     }
 
     $SummarySearch = Import-SearchInformation -SearchPath $SearchPath
 
     Write-Color -Text "[i]", " Starting process to find expiring users" -Color Yellow, White, Green, White, Green, White, Green, White
-    $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty -RulesProperties $ExtendedProperties
+    $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty -RulesProperties $ExtendedProperties -OverwriteManagerProperty $OverwriteManagerProperty
 
     if ($Rules.Count -eq 0) {
         Write-Color -Text "[e]", " No rules found. Please add some rules to configuration" -Color Yellow, White, Red
