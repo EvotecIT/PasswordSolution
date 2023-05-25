@@ -14,7 +14,8 @@
         [string] $SearchPath,
         [string] $EmailDateFormat,
         [switch] $EmailDateFormatUTCConversion,
-        [string] $OverwriteEmailProperty
+        [string] $OverwriteEmailProperty,
+        [string] $OverwriteManagerProperty
     )
 
     $Output = [ordered] @{
@@ -36,6 +37,8 @@
             EmailDateFormatUTCConversion = $EmailDateFormatUTCConversion.IsPresent
             # email property conversion (global)
             OverwriteEmailProperty       = $OverwriteEmailProperty
+            # manager property conversion (global)
+            OverwriteManagerProperty     = $OverwriteManagerProperty
         }
     }
     Remove-EmptyValue -Hashtable $Output.Settings
