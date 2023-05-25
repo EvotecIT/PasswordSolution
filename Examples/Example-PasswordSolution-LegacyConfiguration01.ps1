@@ -9,17 +9,16 @@ $GraphCredentials = @{
 }
 
 $PasswordSolution = [ordered] @{
-    # Graph based credentials
+    # Graph based credentials (full support for Mailozaurr parameters)
     EmailParameters                    = @{
         Credential = ConvertTo-GraphCredential -ClientID $GraphCredentials.ClientID -ClientSecret $GraphCredentials.ClientSecret -DirectoryID $GraphCredentials.DirectoryID
         Graph      = $true
         Priority   = 'Normal'
         From       = 'przemyslaw.klys+testgithub@evotec.pl'
-        #To         = 'przemyslaw.klys+testgithub@evotec.pl' # your default email field (IMPORTANT)
         WhatIf     = $false
         ReplyTo    = 'contact+testgithub@evotec.pl'
     }
-    # Standard SMTP credentials
+    # Standard SMTP credentials (full support for Mailozaurr parameters)
     # EmailParameters                    = [ordered] @{
     #     UserName       = 'ADAutomations@evotec.pl'
     #     Password       = Get-Content -LiteralPath D:\Secrets\WO_SVC_ADAutomations.txt
@@ -34,16 +33,16 @@ $PasswordSolution = [ordered] @{
     # }
     OverwriteEmailProperty             = 'extensionAttribute13'
     UserSection                        = @{
-        Enable                 = $true
-        SendCountMaximum       = 3
-        SendToDefaultEmail     = $true # if enabled $EmailParameters are used (good for testing)
-        DefaultEmail           = 'przemyslaw.klys+testgithub@evotec.pl' # your default email field (IMPORTANT)
+        Enable             = $true
+        SendCountMaximum   = 3
+        SendToDefaultEmail = $true # if enabled $EmailParameters are used (good for testing)
+        DefaultEmail       = 'przemyslaw.klys+testgithub@evotec.pl' # your default email field (IMPORTANT)
     }
     ManagerSection                     = @{
-        Enable                 = $true
-        SendCountMaximum       = 3
-        SendToDefaultEmail     = $true # if enabled $EmailParameters are used (good for testing)
-        DefaultEmail           = 'przemyslaw.klys+testgithub@evotec.pl' # your default email field (IMPORTANT)
+        Enable             = $true
+        SendCountMaximum   = 3
+        SendToDefaultEmail = $true # if enabled $EmailParameters are used (good for testing)
+        DefaultEmail       = 'przemyslaw.klys+testgithub@evotec.pl' # your default email field (IMPORTANT)
     }
     SecuritySection                    = @{
         Enable             = $true
@@ -584,6 +583,7 @@ $PasswordSolution = [ordered] @{
             ShowSearchUsers       = $true
             ShowSearchManagers    = $true
             ShowSearchEscalations = $true
+            NestedRules           = $false
             FilePath              = "$PSScriptRoot\Reporting\PasswordSolution_$(($Date).ToString('yyyy-MM-dd_HH_mm_ss')).html"
             AttachToEmail         = $true
         }
