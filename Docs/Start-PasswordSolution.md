@@ -20,8 +20,8 @@ Start-PasswordSolution [[-ConfigurationDSL] <ScriptBlock>] [<CommonParameters>]
 ### Legacy
 ```
 Start-PasswordSolution -EmailParameters <IDictionary> [-OverwriteEmailProperty <String>]
- -UserSection <IDictionary> -ManagerSection <IDictionary> -SecuritySection <IDictionary>
- -AdminSection <IDictionary> -Rules <Array> [-TemplatePreExpiry <ScriptBlock>]
+ [-OverwriteManagerProperty <String>] -UserSection <IDictionary> -ManagerSection <IDictionary>
+ -SecuritySection <IDictionary> -AdminSection <IDictionary> -Rules <Array> [-TemplatePreExpiry <ScriptBlock>]
  [-TemplatePreExpirySubject <String>] [-TemplatePostExpiry <ScriptBlock>] [-TemplatePostExpirySubject <String>]
  -TemplateManager <ScriptBlock> -TemplateManagerSubject <String> -TemplateSecurity <ScriptBlock>
  -TemplateSecuritySubject <String> -TemplateManagerNotCompliant <ScriptBlock>
@@ -75,6 +75,21 @@ Accept wildcard characters: False
 ### -OverwriteEmailProperty
 Property responsible for overwriting the default email field in Active Directory.
 Useful when the password notification has to go somewhere else than users email address.
+
+```yaml
+Type: String
+Parameter Sets: Legacy
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OverwriteManagerProperty
+{{ Fill OverwriteManagerProperty Description }}
 
 ```yaml
 Type: String

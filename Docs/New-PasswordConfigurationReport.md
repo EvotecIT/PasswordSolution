@@ -16,7 +16,7 @@ schema: 2.0.0
 New-PasswordConfigurationReport [-Enable] [-ShowHTML] [[-Title] <String>] [-Online] [-DisableWarnings]
  [-ShowConfiguration] [-ShowAllUsers] [-ShowRules] [-ShowUsersSent] [-ShowManagersSent] [-ShowEscalationSent]
  [-ShowSkippedUsers] [-ShowSkippedLocations] [-ShowSearchUsers] [-ShowSearchManagers] [-ShowSearchEscalations]
- [[-FilePath] <String>] [-AttachToEmail] [<CommonParameters>]
+ [[-FilePath] <String>] [-AttachToEmail] [-NestedRules] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -33,113 +33,8 @@ PS C:\> {{ Add example code here }}
 
 ## PARAMETERS
 
-### -AttachToEmail
-{{ Fill AttachToEmail Description }}
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -DisableWarnings
-{{ Fill DisableWarnings Description }}
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Enable
 {{ Fill Enable Description }}
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -FilePath
-{{ Fill FilePath Description }}
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 1
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Online
-{{ Fill Online Description }}
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ShowAllUsers
-{{ Fill ShowAllUsers Description }}
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ShowConfiguration
-{{ Fill ShowConfiguration Description }}
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ShowEscalationSent
-{{ Fill ShowEscalationSent Description }}
 
 ```yaml
 Type: SwitchParameter
@@ -168,8 +63,68 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ShowManagersSent
-{{ Fill ShowManagersSent Description }}
+### -Title
+{{ Fill Title Description }}
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Online
+{{ Fill Online Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisableWarnings
+{{ Fill DisableWarnings Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ShowConfiguration
+{{ Fill ShowConfiguration Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ShowAllUsers
+{{ Fill ShowAllUsers Description }}
 
 ```yaml
 Type: SwitchParameter
@@ -198,8 +153,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ShowSearchEscalations
-{{ Fill ShowSearchEscalations Description }}
+### -ShowUsersSent
+{{ Fill ShowUsersSent Description }}
 
 ```yaml
 Type: SwitchParameter
@@ -213,8 +168,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ShowSearchManagers
-{{ Fill ShowSearchManagers Description }}
+### -ShowManagersSent
+{{ Fill ShowManagersSent Description }}
 
 ```yaml
 Type: SwitchParameter
@@ -228,23 +183,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ShowSearchUsers
-{{ Fill ShowSearchUsers Description }}
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ShowSkippedLocations
-{{ Fill ShowSkippedLocations Description }}
+### -ShowEscalationSent
+{{ Fill ShowEscalationSent Description }}
 
 ```yaml
 Type: SwitchParameter
@@ -273,8 +213,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ShowUsersSent
-{{ Fill ShowUsersSent Description }}
+### -ShowSkippedLocations
+{{ Fill ShowSkippedLocations Description }}
 
 ```yaml
 Type: SwitchParameter
@@ -288,8 +228,53 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Title
-{{ Fill Title Description }}
+### -ShowSearchUsers
+{{ Fill ShowSearchUsers Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ShowSearchManagers
+{{ Fill ShowSearchManagers Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ShowSearchEscalations
+{{ Fill ShowSearchEscalations Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FilePath
+{{ Fill FilePath Description }}
 
 ```yaml
 Type: String
@@ -297,8 +282,42 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 0
+Position: 2
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AttachToEmail
+{{ Fill AttachToEmail Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -NestedRules
+Specifies whether to display nested password rules.
+Each rule has it's own tab with output.
+Having many rules and all other settings enabled can result in a very long list of tabs that's hard to navigate.
+This setting forces separate tab for all rules.
+The default value is $false.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

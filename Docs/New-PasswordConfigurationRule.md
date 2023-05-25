@@ -22,8 +22,8 @@ New-PasswordConfigurationRule [[-ReminderConfiguration] <ScriptBlock>] [-Name] <
  [-ManagerNotCompliantDisabled] [-ManagerNotCompliantMissing] [-ManagerNotCompliantMissingEmail]
  [[-ManagerNotCompliantLastLogonDays] <Int32>] [-SecurityEscalation]
  [[-SecurityEscalationDisplayName] <String>] [[-SecurityEscalationEmailAddress] <String>]
- [[-OverwriteEmailProperty] <String>] [[-OverwriteManagerProperty] <String>]
- [[-OverwriteManagerPropertyName] <String>] [-ProcessManagersOnly] [<CommonParameters>]
+ [[-OverwriteEmailProperty] <String>] [[-OverwriteManagerProperty] <String>] [-ProcessManagersOnly]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -455,21 +455,6 @@ Aliases:
 
 Required: False
 Position: 19
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -OverwriteManagerPropertyName
-Parameter description
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 20
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False

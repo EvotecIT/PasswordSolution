@@ -15,7 +15,7 @@ Scan Active Directory forest for all users and their password expiration date
 ```
 Find-Password [[-Forest] <String>] [[-ExcludeDomains] <String[]>] [[-IncludeDomains] <String[]>]
  [[-ExtendedForestInformation] <IDictionary>] [[-OverwriteEmailProperty] <String>]
- [[-ReturnObjectsType] <String[]>] [[-RulesProperties] <String[]>] [<CommonParameters>]
+ [[-ReturnObjectsType] <String[]>] [[-OverwriteManagerProperty] <String>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -120,16 +120,17 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -RulesProperties
-{{ Fill RulesProperties Description }}
+### -OverwriteManagerProperty
+Overwrite Manager property with different property name.
+Can use DistinguishedName or SamAccountName
 
 ```yaml
-Type: String[]
+Type: String
 Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 9
+Position: 10
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False

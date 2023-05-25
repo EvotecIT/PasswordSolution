@@ -16,7 +16,8 @@ schema: 2.0.0
 New-PasswordConfigurationOption [-ShowTime] [[-LogFile] <String>] [[-TimeFormat] <String>]
  [[-LogMaximum] <Int32>] [-NotifyOnSkipUserManagerOnly] [-NotifyOnSecuritySend] [-NotifyOnManagerSend]
  [-NotifyOnUserSend] [-NotifyOnUserMatchingRule] [-NotifyOnUserDaysToExpireNull] [[-SearchPath] <String>]
- [[-EmailDateFormat] <String>] [-EmailDateFormatUTCConversion] [<CommonParameters>]
+ [[-EmailDateFormat] <String>] [-EmailDateFormatUTCConversion] [[-OverwriteEmailProperty] <String>]
+ [[-OverwriteManagerProperty] <String>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -178,6 +179,36 @@ Aliases:
 
 Required: False
 Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OverwriteEmailProperty
+{{ Fill OverwriteEmailProperty Description }}
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 5
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OverwriteManagerProperty
+{{ Fill OverwriteManagerProperty Description }}
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 6
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
