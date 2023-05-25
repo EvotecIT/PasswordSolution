@@ -6,11 +6,16 @@
 - Improves configuration https://github.com/EvotecIT/PasswordSolution/issues/3
 - Improves configuration https://github.com/EvotecIT/PasswordSolution/issues/6
 - Improve HTML report to be better in naming things
+- Allow for overwriting manager field with different properties based on SamAccountName/DN
+- New configuration option for Report (NestedRules), making separate tab for all rules in HTML
+- Small documentation updates
+- Adds defaults for templates meaning it's possible to skip their definitions although not very useful if you want personalized thing for your company users
 
 This actually means:
 - We now support DSL language for configuration (see examples)
 - We now support much easier way of building configuration
 - We now support overwrite email property per rule (global still works)
+- We now support overwrite manager property per rule (global still works)
 
 ## 0.0.37 - 2023.04.25
 - Improve `Maps` in Password Quality
