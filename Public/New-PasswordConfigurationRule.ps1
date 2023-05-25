@@ -90,9 +90,6 @@
     .PARAMETER OverwriteManagerProperty
     Parameter description
 
-    .PARAMETER OverwriteManagerPropertyName
-    Parameter description
-
     .PARAMETER ProcessManagersOnly
     This parameters is used to process users, but only managers will be notified.
     Sending emails to users within the rule will be skipped completly.
@@ -142,31 +139,29 @@
 
         [string] $OverwriteEmailProperty,
         [string] $OverwriteManagerProperty,
-        [string] $OverwriteManagerPropertyName,
 
         [switch] $ProcessManagersOnly
 
     )
 
     $Output = [ordered] @{
-        Name                         = $Name
-        Enable                       = $Enable.IsPresent
-        IncludeExpiring              = $IncludeExpiring.IsPresent
-        IncludePasswordNeverExpires  = $IncludePasswordNeverExpires.IsPresent
-        Reminders                    = $ReminderDays
-        PasswordNeverExpiresDays     = $PasswordNeverExpiresDays
-        IncludeNameProperties        = $IncludeNameProperties
-        IncludeName                  = $IncludeName
-        IncludeOU                    = $IncludeOU
-        ExcludeOU                    = $ExcludeOU
-        SendToManager                = [ordered] @{}
+        Name                        = $Name
+        Enable                      = $Enable.IsPresent
+        IncludeExpiring             = $IncludeExpiring.IsPresent
+        IncludePasswordNeverExpires = $IncludePasswordNeverExpires.IsPresent
+        Reminders                   = $ReminderDays
+        PasswordNeverExpiresDays    = $PasswordNeverExpiresDays
+        IncludeNameProperties       = $IncludeNameProperties
+        IncludeName                 = $IncludeName
+        IncludeOU                   = $IncludeOU
+        ExcludeOU                   = $ExcludeOU
+        SendToManager               = [ordered] @{}
 
-        ProcessManagersOnly          = $ProcessManagersOnly.IsPresent
+        ProcessManagersOnly         = $ProcessManagersOnly.IsPresent
 
-        OverwriteEmailProperty       = $OverwriteEmailProperty
+        OverwriteEmailProperty      = $OverwriteEmailProperty
         # properties to overwrite manager based on different field
-        OverwriteManagerProperty     = $OverwriteManagerProperty
-        OverwriteManagerPropertyName = $OverwriteManagerPropertyName
+        OverwriteManagerProperty    = $OverwriteManagerProperty
     }
     $Output.SendToManager['Manager'] = [ordered] @{
         Enable    = $false
