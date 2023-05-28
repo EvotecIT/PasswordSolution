@@ -78,3 +78,45 @@ Update-Module -Name PasswordSolution
 That's it. Whenever there's a new version, you run the command, and you can enjoy it. Remember that you may need to close, reopen PowerShell session if you have already used module before updating it.
 
 **The essential thing** is if something works for you on production, keep using it till you test the new version on a test computer. I do changes that may not be big, but big enough that auto-update may break your code. For example, small rename to a parameter and your code stops working! Be responsible!
+
+## Usage - Password Quality
+
+Password Quality report uses [DSInternals](https://github.com/MichaelGrafnetter/DSInternals) module to scan Active Directory for passwords and then assesses them.
+It's a very powerful tool that can be used to find weak passwords in your environment.
+It's also a great tool to find out if your password policy is working as expected.
+PasswordSolution wraps around DSInternals to make it easier to use and to provide a nice HTML report.
+
+```powershell
+Show-PasswordQuality -FilePath C:\Temp\PasswordQuality.html -Online -WeakPasswords "Test1", "Test2", "Test3" -Verbose -SeparateDuplicateGroups -AddWorldMap -PassThru
+```
+
+or
+
+```powershell
+$showPasswordQualitySplat = @{
+    FilePath                = "$PSScriptRoot\Reporting\PasswordQuality_$(Get-Date -f yyyy-MM-dd_HHmmss).html"
+    WeakPasswords           = "Test1", "Test2", "Test3", 'February2023!#!@ok', $Passwords | ForEach-Object { $_ }
+    SeparateDuplicateGroups = $true
+    PassThru                = $true
+    AddWorldMap             = $true
+    LogPath                 = "$PSScriptRoot\Logs\PasswordQuality_$(Get-Date -f yyyy-MM-dd_HHmmss).log"
+    Online                  = $true
+    LogMaximum              = 5
+}
+
+Show-PasswordQuality @showPasswordQualitySplat -Verbose
+```
+
+And here's what you get
+
+![PasswordQuality](https://raw.githubusercontent.com/EvotecIT/PasswordSolution/master/Docs/Images/PasswordQuality1.png)
+
+![PasswordQuality](https://raw.githubusercontent.com/EvotecIT/PasswordSolution/master/Docs/Images/PasswordQuality2.png)
+
+![PasswordQuality](https://raw.githubusercontent.com/EvotecIT/PasswordSolution/master/Docs/Images/PasswordQuality3.png)
+
+![PasswordQuality](https://raw.githubusercontent.com/EvotecIT/PasswordSolution/master/Docs/Images/PasswordQuality4.png)
+
+![PasswordQuality](https://raw.githubusercontent.com/EvotecIT/PasswordSolution/master/Docs/Images/PasswordQuality5.png)
+
+![PasswordQuality](https://raw.githubusercontent.com/EvotecIT/PasswordSolution/master/Docs/Images/PasswordQuality6.png)
