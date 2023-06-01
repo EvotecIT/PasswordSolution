@@ -60,6 +60,8 @@
                     $ManagerSection = $Configuration.Settings
                 } elseif ($Configuration.Type -eq 'PasswordConfigurationTypeSecurity') {
                     $SecuritySection = $Configuration.Settings
+                } elseif ($Configuration.Type -eq 'PasswordConfigurationTypeAdmin') {
+                    $AdminSection = $Configuration.Settings
                 } elseif ($Configuration.Type -eq 'PasswordConfigurationReport') {
                     $HTMLReports += $Configuration.Settings
                 } elseif ($Configuration.Type -eq 'PasswordConfigurationRule') {
@@ -304,6 +306,7 @@
         UserSection                        = $UserSection
         ManagerSection                     = $ManagerSection
         SecuritySection                    = $SecuritySection
+        AdminSection                       = $AdminSection
         HTMLReports                        = $HTMLReports
         Rules                              = $Rules
         SearchPath                         = $SearchPath
