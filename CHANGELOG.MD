@@ -1,5 +1,8 @@
 ﻿# PasswordSolution Release History
 
+## 1.0.1 - 2023.06.01
+- Fixes AdminSection not working properly
+
 ## 1.0.0 - 2023.05.25
 - Improves exclusions https://github.com/EvotecIT/PasswordSolution/issues/7
 - Simplifies configuration https://github.com/EvotecIT/PasswordSolution/issues/8
