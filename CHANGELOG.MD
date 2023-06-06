@@ -1,5 +1,8 @@
 ﻿# PasswordSolution Release History
 
+## 1.0.2 - 2023.06.06
+- Improves `New-PasswordConfigurationRuleReminder` by allowing: `New-PasswordConfigurationRuleReminder -Type 'Manager' -ExpirationDays @(-200..-1), 0, 1, 2, 3, 7, 15, 30, 60 -ComparisonType eq` configuration
+
 ## 1.0.1 - 2023.06.01
 - Fixes AdminSection not working properly
 
