@@ -14,7 +14,8 @@ schema: 2.0.0
 
 ### Daily (Default)
 ```
-New-PasswordConfigurationRuleReminder -Type <String> [<CommonParameters>]
+New-PasswordConfigurationRuleReminder -Type <String> -ExpirationDays <Array> [-ComparisonType <String>]
+ [<CommonParameters>]
 ```
 
 ### DayOfMonth
@@ -48,7 +49,7 @@ PS C:\> {{ Add example code here }}
 
 ```yaml
 Type: String
-Parameter Sets: DayOfMonth, DayOfWeek
+Parameter Sets: (All)
 Aliases:
 Accepted values: lt, gt, eq, in
 
@@ -95,7 +96,7 @@ Accept wildcard characters: False
 
 ```yaml
 Type: Array
-Parameter Sets: DayOfMonth, DayOfWeek
+Parameter Sets: (All)
 Aliases: ConditionDays, Days
 
 Required: True
