@@ -6,6 +6,7 @@
         [Parameter(Mandatory, ParameterSetName = 'DayOfMonth')]
         [ValidateSet('Manager', 'ManagerNotCompliant', 'Security')][string] $Type,
 
+        [Parameter(Mandatory, ParameterSetName = 'Daily')]
         [Parameter(Mandatory, ParameterSetName = 'DayOfWeek')]
         [Parameter(Mandatory, ParameterSetName = 'DayOfMonth')]
         [alias('ConditionDays', 'Days')][Array] $ExpirationDays,
@@ -24,6 +25,7 @@
         [Parameter(Mandatory, ParameterSetName = 'DayOfMonth')]
         [Array] $DayOfMonth,
 
+        [Parameter(ParameterSetName = 'Daily')]
         [Parameter(ParameterSetName = 'DayOfWeek')]
         [Parameter(ParameterSetName = 'DayOfMonth')]
         [ValidateSet('lt', 'gt', 'eq', 'in')][string] $ComparisonType
