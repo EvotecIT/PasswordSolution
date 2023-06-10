@@ -1,9 +1,11 @@
 ﻿Clear-Host
 Import-Module .\PasswordSolution.psd1 -Force
 
-#Show-PasswordQuality -FilePath $PSScriptRoot\Reporting\PasswordQuality.html -Online -WeakPasswords "Test1", "Test2", "Test3" -Verbose
+# option 1, one-liner
+# Show-PasswordQuality -FilePath C:\Temp\PasswordQuality.html -Online -WeakPasswords "Test1", "Test2", "Test3" -Verbose -SeparateDuplicateGroups -AddWorldMap -PassThru
+
+# option 2, for easier reading with splatting
 $showPasswordQualitySplat = @{
-    #FilePath                = "C:\Support\GitHub\TheDashboard\Ignore\Reports\CustomReports\PasswordQuality_$(Get-Date -f yyyy-MM-dd_HHmmss).html"
     FilePath                = "$PSScriptRoot\Reporting\PasswordQuality_$(Get-Date -f yyyy-MM-dd_HHmmss).html"
     WeakPasswords           = "Test1", "Test2", "Test3", 'February2023!#!@ok', $Passwords | ForEach-Object { $_ }
     SeparateDuplicateGroups = $true
@@ -11,6 +13,7 @@ $showPasswordQualitySplat = @{
     AddWorldMap             = $true
     LogPath                 = "$PSScriptRoot\Logs\PasswordQuality_$(Get-Date -f yyyy-MM-dd_HHmmss).log"
     Online                  = $true
+    LogMaximum              = 5
 }
 
-Show-PasswordQuality @showPasswordQualitySplat -LogMaximum 5
+Show-PasswordQuality @showPasswordQualitySplat -Verbose
