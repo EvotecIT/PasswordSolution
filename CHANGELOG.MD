@@ -1,7 +1,7 @@
 ﻿# PasswordSolution Release History
 
 ## 1.0.3
-- Resolves issue with scanning Active Directory without exchange attributes
+- Resolves issue with scanning **Active Directory** without exchange attributes
 
 ## 1.0.2 - 2023.06.06
 - Improves `New-PasswordConfigurationRuleReminder` by allowing: `New-PasswordConfigurationRuleReminder -Type 'Manager' -ExpirationDays @(-200..-1), 0, 1, 2, 3, 7, 15, 30, 60 -ComparisonType eq` configuration
