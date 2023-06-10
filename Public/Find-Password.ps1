@@ -51,15 +51,22 @@
     )
     $Today = Get-Date
 
+    $GuidForExchange = Convert-ADSchemaToGuid -SchemaName 'msExchMailboxGuid'
+    if ($GuidForExchange) {
+        $ExchangeProperty = 'msExchMailboxGuid'
+    }
+
     $Properties = @(
         'Manager', 'DisplayName', 'GivenName', 'Surname', 'SamAccountName', 'EmailAddress',
         'msDS-UserPasswordExpiryTimeComputed', 'PasswordExpired', 'PasswordLastSet', 'PasswordNotRequired',
         'Enabled', 'PasswordNeverExpires', 'Mail', 'MemberOf', 'LastLogonDate', 'Name'
         'userAccountControl'
-        'msExchMailboxGuid'
         'pwdLastSet', 'ObjectClass'
         'LastLogonDate'
         'Country'
+        if ($ExchangeProperty) {
+            $ExchangeProperty
+        }
         if ($OverwriteEmailProperty) {
             $OverwriteEmailProperty
         }
@@ -280,10 +287,14 @@
         if ($UserAccountControl -contains 'INTERDOMAIN_TRUST_ACCOUNT') {
             continue
         }
-        if ($User.'msExchMailboxGuid') {
-            $HasMailbox = $true
+        if ($ExchangeProperty) {
+            if ($User.'msExchMailboxGuid') {
+                $HasMailbox = 'Yes'
+            } else {
+                $HasMailbox = 'No'
+            }
         } else {
-            $HasMailbox = $false
+            $HasMailbox = 'Unknown'
         }
         if ($User.LastLogonDate) {
             $LastLogonDays = $( - $($User.LastLogonDate - $Today).Days)
