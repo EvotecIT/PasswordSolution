@@ -28,7 +28,7 @@
             Guid          = '2b0ea9f1-3ff1-4300-b939-106d5da608fa'
         }, @{
             ModuleName    = 'PSWriteHTML'
-            ModuleVersion = '0.0.189'
+            ModuleVersion = '0.0.190'
             Guid          = 'a7bdf640-f5cb-4acf-9de0-365b322d245c'
         }, @{
             ModuleName    = 'PSWriteColor'
