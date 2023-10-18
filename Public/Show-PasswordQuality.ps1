@@ -143,9 +143,9 @@
                                     "$($Statistic)",
                                     " property shows there are "
                                     "$ValueEnabled"
-                                    " enabled "
+                                    "enabled accounts, and "
                                     $ValueDisabled
-                                    " accounts having duplicate passwords with other accounts."
+                                    " disabled accounts having duplicate passwords with other accounts."
                                 ) -Color Blue, None, Salmon, None, LightSkyBlue, None -FontWeight bold, normal, bold, normal, bold, normal
                             } else {
                                 $ValueEnabled = $Statistics[$Statistic + 'EnabledOnly']
