@@ -1,5 +1,8 @@
 ﻿# PasswordSolution Release History
 
+## 1.0.4 - 2023.10.18
+- I can't type apparently so I fixed typo in code
+
 ## 1.0.3 - 2023.06.12
 - Resolves issue with scanning **Active Directory** without exchange attributes
 
