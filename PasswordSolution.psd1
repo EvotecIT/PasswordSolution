@@ -27,13 +27,13 @@
             ModuleName    = 'PSWriteHTML'
             ModuleVersion = '1.11.0'
         }, @{
-            Guid          = '2b0ea9f1-3ff1-4300-b939-106d5da608fa'
-            ModuleName    = 'Mailozaurr'
-            ModuleVersion = '1.1.0'
-        }, @{
             Guid          = '0b0ba5c5-ec85-4c2b-a718-874e55a8bc3f'
             ModuleName    = 'PSWriteColor'
             ModuleVersion = '1.0.1'
+        }, @{
+            Guid          = '2b0ea9f1-3ff1-4300-b939-106d5da608fa'
+            ModuleName    = 'Mailozaurr'
+            ModuleVersion = '1.0.0'
         }, 'ActiveDirectory')
     RootModule           = 'PasswordSolution.psm1'
 }
