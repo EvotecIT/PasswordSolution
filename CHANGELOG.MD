@@ -1,5 +1,10 @@
 ﻿# PasswordSolution Release History
 
+## 1.1.0 - 2023.11.12
+- Add support for weak password hashes (NTLM) in Password Quality Check
+  - Add new parameters for `Find-PasswordQuality`
+  - Add new parameters for `Show-PasswordQuality`
+
 ## 1.0.5 - 2023.10.18
 - I can't type apparently so I fixed typo in code
 
