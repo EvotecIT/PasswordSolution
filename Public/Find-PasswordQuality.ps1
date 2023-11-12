@@ -9,6 +9,15 @@
     .PARAMETER WeakPasswords
     List of weak passwords to check against
 
+    .PARAMETER WeakPasswordsFilePath
+    Path to a file that contains weak passwords, one password per line.
+
+    .PARAMETER WeakPasswordsHashesFile
+    Path to a file that contains NT hashes of weak passwords, one hash in HEX format per line. For performance reasons, the -WeakPasswordHashesSortedFile parameter should be used instead.
+
+    .PARAMETER WeakPasswordsHashesSortedFile
+    Path to a file that contains NT hashes of weak passwords, one hash in HEX format per line. The hashes must be sorted alphabetically, because a binary search is performed. This parameter is typically used with a list of leaked password hashes from HaveIBeenPwned.
+
     .PARAMETER IncludeStatistics
     Include statistics in output
 
@@ -36,6 +45,9 @@
     [CmdletBinding()]
     param(
         [string[]] $WeakPasswords,
+        [string] $WeakPasswordsFilePath,
+        [string] $WeakPasswordsHashesFile,
+        [string] $WeakPasswordsHashesSortedFile,
         [switch] $IncludeStatistics,
 
         [alias('ForestName')][string] $Forest,
@@ -60,7 +72,33 @@
         'SmartCardUsersWithPassword'
         'DuplicatePasswordGroups'
     )
-
+    if ($WeakPasswordsHashesFile) {
+        if (Test-Path -LiteralPath $WeakPasswordsHashesFile) {
+            Write-Color -Text "[i] ", "Weak password hashes available to read  from ", $WeakPasswordsHashesFile -Color Yellow, Gray, White, Yellow, White, Yellow, White
+            $WeakPasswordHashesStats = Get-FileInformation -File $WeakPasswordsHashesFile
+        } else {
+            Write-Color -Text "[e] ", "Weak password hashes file not found at ", $WeakPasswordsHashesFile -Color Red, Yellow, White, Yellow, Red
+            return
+        }
+    }
+    if ($WeakPasswordsHashesSortedFile) {
+        if (Test-Path -LiteralPath $WeakPasswordsHashesSortedFile) {
+            Write-Color -Text "[i] ", "Weak passwords hashes (sorted) available to read from ", $WeakPasswordsHashesSortedFile -Color Yellow, Gray, White, Yellow, White, Yellow, White
+            $WeakPasswordHashesSortedStats = Get-FileInformation -File $WeakPasswordsHashesSortedFile
+        } else {
+            Write-Color -Text "[e] ", "Weak passwords hashes (sorted) file not found at ", $WeakPasswordsHashesSortedFile -Color Red, Yellow, White, Yellow, Red
+            return
+        }
+    }
+    if ($WeakPasswordsFilePath) {
+        if (Test-Path -LiteralPath $WeakPasswordsFilePath) {
+            Write-Color -Text "[i] ", "Weak passwords available to read from ", $WeakPasswordsFilePath -Color Yellow, Gray, White, Yellow, White, Yellow, White
+            $WeakPasswordsStats = Get-FileInformation -File $WeakPasswordsFilePath
+        } else {
+            Write-Color -Text "[e] ", "Weak passwords file not found at ", $WeakPasswordsFilePath -Color Red, Yellow, White, Yellow, Red
+            return
+        }
+    }
     $ModuleExists = Get-Command -Module DSInternals -ErrorAction SilentlyContinue
     if (-not $ModuleExists) {
         Write-Color -Text "[e] ", "DSInternals module is not installed. Please install it using Install-Module DSInternals -Verbose" -Color Yellow, Red
@@ -79,7 +117,11 @@
         Write-Color -Text "[i] ", "Getting replication data from ", "$($Domain)", " using ", $Server -Color Yellow, Gray, White, Yellow, White, Yellow, White
 
         $testPasswordQualitySplat = @{
-            WeakPasswords = $WeakPasswords
+            WeakPasswords                = $WeakPasswords
+            WeakPasswordsFile            = $WeakPasswordsFilePath
+            WeakPasswordHashesFile       = $WeakPasswordsHashesFile
+            WeakPasswordHashesSortedFile = $WeakPasswordsHashesSortedFile
+            IncludeDisabledAccounts      = $true
         }
         Remove-EmptyValue -Hashtable $testPasswordQualitySplat
 
@@ -90,7 +132,7 @@
         }
     }
     Write-Color -Text "[i] Testing password quality" -Color Yellow, Gray, White, Yellow, White, Yellow, White
-    $Quality = $PasswordQuality | Test-PasswordQuality @testPasswordQualitySplat -IncludeDisabledAccounts
+    $Quality = $PasswordQuality | Test-PasswordQuality @testPasswordQualitySplat
 
     Write-Color -Text "[i] Processing results, merging data from DSInternals" -Color Yellow, Gray, White, Yellow, White, Yellow, White
     foreach ($Property in $Quality.PSObject.Properties.Name) {
@@ -232,13 +274,18 @@
     }
     if ($IncludeStatistics) {
         [ordered] @{
-            Forest                = $ForestInformation.Forest
-            Domains               = $ForestInformation.Domains
-            Statistics            = $QualityStatistics
-            StatisticsCountry     = $CountryStatistics
-            StatisticsCountryCode = $CountryCodeStatistics
-            StatisticsContinents  = $ContinentStatistics
-            Users                 = $OutputUsers
+            Forest                       = $ForestInformation.Forest
+            Domains                      = $ForestInformation.Domains
+            Statistics                   = $QualityStatistics
+            StatisticsCountry            = $CountryStatistics
+            StatisticsCountryCode        = $CountryCodeStatistics
+            StatisticsContinents         = $ContinentStatistics
+            Users                        = $OutputUsers
+            WeakPasswordsFileInformation = [ordered] @{
+                WeakPasswordHashesStats       = $WeakPasswordHashesStats
+                WeakPasswordHashesSortedStats = $WeakPasswordHashesSortedStats
+                WeakPasswordsStats            = $WeakPasswordsStats
+            }
         }
     } else {
         $OutputUsers
