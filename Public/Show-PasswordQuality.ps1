@@ -159,7 +159,7 @@
                             if ($WeakPasswordsFileInformation.WeakPasswordHashesStats) {
                                 New-HTMLListItem -Text @(
                                     "This report uses weak passwords hashes from ", $WeakPasswordsFileInformation.WeakPasswordHashesStats.FullName, " to check for, as provided during runtime, size ", $WeakPasswordsFileInformation.WeakPasswordHashesStats.Size, ", last write time ", $WeakPasswordsFileInformation.WeakPasswordHashesStats.LastWriteTime, "."
-                                ) -FontSize 12px -Color None, Red, None, Blue, None, Blue, None-FontWeight  normal, bold, normal, bold, normal, bold, normal
+                                ) -FontSize 12px -Color None, Red, None, Blue, None, Blue, None -FontWeight  normal, bold, normal, bold, normal, bold, normal
                             }
                             if ($WeakPasswordsFileInformation.WeakPasswordHashesSortedStats) {
                                 New-HTMLListItem -Text @(
