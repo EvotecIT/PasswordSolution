@@ -25,6 +25,15 @@
     List of weak passwords that should be checked for.
     Provide a list of common passwords that you want to check for, and that your users may have used.
 
+    .PARAMETER WeakPasswordsFilePath
+    Path to a file that contains weak passwords, one password per line.
+
+    .PARAMETER WeakPasswordsHashesFile
+    Path to a file that contains NT hashes of weak passwords, one hash in HEX format per line. For performance reasons, the -WeakPasswordHashesSortedFile parameter should be used instead.
+
+    .PARAMETER WeakPasswordsHashesSortedFile
+    Path to a file that contains NT hashes of weak passwords, one hash in HEX format per line. The hashes must be sorted alphabetically, because a binary search is performed. This parameter is typically used with a list of leaked password hashes from HaveIBeenPwned.
+
     .PARAMETER SeparateDuplicateGroups
     If specified, report will show duplicate groups separately, one group per tab.
 
@@ -46,7 +55,10 @@
         [string] $FilePath,
         [switch] $DontShow,
         [switch] $Online,
-        [string[]] $WeakPasswords,
+        [alias('KnownPasswords')][string[]] $WeakPasswords,
+        [alias('KnownPasswordsFilePath')][string] $WeakPasswordsFilePath,
+        [alias('KnownPasswordsHashesFile')][string] $WeakPasswordsHashesFile,
+        [alias('KnownPasswordsHashesSortedFile')][string] $WeakPasswordsHashesSortedFile,
         [switch] $SeparateDuplicateGroups,
         [switch] $PassThru,
         [switch] $AddWorldMap,
@@ -68,7 +80,18 @@
     Write-Color '[i]', ' Gathering passwords data' -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
     Write-Color '[i]', ' Using provided ', $WeakPasswords.Count, " weak passwords to verify against." -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
     $TimeStartPasswords = Start-TimeLog
-    $PasswordQuality = Find-PasswordQuality -IncludeStatistics -WeakPasswords $WeakPasswords -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
+    $findPasswordQualitySplat = @{
+        IncludeStatistics             = $true
+        WeakPasswords                 = $WeakPasswords
+        WeakPasswordsFilePath         = $WeakPasswordsFilePath
+        WeakPasswordsHashesFile       = $WeakPasswordsHashesFile
+        WeakPasswordsHashesSortedFile = $WeakPasswordsHashesSortedFile
+        Forest                        = $Forest
+        ExcludeDomains                = $ExcludeDomains
+        IncludeDomains                = $IncludeDomains
+        ExtendedForestInformation     = $ExtendedForestInformation
+    }
+    $PasswordQuality = Find-PasswordQuality @findPasswordQualitySplat
     if (-not $PasswordQuality) {
         # most likely DSInternals not installed
         return
@@ -116,9 +139,36 @@
                             New-HTMLListItem -Text $Domain -Color Blue
                         }
                     } -FontSize 12px
-                    New-HTMLText -Text @(
-                        "This report uses ", $WeakPasswords.Count, " weak passwords to check for, as provided during runtime."
-                    ) -FontSize 12px -Color None, Red, None -FontWeight normal, bold, normal
+
+                    $WeakPasswordsFileInformation = $PasswordQuality.WeakPasswordsFileInformation
+                    if ($WeakPasswords.Count -gt 0 -or $WeakPasswordsFileInformation.WeakPasswordsStats -or $WeakPasswordsFileInformation.WeakPasswordHashesStats -or $WeakPasswordsFileInformation.WeakPasswordHashesSortedStats) {
+                        New-HTMLText -Text @(
+                            "The report uses following weak password features: "
+                        ) -FontSize 12px
+                        New-HTMLList {
+                            if ($WeakPasswords.Count -gt 0) {
+                                New-HTMLListItem -Text @(
+                                    "This report uses ", $WeakPasswords.Count, " weak passwords to check for, as provided during runtime."
+                                ) -FontSize 12px -Color None, Red, None -FontWeight normal, bold, normal
+                            }
+                            if ($WeakPasswordsFileInformation.WeakPasswordsStats) {
+                                New-HTMLListItem -Text @(
+                                    "This report uses weak passwords from ", $WeakPasswordsFileInformation.WeakPasswordsStats.FullName, " to check for, as provided during runtime, size ", $WeakPasswordsFileInformation.WeakPasswordsStats.Size, ", last write time ", $WeakPasswordsFileInformation.WeakPasswordsStats.LastWriteTime, "."
+                                ) -FontSize 12px -Color None, Red, None, Blue, None, Blue, None -FontWeight normal, bold, normal, bold, normal, bold, normal
+                            }
+                            if ($WeakPasswordsFileInformation.WeakPasswordHashesStats) {
+                                New-HTMLListItem -Text @(
+                                    "This report uses weak passwords hashes from ", $WeakPasswordsFileInformation.WeakPasswordHashesStats.FullName, " to check for, as provided during runtime, size ", $WeakPasswordsFileInformation.WeakPasswordHashesStats.Size, ", last write time ", $WeakPasswordsFileInformation.WeakPasswordHashesStats.LastWriteTime, "."
+                                ) -FontSize 12px -Color None, Red, None, Blue, None, Blue, None-FontWeight  normal, bold, normal, bold, normal, bold, normal
+                            }
+                            if ($WeakPasswordsFileInformation.WeakPasswordHashesSortedStats) {
+                                New-HTMLListItem -Text @(
+                                    "This report uses weak passwords hashes from ", $WeakPasswordsFileInformation.WeakPasswordHashesSortedStats.FullName, " to check for, as provided during runtime, size ", $WeakPasswordsFileInformation.WeakPasswordHashesSortedStats.Size, ", last write time ", $WeakPasswordsFileInformation.WeakPasswordHashesSortedStats.LastWriteTime, "."
+                                ) -FontSize 12px -Color None, Red, None, Blue, None, Blue, None -FontWeight normal, bold, normal, bold, normal, bold, normal
+                            }
+                        }
+                    }
+
                     #New-HTMLText -LineBreak
                     New-HTMLText -Text "Here's a short overview of what this report shows:" -Color None -FontSize 12px
                     #New-HTMLText -LineBreak
