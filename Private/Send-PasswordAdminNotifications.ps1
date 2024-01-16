@@ -44,7 +44,9 @@
             $EmailResult = Send-PasswordEmail @EmailSplat
 
             Write-Color -Text "[r] Sending summary information ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
-
+            if ($EmailResult.Error) {
+                Write-Color -Text "[r] Error: ", $EmailResult.Error -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+            }
             [PSCustomObject] @{
                 DisplayName    = $ManagerUser.DisplayName
                 SamAccountName = $ManagerUser.SamAccountName

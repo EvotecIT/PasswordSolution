@@ -1,5 +1,8 @@
 ﻿# PasswordSolution Release History
 
+## 1.1.1 - 2024.01.16
+- Small improvement to error message being provided when sending email fails with summary of emails
+
 ## 1.1.0 - 2023.11.12
 - Add support for weak password hashes (NTLM) in Password Quality Check
   - Add new parameters for `Find-PasswordQuality`
