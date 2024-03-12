@@ -47,7 +47,8 @@
         [Parameter(DontShow)][switch] $AsHashTableObject,
         [Parameter(DontShow)][string[]] $AddEmptyProperties = @(),
         [Parameter(DontShow)][string[]] $RulesProperties,
-        [string] $OverwriteManagerProperty
+        [string] $OverwriteManagerProperty,
+        [Parameter(DontShow)][System.Collections.IDictionary] $UsersExternalSystem
     )
     $Today = Get-Date
 
@@ -64,6 +65,9 @@
         'pwdLastSet', 'ObjectClass'
         'LastLogonDate'
         'Country'
+        if ($UsersExternalSystem -and $UsersExternalSystem.Type -eq 'ExternalUsers') {
+            $UsersExternalSystem.ActiveDirectoryProperty
+        }
         if ($ExchangeProperty) {
             $ExchangeProperty
         }
@@ -229,6 +233,23 @@
         } else {
             $EmailAddress = $User.EmailAddress
         }
+
+        if ($UsersExternalSystem -and $UsersExternalSystem.Global -eq $true) {
+            if ($UsersExternalSystem.Type -eq 'ExternalUsers') {
+                $ADProperty = $UsersExternalSystem.ActiveDirectoryProperty
+                $EmailProperty = $UsersExternalSystem.EmailProperty
+                $ExternalUser = $UsersExternalSystem['Users'][$User.$ADProperty]
+                if ($ExternalUser -and $ExternalUser.$EmailProperty -like '*@*') {
+                    $EmailAddress = $ExternalUser.$EmailProperty
+                } else {
+                    $EmailAddress = $User.EmailAddress
+                }
+            } else {
+                Write-Color -Text '[-] ', "External system type not supported. Please use only type as provided using 'New-PasswordConfigurationExternalUsers'." -Color Yellow, White, Red
+                return
+            }
+        }
+
         if ($User.PasswordLastSet) {
             $PasswordDays = (New-TimeSpan -Start ($User.PasswordLastSet) -End ($Today)).Days
         } else {
@@ -321,6 +342,7 @@
                 Enabled              = $User.Enabled
                 HasMailbox           = $HasMailbox
                 EmailAddress         = $EmailAddress
+                SystemEmailAddress   = $User.EmailAddress
                 DateExpiry           = $DateExpiry
                 DaysToExpire         = $DaysToExpire
                 PasswordExpired      = $User.PasswordExpired
@@ -366,6 +388,7 @@
                 Enabled               = $User.Enabled
                 HasMailbox            = $HasMailbox
                 EmailAddress          = $EmailAddress
+                SystemEmailAddress    = $User.EmailAddress
                 DateExpiry            = $DateExpiry
                 DaysToExpire          = $DaysToExpire
                 PasswordExpired       = $User.PasswordExpired
@@ -432,6 +455,7 @@
                 Enabled               = $true
                 HasMailbox            = $null
                 EmailAddress          = $Contact.Mail
+                SystemEmailAddress    = $Contact.Mail
                 DateExpiry            = $null
                 DaysToExpire          = $null
                 PasswordExpired       = $null

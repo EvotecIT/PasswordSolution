@@ -1,5 +1,8 @@
 ﻿# PasswordSolution Release History
 
+## 1.1.2
+- Added `New-PasswordConfigurationExternalUsers` to allow for overwritting emails with external data in form of array of objects
+
 ## 1.1.1 - 2024.01.16
 - Small improvement to error message being provided when sending email fails with summary of emails
 
