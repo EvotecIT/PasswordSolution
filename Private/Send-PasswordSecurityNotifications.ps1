@@ -1,11 +1,11 @@
 ﻿function Send-PasswordSecurityNotifications {
     [CmdletBinding()]
     param(
-        $SecuritySection,
-        $Summary,
-        $TemplateSecurity,
-        $TemplateSecuritySubject,
-        $Logging
+        [System.Collections.IDictionary] $SecuritySection,
+        [System.Collections.IDictionary] $Summary,
+        [ScriptBlock]  $TemplateSecurity,
+        [string] $TemplateSecuritySubject,
+        [System.Collections.IDictionary] $Logging
     )
 
     if ($SecuritySection.Enable) {

@@ -1,15 +1,15 @@
 ﻿function Send-PasswordManagerNofifications {
     [CmdletBinding()]
     param(
-        $ManagerSection,
-        $Summary,
-        $CachedUsers,
-        $TemplateManager,
-        $TemplateManagerSubject,
-        $TemplateManagerNotCompliant,
-        $TemplateManagerNotCompliantSubject,
-        $EmailParameters,
-        $Logging
+        [System.Collections.IDictionary] $ManagerSection,
+        [System.Collections.IDictionary]  $Summary,
+        [System.Collections.IDictionary]    $CachedUsers,
+        [ScriptBlock] $TemplateManager,
+        [string] $TemplateManagerSubject,
+        [ScriptBlock] $TemplateManagerNotCompliant,
+        [string] $TemplateManagerNotCompliantSubject,
+        [System.Collections.IDictionary]  $EmailParameters,
+        [System.Collections.IDictionary]  $Logging
     )
     if ($ManagerSection.Enable) {
         Write-Color -Text "[i] Sending notifications to managers " -Color White, Yellow, White, Yellow, White, Yellow, White

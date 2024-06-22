@@ -1,14 +1,14 @@
 ﻿function Send-PasswordUserNofifications {
     [CmdletBinding()]
     param(
-        $UserSection,
-        $Summary,
-        $Logging,
-        $TemplatePreExpiry,
-        $TemplatePreExpirySubject,
-        $TemplatePostExpiry,
-        $TemplatePostExpirySubject,
-        $EmailParameters
+        [System.Collections.IDictionary] $UserSection,
+        [System.Collections.IDictionary] $Summary,
+        [System.Collections.IDictionary] $Logging,
+        [ScriptBlock] $TemplatePreExpiry,
+        [string] $TemplatePreExpirySubject,
+        [scriptBlock] $TemplatePostExpiry,
+        [string] $TemplatePostExpirySubject,
+        [System.Collections.IDictionary] $EmailParameters
 
     )
     if ($UserSection.Enable) {
