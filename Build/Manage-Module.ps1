@@ -43,7 +43,10 @@ Invoke-ModuleBuild -ModuleName 'PasswordSolution' {
         'DSInternals'
         'NetTCPIP'
         'Microsoft.WSMan.Management'
-    ) #-IgnoreFunctionName 'Select-Unique', 'Compare-TwoArrays' # those functions are internal within private function
+        # entra id
+        "Microsoft.Graph.Identity.DirectoryManagement"
+        "Microsoft.Graph.Users"
+    ) -IgnoreFunctionName 'Get-ADReplAccount', 'Test-PasswordQuality' # those functions are internal within private function
 
     $ConfigurationFormat = [ordered] @{
         RemoveComments                              = $true
