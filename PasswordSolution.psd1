@@ -6,7 +6,7 @@
     CompatiblePSEditions = @('Desktop', 'Core')
     Copyright            = '(c) 2011 - 2024 Przemyslaw Klys @ Evotec. All rights reserved.'
     Description          = 'This module allows the creation of password expiry emails for users, managers, administrators, and security according to defined templates. It''s able to work with different rules allowing to fully customize who gets the email and when.'
-    FunctionsToExport    = @('Find-Password', 'Find-PasswordNotification', 'Find-PasswordQuality', 'New-PasswordConfigurationEmail', 'New-PasswordConfigurationExternalUsers', 'New-PasswordConfigurationOption', 'New-PasswordConfigurationReport', 'New-PasswordConfigurationRule', 'New-PasswordConfigurationRuleReminder', 'New-PasswordConfigurationTemplate', 'New-PasswordConfigurationType', 'Show-PasswordQuality', 'Start-PasswordSolution')
+    FunctionsToExport    = @('Find-Password', 'Find-PasswordEntra', 'Find-PasswordNotification', 'Find-PasswordQuality', 'New-PasswordConfigurationEmail', 'New-PasswordConfigurationExternalUsers', 'New-PasswordConfigurationOption', 'New-PasswordConfigurationReport', 'New-PasswordConfigurationRule', 'New-PasswordConfigurationRuleReminder', 'New-PasswordConfigurationTemplate', 'New-PasswordConfigurationType', 'Show-PasswordQuality', 'Start-PasswordSolution')
     GUID                 = 'c58ff818-1de6-4500-961c-a243c2043255'
     ModuleVersion        = '1.1.2'
     PowerShellVersion    = '5.1'
@@ -21,11 +21,11 @@
     RequiredModules      = @(@{
             Guid          = 'ee272aa8-baaa-4edf-9f45-b6d6f7d844fe'
             ModuleName    = 'PSSharedGoods'
-            ModuleVersion = '0.0.280'
+            ModuleVersion = '0.0.290'
         }, @{
             Guid          = 'a7bdf640-f5cb-4acf-9de0-365b322d245c'
             ModuleName    = 'PSWriteHTML'
-            ModuleVersion = '1.17.0'
+            ModuleVersion = '1.18.0'
         }, @{
             Guid          = '0b0ba5c5-ec85-4c2b-a718-874e55a8bc3f'
             ModuleName    = 'PSWriteColor'
