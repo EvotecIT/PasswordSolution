@@ -22,6 +22,9 @@
     .PARAMETER Global
     Tells the solution to globally overwrite email addresses for all users.
 
+    .PARAMETER Name
+    Name of the configuration. Visible in HTML reports.
+
     .EXAMPLE
     New-PasswordConfigurationExternalUsers -Users $ExportDataFromHrSystem -SearchProperty '<property in the HR system>' -EmailProperty '<email property in HR system>' -ActiveDirectoryProperty 'SamAccountName'
 
@@ -30,6 +33,7 @@
     #>
     [CmdletBinding()]
     param(
+        [parameter(Mandatory)][string] $Name,
         [parameter(Mandatory)][Array] $Users,
         [parameter(Mandatory)][string] $ActiveDirectoryProperty,
         [parameter(Mandatory)][string] $SearchProperty,
@@ -38,9 +42,18 @@
     )
 
     $CachedUsers = [ordered] @{}
+
+    if ($Users.Count -gt 0 -and $Users[0].$SearchProperty -and $Users[0].$EmailProperty) {
+        Write-Color -Text '[+] ', "Caching users for '$Name'" -Color Green, White
+    } else {
+        Write-Color -Text '[-] ', "Couldn't cache users as either users not provided or email/search property are invalid. Please fix 'New-PasswordConfigurationExternalUsers'" -Color Yellow, White
+        return
+    }
     try {
         foreach ($User in $Users) {
-            $CachedUsers[$User.$SearchProperty] = $User | Select-Object -Property $EmailProperty
+            if ($User.$SearchProperty) {
+                $CachedUsers[$User.$SearchProperty] = $User | Select-Object -Property $EmailProperty
+            }
         }
     } catch {
         Write-Color -Text '[-] ', "Couldn't cache users. Please fix 'New-PasswordConfigurationExternalUsers'. Error: ", "$($_.Exception.Message)" -Color Yellow, White, Red
@@ -53,5 +66,6 @@
         EmailProperty           = $EmailProperty
         Users                   = $CachedUsers
         Global                  = $Global.IsPresent
+        Name                    = $Name
     }
 }
