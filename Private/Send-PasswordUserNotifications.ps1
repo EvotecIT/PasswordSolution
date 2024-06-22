@@ -95,6 +95,7 @@
                     PasswordExpired      = $EmailSplat.User.PasswordExpired
                     PasswordNeverExpires = $EmailSplat.User.PasswordNeverExpires
                     PasswordLastSet      = $EmailSplat.User.PasswordLastSet
+                    EmailFrom            = $EmailSplat.User.EmailFrom
                 }
             } else {
                 # Email not sent
@@ -117,6 +118,7 @@
                     PasswordExpired      = $EmailSplat.User.PasswordExpired
                     PasswordNeverExpires = $EmailSplat.User.PasswordNeverExpires
                     PasswordLastSet      = $EmailSplat.User.PasswordLastSet
+                    EmailFrom            = $EmailSplat.User.EmailFrom
                 }
             }
             if ($Logging.NotifyOnUserSend) {
