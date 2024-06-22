@@ -7,6 +7,7 @@
         [System.Collections.IDictionary] $AllSkipped,
         [System.Collections.IDictionary] $Locations,
         [System.Collections.IDictionary] $Logging,
+        [System.Collections.IDictionary] $UsersExternalSystem,
         [DateTime] $TodayDate
     )
     # Go for each rule and check if the user is in any of those rules
@@ -201,6 +202,16 @@
                         $NewPropertyWithEmail = $Rule.OverwriteEmailProperty
                         if ($NewPropertyWithEmail -and $User.$NewPropertyWithEmail) {
                             $User.EmailAddress = $User.$NewPropertyWithEmail
+                        }
+                    }
+
+                    if ($Rule.OverwriteEmailFromExternalUsers) {
+                        $ExternalUser = $null
+                        $ADProperty = $UsersExternalSystem.ActiveDirectoryProperty
+                        $EmailProperty = $UsersExternalSystem.EmailProperty
+                        $ExternalUser = $UsersExternalSystem['Users'][$User.$ADProperty]
+                        if ($ExternalUser -and $ExternalUser.$EmailProperty -like '*@*') {
+                            $User.EmailAddress = $ExternalUser.$EmailProperty
                         }
                     }
 

@@ -20,6 +20,7 @@
         [System.Collections.IDictionary] $ManagerSection,
         [System.Collections.IDictionary] $SecuritySection,
         [System.Collections.IDictionary] $AdminSection,
+        [System.Collections.IDictionary] $UsersExternalSystem,
         [Array] $HTMLReports,
         [Array] $Rules,
         [string] $SearchPath,
@@ -84,6 +85,8 @@
                 } elseif ($Configuration.Type -eq "PasswordConfigurationTemplateAdmin") {
                     $TemplateAdmin = $Configuration.Settings.Template
                     $TemplateAdminSubject = $Configuration.Settings.Subject
+                } elseif ($Configuration.Type -eq 'ExternalUsers') {
+                    $UsersExternalSystem = $Configuration
                 }
             }
         } catch {
@@ -325,6 +328,7 @@
         TemplateManagerNotCompliantSubject = $TemplateManagerNotCompliantSubject
         TemplateAdmin                      = $TemplateAdmin
         TemplateAdminSubject               = $TemplateAdminSubject
+        UsersExternalSystem                = $UsersExternalSystem
     }
     $OutputInformation
 }
