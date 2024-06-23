@@ -57,6 +57,12 @@
     .PARAMETER ShowSearchEscalations
     Specifies whether to display information for searching who got password escalation notifications and what's the status of that message. The default value is $false.
 
+    .PARAMETER ShowExternalSystemReplacementsUsers
+    Specifies whether to display information about users who's email address was replaced by an external system. The default value is $false.
+
+    .PARAMETER ShowExternalSystemReplacementsManagers
+    Specifies whether to display information about managers who's email address was replaced by an external system. The default value is $false.
+
     .PARAMETER FilePath
     Specifies the file path for the report
 
@@ -122,30 +128,35 @@
         [switch] $ShowSearchEscalations ,
         [string] $FilePath,
         [switch] $AttachToEmail,
-        [switch] $NestedRules
+        [switch] $NestedRules,
+        [switch] $ShowExternalSystemReplacementsUsers,
+        [switch] $ShowExternalSystemReplacementsManagers
     )
 
     $Output = [ordered] @{
         Type     = "PasswordConfigurationReport"
         Settings = [ordered] @{
-            Enable                = $Enable.IsPresent
-            ShowHTML              = $ShowHTML.IsPresent
-            Title                 = $Title
-            Online                = $Online.IsPresent
-            DisableWarnings       = $DisableWarnings.IsPresent
-            ShowConfiguration     = $ShowConfiguration.IsPresent
-            ShowAllUsers          = $ShowAllUsers.IsPresent
-            ShowRules             = $ShowRules.IsPresent
-            ShowUsersSent         = $ShowUsersSent.IsPresent
-            ShowManagersSent      = $ShowManagersSent.IsPresent
-            ShowEscalationSent    = $ShowEscalationSent.IsPresent
-            ShowSkippedUsers      = $ShowSkippedUsers.IsPresent
-            ShowSkippedLocations  = $ShowSkippedLocations.IsPresent
-            ShowSearchUsers       = $ShowSearchUsers.IsPresent
-            ShowSearchManagers    = $ShowSearchManagers.IsPresent
-            ShowSearchEscalations = $ShowSearchEscalations.IsPresent
-            FilePath              = $FilePath
-            AttachToEmail         = $AttachToEmail.IsPresent
+            Enable                                 = $Enable.IsPresent
+            ShowHTML                               = $ShowHTML.IsPresent
+            Title                                  = $Title
+            Online                                 = $Online.IsPresent
+            DisableWarnings                        = $DisableWarnings.IsPresent
+            ShowConfiguration                      = $ShowConfiguration.IsPresent
+            ShowAllUsers                           = $ShowAllUsers.IsPresent
+            ShowRules                              = $ShowRules.IsPresent
+            ShowUsersSent                          = $ShowUsersSent.IsPresent
+            ShowManagersSent                       = $ShowManagersSent.IsPresent
+            ShowEscalationSent                     = $ShowEscalationSent.IsPresent
+            ShowSkippedUsers                       = $ShowSkippedUsers.IsPresent
+            ShowSkippedLocations                   = $ShowSkippedLocations.IsPresent
+            ShowSearchUsers                        = $ShowSearchUsers.IsPresent
+            ShowSearchManagers                     = $ShowSearchManagers.IsPresent
+            ShowSearchEscalations                  = $ShowSearchEscalations.IsPresent
+            FilePath                               = $FilePath
+            AttachToEmail                          = $AttachToEmail.IsPresent
+            NestedRules                            = $NestedRules.IsPresent
+            ShowExternalSystemReplacementsUsers    = $ShowExternalSystemReplacementsUsers.IsPresent
+            ShowExternalSystemReplacementsManagers = $ShowExternalSystemReplacementsManagers.IsPresent
         }
     }
     $Output

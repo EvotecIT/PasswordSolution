@@ -48,12 +48,22 @@
         [Parameter(DontShow)][string[]] $AddEmptyProperties = @(),
         [Parameter(DontShow)][string[]] $RulesProperties,
         [string] $OverwriteManagerProperty,
-        [Parameter(DontShow)][System.Collections.IDictionary] $UsersExternalSystem
+        [Parameter(DontShow)][System.Collections.IDictionary] $UsersExternalSystem,
+        [Parameter(DontShow)][System.Collections.IDictionary] $ExternalSystemReplacements = [ordered] @{
+            Managers = [System.Collections.Generic.List[PSCustomObject]]::new()
+            Users    = [System.Collections.Generic.List[PSCustomObject]]::new()
+        }
     )
 
     if ($UsersExternalSystem.Name) {
         Write-Color -Text '[i] ', "Using external system ", $UsersExternalSystem.Name, " for EMAIL replacement functionality" -Color Yellow, White, Yellow, White
         Write-Color -Text '[i] ', "There are ", $UsersExternalSystem.Users.Count, " users in the external system" -Color Yellow, White, Yellow, White
+    }
+    if (-not $ExternalSystemReplacements.Users) {
+        $ExternalSystemReplacements.Users = [System.Collections.Generic.List[PSCustomObject]]::new()
+    }
+    if (-not $ExternalSystemReplacements.Managers) {
+        $ExternalSystemReplacements.Managers = [System.Collections.Generic.List[PSCustomObject]]::new()
     }
 
     $Today = Get-Date
@@ -197,6 +207,14 @@
                     if ($ExternalUser -and $ExternalUser.$EmailProperty -like '*@*' -and $ExternalUser.$EmailProperty -ne $ManagerEmail) {
                         $ReplacedManagerEmail = $ManagerEmail
                         $ManagerEmail = $ExternalUser.$EmailProperty
+                        $ExternalSystemReplacements.Managers.Add(
+                            [PSCustomObject]@{
+                                ManagerSamAccountName = $ManagerSamAccountName
+                                ManagerEmail          = $ManagerEmail
+                                ReplacedManagerEmail  = $ReplacedManagerEmail
+                                ExternalSystem        = $UsersExternalSystem.Name
+                            }
+                        )
                         #Write-Color -Text '[i] ', "Overwriting manager email address for ", $Manager, " with ", $ManagerEmail, " (old email: $ReplacedManagerEmail)", " from ", $UsersExternalSystem.Name -Color Yellow, White, Yellow, White, Green, Red, White, Yellow
                     }
                 }
@@ -228,6 +246,14 @@
                     if ($ExternalUser -and $ExternalUser.$EmailProperty -like '*@*' -and $ExternalUser.$EmailProperty -ne $ManagerEmail) {
                         $ReplacedManagerEmail = $ManagerEmail
                         $ManagerEmail = $ExternalUser.$EmailProperty
+                        $ExternalSystemReplacements.Managers.Add(
+                            [PSCustomObject]@{
+                                ManagerSamAccountName = $ManagerSamAccountName
+                                ManagerEmail          = $ManagerEmail
+                                ReplacedManagerEmail  = $ReplacedManagerEmail
+                                ExternalSystem        = $UsersExternalSystem.Name
+                            }
+                        )
                         #Write-Color -Text '[i] ', "Overwriting manager email address for ", $Manager, " with ", $ManagerEmail, " (old email: $ReplacedManagerEmail)", " from ", $UsersExternalSystem.Name -Color Yellow, White, Yellow, White, Green, Red, White, Yellow
                     }
                 }
@@ -281,12 +307,19 @@
                 $ADProperty = $UsersExternalSystem.ActiveDirectoryProperty
                 $EmailProperty = $UsersExternalSystem.EmailProperty
                 $ExternalUser = $UsersExternalSystem['Users'][$User.$ADProperty]
-                if ($ExternalUser -and $ExternalUser.$EmailProperty -like '*@*') {
+                $EmailAddress = $User.EmailAddress
+                $EmailFrom = 'AD'
+                if ($ExternalUser -and $ExternalUser.$EmailProperty -like '*@*' -and $EmailAddress -ne $ExternalUser.$EmailProperty) {
                     $EmailFrom = 'ILM'
                     $EmailAddress = $ExternalUser.$EmailProperty
-                } else {
-                    $EmailAddress = $User.EmailAddress
-                    $EmailFrom = 'AD'
+                    $ExternalSystemReplacements.Users.Add(
+                        [PSCustomObject]@{
+                            UserSamAccountName = $User.SamAccountName
+                            UserEmail          = $EmailAddress
+                            ReplacedUserEmail  = $User.EmailAddress
+                            ExternalSystem     = $UsersExternalSystem.Name
+                        }
+                    )
                 }
             } else {
                 Write-Color -Text '[-] ', "External system type not supported. Please use only type as provided using 'New-PasswordConfigurationExternalUsers'." -Color Yellow, White, Red

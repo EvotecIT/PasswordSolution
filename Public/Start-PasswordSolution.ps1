@@ -208,7 +208,8 @@
     $SummarySearch = Import-SearchInformation -SearchPath $SearchPath
 
     Write-Color -Text "[i]", " Starting process to find expiring users" -Color Yellow, White, Green, White, Green, White, Green, White
-    $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty -RulesProperties $ExtendedProperties -OverwriteManagerProperty $OverwriteManagerProperty -UsersExternalSystem $UsersExternalSystem
+    $ExternalSystemReplacements = [ordered] @{}
+    $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty -RulesProperties $ExtendedProperties -OverwriteManagerProperty $OverwriteManagerProperty -UsersExternalSystem $UsersExternalSystem -ExternalSystemReplacements $ExternalSystemReplacements
 
     if ($Rules.Count -eq 0) {
         Write-Color -Text "[e]", " No rules found. Please add some rules to configuration" -Color Yellow, White, Red
@@ -273,24 +274,25 @@
     foreach ($Report in $HTMLReports) {
         if ($Report.Enable) {
             $ReportSettings = @{
-                Report                  = $Report
-                EmailParameters         = $EmailParameters
-                Logging                 = $Logging
+                Report                     = $Report
+                EmailParameters            = $EmailParameters
+                Logging                    = $Logging
                 #FilePath                = $FilePath
-                SearchPath              = $SearchPath
-                Rules                   = $Rules
-                UserSection             = $UserSection
-                ManagerSection          = $ManagerSection
-                SecuritySection         = $SecuritySection
-                AdminSection            = $AdminSection
-                CachedUsers             = $CachedUsers
-                Summary                 = $Summary
-                SummaryUsersEmails      = $SummaryUsersEmails
-                SummaryManagersEmails   = $SummaryManagersEmails
-                SummaryEscalationEmails = $SummaryEscalationEmails
-                SummarySearch           = $SummarySearch
-                Locations               = $Locations
-                AllSkipped              = $AllSkipped
+                SearchPath                 = $SearchPath
+                Rules                      = $Rules
+                UserSection                = $UserSection
+                ManagerSection             = $ManagerSection
+                SecuritySection            = $SecuritySection
+                AdminSection               = $AdminSection
+                CachedUsers                = $CachedUsers
+                Summary                    = $Summary
+                SummaryUsersEmails         = $SummaryUsersEmails
+                SummaryManagersEmails      = $SummaryManagersEmails
+                SummaryEscalationEmails    = $SummaryEscalationEmails
+                SummarySearch              = $SummarySearch
+                Locations                  = $Locations
+                AllSkipped                 = $AllSkipped
+                ExternalSystemReplacements = $ExternalSystemReplacements
             }
             New-HTMLReport @ReportSettings
 
