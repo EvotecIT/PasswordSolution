@@ -50,6 +50,12 @@
         [string] $OverwriteManagerProperty,
         [Parameter(DontShow)][System.Collections.IDictionary] $UsersExternalSystem
     )
+
+    if ($UsersExternalSystem.Name) {
+        Write-Color -Text '[i] ', "Using external system ", $UsersExternalSystem.Name, " for EMAIL replacement functionality" -Color Yellow, White, Yellow, White
+        Write-Color -Text '[i] ', "There are ", $UsersExternalSystem.Users.Count, " users in the external system" -Color Yellow, White, Yellow, White
+    }
+
     $Today = Get-Date
 
     $GuidForExchange = Convert-ADSchemaToGuid -SchemaName 'msExchMailboxGuid'
@@ -178,6 +184,23 @@
             $ManagerSamAccountName = $ManagerSpecial.SamAccountName
             $ManagerDisplayName = $ManagerSpecial.DisplayName
             $ManagerEmail = $ManagerSpecial.Mail
+
+            # we check if we have external system and if we have global email replacement for managers in place
+            # we check only if SamAccountName is there (contacts don't have it)
+            if ($ManagerSamAccountName -and $UsersExternalSystem -and $UsersExternalSystem.Global -eq $true) {
+                $ADProperty = $UsersExternalSystem.ActiveDirectoryProperty
+                if ($ADProperty -eq 'SamAccountName') {
+                    # we need to find manager by SamAccountName, and we need to find it in external system
+                    # any other property is not supported
+                    $EmailProperty = $UsersExternalSystem.EmailProperty
+                    $ExternalUser = $UsersExternalSystem['Users'][$ManagerSamAccountName]
+                    if ($ExternalUser -and $ExternalUser.$EmailProperty -like '*@*') {
+                        $ManagerEmail = $ExternalUser.$EmailProperty
+                        Write-Color -Text '[i] ', "Overwriting manager email address for ", $Manager, " with ", $ManagerEmail, " from ", $UsersExternalSystem.Name -Color Yellow, White, Yellow, White, Yellow, White
+                    }
+                }
+            }
+
             $ManagerEnabled = $ManagerSpecial.Enabled
             $ManagerLastLogon = $ManagerSpecial.LastLogonDate
             if ($ManagerLastLogon) {
@@ -191,6 +214,23 @@
             $ManagerSamAccountName = $Cache[$User.Manager].SamAccountName
             $ManagerDisplayName = $Cache[$User.Manager].DisplayName
             $ManagerEmail = $Cache[$User.Manager].Mail
+
+            # we check if we have external system and if we have global email replacement for managers in place
+            # we check only if SamAccountName is there (contacts don't have it)
+            if ($ManagerSamAccountName -and $UsersExternalSystem -and $UsersExternalSystem.Global -eq $true) {
+                $ADProperty = $UsersExternalSystem.ActiveDirectoryProperty
+                if ($ADProperty -eq 'SamAccountName') {
+                    # we need to find manager by SamAccountName, and we need to find it in external system
+                    # any other property is not supported
+                    $EmailProperty = $UsersExternalSystem.EmailProperty
+                    $ExternalUser = $UsersExternalSystem['Users'][$ManagerSamAccountName]
+                    if ($ExternalUser -and $ExternalUser.$EmailProperty -like '*@*') {
+                        $ManagerEmail = $ExternalUser.$EmailProperty
+                        Write-Color -Text '[i] ', "Overwriting manager email address for ", $Manager, " with ", $ManagerEmail, " from ", $UsersExternalSystem.Name -Color Yellow, White, Yellow, White, Yellow, White
+                    }
+                }
+            }
+
             $ManagerEnabled = $Cache[$User.Manager].Enabled
             $ManagerLastLogon = $Cache[$User.Manager].LastLogonDate
             if ($ManagerLastLogon) {
@@ -240,14 +280,18 @@
                 $EmailProperty = $UsersExternalSystem.EmailProperty
                 $ExternalUser = $UsersExternalSystem['Users'][$User.$ADProperty]
                 if ($ExternalUser -and $ExternalUser.$EmailProperty -like '*@*') {
+                    $EmailFrom = 'ILM'
                     $EmailAddress = $ExternalUser.$EmailProperty
                 } else {
                     $EmailAddress = $User.EmailAddress
+                    $EmailFrom = 'AD'
                 }
             } else {
                 Write-Color -Text '[-] ', "External system type not supported. Please use only type as provided using 'New-PasswordConfigurationExternalUsers'." -Color Yellow, White, Red
                 return
             }
+        } else {
+            $EmailFrom = 'AD'
         }
 
         if ($User.PasswordLastSet) {
@@ -376,6 +420,7 @@
                 Country               = $Country
                 CountryCode           = $CountryCode
                 Type                  = 'User'
+                EmailFrom             = $EmailFrom
             }
             $MyUser = $StartUser + $EndUser
         } else {
@@ -417,6 +462,7 @@
                 Country               = $Country
                 CountryCode           = $CountryCode
                 Type                  = 'User'
+                EmailFrom             = $EmailFrom
             }
         }
         foreach ($Property in $ConditionProperties) {
@@ -484,6 +530,7 @@
                 Country               = $null
                 CountryCode           = $null
                 Type                  = 'Contact'
+                EmailFrom             = $EmailFrom
             }
             # this allows to extend the object with custom properties requested by user
             # especially custom extensions for use within rules
