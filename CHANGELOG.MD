@@ -1,5 +1,8 @@
 ﻿# PasswordSolution Release History
 
+## 1.2.2 - 2024.06.23
+- Add reporting for replacements of emails from external sources
+
 ## 1.2.1 - 2024.06.23
 - Allow using DSL and normal configuration at the same time
 
