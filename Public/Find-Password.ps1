@@ -210,8 +210,8 @@
                         $ExternalSystemReplacements.Managers.Add(
                             [PSCustomObject]@{
                                 ManagerSamAccountName = $ManagerSamAccountName
-                                ManagerEmail          = $ManagerEmail
-                                ReplacedManagerEmail  = $ReplacedManagerEmail
+                                ExternalEmail         = $ManagerEmail
+                                ADEmailAddress        = $ReplacedManagerEmail
                                 ExternalSystem        = $UsersExternalSystem.Name
                             }
                         )
@@ -249,8 +249,8 @@
                         $ExternalSystemReplacements.Managers.Add(
                             [PSCustomObject]@{
                                 ManagerSamAccountName = $ManagerSamAccountName
-                                ManagerEmail          = $ManagerEmail
-                                ReplacedManagerEmail  = $ReplacedManagerEmail
+                                ExternalEmail         = $ManagerEmail
+                                ADEmailAddress        = $ReplacedManagerEmail
                                 ExternalSystem        = $UsersExternalSystem.Name
                             }
                         )
@@ -315,8 +315,8 @@
                     $ExternalSystemReplacements.Users.Add(
                         [PSCustomObject]@{
                             UserSamAccountName = $User.SamAccountName
-                            UserEmail          = $EmailAddress
-                            ReplacedUserEmail  = $User.EmailAddress
+                            ExternalEmail      = $EmailAddress
+                            ADEmailAddress     = $User.EmailAddress
                             ExternalSystem     = $UsersExternalSystem.Name
                         }
                     )

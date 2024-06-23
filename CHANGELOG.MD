@@ -1,5 +1,8 @@
 ﻿# PasswordSolution Release History
 
+## 1.2.3 - 2024.06.23
+- Small report improvements
+
 ## 1.2.2 - 2024.06.23
 - Add reporting for replacements of emails from external sources
 
