@@ -88,6 +88,7 @@
     #>
     [CmdletBinding(DefaultParameterSetName = 'DSL')]
     param(
+        [Parameter(ParameterSetName = 'Legacy', Position = 0)]
         [Parameter(ParameterSetName = 'DSL', Position = 0)][scriptblock] $ConfigurationDSL,
         [Parameter(Mandatory, ParameterSetName = 'Legacy')][System.Collections.IDictionary] $EmailParameters,
         [Parameter(ParameterSetName = 'Legacy')][string] $OverwriteEmailProperty,

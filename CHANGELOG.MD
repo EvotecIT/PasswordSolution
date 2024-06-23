@@ -1,5 +1,8 @@
 ﻿# PasswordSolution Release History
 
+## 1.2.1 - 2024.06.23
+- Allow using DSL and normal configuration at the same time
+
 ## 1.2.0 - 2024.06.23
 - This version adds ability to allow overwritting email address from external system, or even CSV records based on prepared data
 - Added `New-PasswordConfigurationExternalUsers` to allow for overwritting emails with external data in form of array of objects
