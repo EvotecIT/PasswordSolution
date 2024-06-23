@@ -194,9 +194,10 @@
                     # any other property is not supported
                     $EmailProperty = $UsersExternalSystem.EmailProperty
                     $ExternalUser = $UsersExternalSystem['Users'][$ManagerSamAccountName]
-                    if ($ExternalUser -and $ExternalUser.$EmailProperty -like '*@*') {
+                    if ($ExternalUser -and $ExternalUser.$EmailProperty -like '*@*' -and $ExternalUser.$EmailProperty -ne $ManagerEmail) {
+                        $ReplacedManagerEmail = $ManagerEmail
                         $ManagerEmail = $ExternalUser.$EmailProperty
-                        Write-Color -Text '[i] ', "Overwriting manager email address for ", $Manager, " with ", $ManagerEmail, " from ", $UsersExternalSystem.Name -Color Yellow, White, Yellow, White, Yellow, White
+                        #Write-Color -Text '[i] ', "Overwriting manager email address for ", $Manager, " with ", $ManagerEmail, " (old email: $ReplacedManagerEmail)", " from ", $UsersExternalSystem.Name -Color Yellow, White, Yellow, White, Green, Red, White, Yellow
                     }
                 }
             }
@@ -224,9 +225,10 @@
                     # any other property is not supported
                     $EmailProperty = $UsersExternalSystem.EmailProperty
                     $ExternalUser = $UsersExternalSystem['Users'][$ManagerSamAccountName]
-                    if ($ExternalUser -and $ExternalUser.$EmailProperty -like '*@*') {
+                    if ($ExternalUser -and $ExternalUser.$EmailProperty -like '*@*' -and $ExternalUser.$EmailProperty -ne $ManagerEmail) {
+                        $ReplacedManagerEmail = $ManagerEmail
                         $ManagerEmail = $ExternalUser.$EmailProperty
-                        Write-Color -Text '[i] ', "Overwriting manager email address for ", $Manager, " with ", $ManagerEmail, " from ", $UsersExternalSystem.Name -Color Yellow, White, Yellow, White, Yellow, White
+                        #Write-Color -Text '[i] ', "Overwriting manager email address for ", $Manager, " with ", $ManagerEmail, " (old email: $ReplacedManagerEmail)", " from ", $UsersExternalSystem.Name -Color Yellow, White, Yellow, White, Green, Red, White, Yellow
                     }
                 }
             }
