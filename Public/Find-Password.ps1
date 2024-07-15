@@ -307,7 +307,7 @@
                 $ADProperty = $UsersExternalSystem.ActiveDirectoryProperty
                 $EmailProperty = $UsersExternalSystem.EmailProperty
                 $ExternalUser = $UsersExternalSystem['Users'][$User.$ADProperty]
-                $EmailAddress = $User.EmailAddress
+                # $EmailAddress = $User.EmailAddress
                 $EmailFrom = 'AD'
                 if ($ExternalUser -and $ExternalUser.$EmailProperty -like '*@*' -and $EmailAddress -ne $ExternalUser.$EmailProperty) {
                     $EmailFrom = 'ILM'
