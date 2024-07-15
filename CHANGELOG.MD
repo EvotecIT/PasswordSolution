@@ -1,5 +1,8 @@
 ﻿# PasswordSolution Release History
 
+## 1.2.4 - 2024.07.15
+- Fixes email address being wrong when using external system and using overwrite property
+
 ## 1.2.3 - 2024.06.23
 - Small report improvements
 
