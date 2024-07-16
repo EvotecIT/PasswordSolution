@@ -1,5 +1,8 @@
 ﻿# PasswordSolution Release History
 
+## 1.2.5 - 2024.07.16
+- Remove duplicate records from external managers
+
 ## 1.2.4 - 2024.07.15
 - Fixes email address being wrong when using external system and using overwrite property
 
