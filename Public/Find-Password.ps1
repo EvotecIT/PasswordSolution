@@ -55,6 +55,7 @@
         }
     )
 
+    $ExternalSystemManagers = [ordered]@{}
     if ($UsersExternalSystem.Name) {
         Write-Color -Text '[i] ', "Using external system ", $UsersExternalSystem.Name, " for EMAIL replacement functionality" -Color Yellow, White, Yellow, White
         Write-Color -Text '[i] ', "There are ", $UsersExternalSystem.Users.Count, " users in the external system" -Color Yellow, White, Yellow, White
@@ -207,14 +208,18 @@
                     if ($ExternalUser -and $ExternalUser.$EmailProperty -like '*@*' -and $ExternalUser.$EmailProperty -ne $ManagerEmail) {
                         $ReplacedManagerEmail = $ManagerEmail
                         $ManagerEmail = $ExternalUser.$EmailProperty
-                        $ExternalSystemReplacements.Managers.Add(
-                            [PSCustomObject]@{
-                                ManagerSamAccountName = $ManagerSamAccountName
-                                ExternalEmail         = $ManagerEmail
-                                ADEmailAddress        = $ReplacedManagerEmail
-                                ExternalSystem        = $UsersExternalSystem.Name
-                            }
-                        )
+
+                        if (-not $ExternalSystemManagers[$ManagerSamAccountName]) {
+                            $ExternalSystemManagers[$ManagerSamAccountName] = $ManagerSamAccountName
+                            $ExternalSystemReplacements.Managers.Add(
+                                [PSCustomObject]@{
+                                    ManagerSamAccountName = $ManagerSamAccountName
+                                    ExternalEmail         = $ManagerEmail
+                                    ADEmailAddress        = $ReplacedManagerEmail
+                                    ExternalSystem        = $UsersExternalSystem.Name
+                                }
+                            )
+                        }
                         #Write-Color -Text '[i] ', "Overwriting manager email address for ", $Manager, " with ", $ManagerEmail, " (old email: $ReplacedManagerEmail)", " from ", $UsersExternalSystem.Name -Color Yellow, White, Yellow, White, Green, Red, White, Yellow
                     }
                 }
@@ -246,14 +251,17 @@
                     if ($ExternalUser -and $ExternalUser.$EmailProperty -like '*@*' -and $ExternalUser.$EmailProperty -ne $ManagerEmail) {
                         $ReplacedManagerEmail = $ManagerEmail
                         $ManagerEmail = $ExternalUser.$EmailProperty
-                        $ExternalSystemReplacements.Managers.Add(
-                            [PSCustomObject]@{
-                                ManagerSamAccountName = $ManagerSamAccountName
-                                ExternalEmail         = $ManagerEmail
-                                ADEmailAddress        = $ReplacedManagerEmail
-                                ExternalSystem        = $UsersExternalSystem.Name
-                            }
-                        )
+                        if (-not $ExternalSystemManagers[$ManagerSamAccountName]) {
+                            $ExternalSystemManagers[$ManagerSamAccountName] = $ManagerSamAccountName
+                            $ExternalSystemReplacements.Managers.Add(
+                                [PSCustomObject]@{
+                                    ManagerSamAccountName = $ManagerSamAccountName
+                                    ExternalEmail         = $ManagerEmail
+                                    ADEmailAddress        = $ReplacedManagerEmail
+                                    ExternalSystem        = $UsersExternalSystem.Name
+                                }
+                            )
+                        }
                         #Write-Color -Text '[i] ', "Overwriting manager email address for ", $Manager, " with ", $ManagerEmail, " (old email: $ReplacedManagerEmail)", " from ", $UsersExternalSystem.Name -Color Yellow, White, Yellow, White, Green, Red, White, Yellow
                     }
                 }
