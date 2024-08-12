@@ -1,5 +1,8 @@
 ﻿# PasswordSolution Release History
 
+## 1.2.6 - 2024.08.12
+- Fix wrong publish of cmdlets
+
 ## 1.2.5 - 2024.07.16
 - Remove duplicate records from external managers
 
