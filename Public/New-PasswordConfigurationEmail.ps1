@@ -1,5 +1,5 @@
 ﻿function New-PasswordConfigurationEmail {
-    [CmdletBinding(SupportsShouldProcess)]
+    [cmdletBinding(DefaultParameterSetName = 'Compatibility', SupportsShouldProcess)]
     param(
         [Parameter(ParameterSetName = 'SecureString')]
 
@@ -29,21 +29,6 @@
         [Parameter(ParameterSetName = 'SendGrid')]
         [string] $ReplyTo,
 
-        # [Parameter(ParameterSetName = 'SecureString')]
-        # [Parameter(ParameterSetName = 'oAuth')]
-        # [Parameter(ParameterSetName = 'Graph')]
-        # [Parameter(ParameterSetName = 'MgGraphRequest')]
-        # [Parameter(ParameterSetName = 'Compatibility')]
-        # [Parameter(ParameterSetName = 'SendGrid')]
-        # [string[]] $Cc,
-
-        # [Parameter(ParameterSetName = 'SecureString')]
-        # [Parameter(ParameterSetName = 'oAuth')]
-        # [Parameter(ParameterSetName = 'Graph')]
-        # [Parameter(ParameterSetName = 'MgGraphRequest')]
-        # [Parameter(ParameterSetName = 'Compatibility')]
-        # [Parameter(ParameterSetName = 'SendGrid')]
-        # [string[]] $Bcc,
 
         [Parameter(ParameterSetName = 'SecureString')]
         [Parameter(ParameterSetName = 'oAuth')]
@@ -93,7 +78,7 @@
         [Parameter(ParameterSetName = 'SecureString')]
         [Parameter(ParameterSetName = 'oAuth')]
         [Parameter(ParameterSetName = 'Compatibility')]
-        [switch] $SkipCertificateValidatation,
+        [alias('SkipCertificateValidatation')][switch] $SkipCertificateValidation,
 
         [Parameter(ParameterSetName = 'SecureString')]
         [Parameter(ParameterSetName = 'oAuth')]
@@ -144,8 +129,6 @@
             Port                           = if ($PSBoundParameters.ContainsKey('Port')) { $Port } else { $null }
             From                           = if ($PSBoundParameters.ContainsKey('From')) { $From } else { $null }
             ReplyTo                        = if ($PSBoundParameters.ContainsKey('ReplyTo')) { $ReplyTo } else { $null }
-            #Cc                             = if ($PSBoundParameters.ContainsKey('Cc')) { $Cc } else { $null }
-            #Bcc                            = if ($PSBoundParameters.ContainsKey('Bcc')) { $Bcc } else { $null }
             Priority                       = if ($PSBoundParameters.ContainsKey('Priority')) { $Priority } else { $null }
             DeliveryNotificationOption     = if ($PSBoundParameters.ContainsKey('DeliveryNotificationOption')) { $DeliveryNotificationOption } else { $null }
             DeliveryStatusNotificationType = if ($PSBoundParameters.ContainsKey('DeliveryStatusNotificationType')) { $DeliveryStatusNotificationType } else { $null }
@@ -155,7 +138,7 @@
             SecureSocketOptions            = if ($PSBoundParameters.ContainsKey('SecureSocketOptions')) { $SecureSocketOptions } else { $null }
             UseSsl                         = if ($PSBoundParameters.ContainsKey('UseSsl')) { $UseSsl } else { $null }
             SkipCertificateRevocation      = if ($PSBoundParameters.ContainsKey('SkipCertificateRevocation')) { $SkipCertificateRevocation } else { $null }
-            SkipCertificateValidatation    = if ($PSBoundParameters.ContainsKey('SkipCertificateValidatation')) { $SkipCertificateValidatation } else { $null }
+            SkipCertificateValidation      = if ($PSBoundParameters.ContainsKey('SkipCertificateValidatation')) { $SkipCertificateValidation } else { $null }
             Timeout                        = if ($PSBoundParameters.ContainsKey('Timeout')) { $Timeout } else { $null }
             oAuth2                         = if ($PSBoundParameters.ContainsKey('oAuth2')) { $oAuth2 } else { $null }
             RequestReadReceipt             = if ($PSBoundParameters.ContainsKey('RequestReadReceipt')) { $RequestReadReceipt } else { $null }

@@ -1,5 +1,10 @@
 ﻿# PasswordSolution Release History
 
+## 1.2.7 - 2024.8.21
+- Adds sending email without credentials (using SMTP server)
+- Fixes `SkipCertificateValidation` typo in `New-PasswordConfigurationEmail`
+- Small cleanup
+
 ## 1.2.6 - 2024.08.12
 - Fix wrong publish of cmdlets
 
