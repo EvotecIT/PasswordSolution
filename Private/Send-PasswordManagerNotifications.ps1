@@ -10,7 +10,6 @@
         [string] $TemplateManagerNotCompliantSubject,
         [System.Collections.IDictionary] $EmailParameters,
         [System.Collections.IDictionary] $Logging,
-        [System.Collections.IDictionary] $GlobalUsersCache,
         [System.Collections.IDictionary] $GlobalManagersCache
     )
     if ($ManagerSection.Enable) {
@@ -26,12 +25,6 @@
                 # This is required when user uses `FilterOrganizationalUnit` feature and manager is not in the same OU
                 # This causes Manager Data to be not processed in the same way as User Data so we need to process it separately
                 $ManagerUser = $GlobalManagersCache[$Manager]
-            } elseif ($GlobalUsersCache[$Manager]) {
-                # This user is "findable" in AD, but in non processed cache
-                # This is required when user uses `FilterOrganizationalUnit` feature and manager is not in the same OU
-                # This causes Manager Data to be not processed in the same way as User Data so we need to process it separately
-                # Probably not needed, but alternative to above
-                $ManagerUser = $GlobalUsersCache[$Manager]
             } else {
                 # This user is provided by user in config file
                 $ManagerUser = $Summary['NotifyManager'][$Manager]['Manager']
