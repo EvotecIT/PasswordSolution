@@ -1,5 +1,35 @@
 ﻿# PasswordSolution Release History
 
+## 1.2.8 - 2024.8.21
+- Added `FilterOrganizationalUnit` to `New-PasswordConfigurationOption` to allow for filtering users based on OrganizationalUnit
+  This speeds up the process of scanning users, and allows for more granular control over which users are scanned without having to go thru all users in the domain
+  The module still gets all the users but only processes the ones that match the filter
+- Improved console colors a bit, to prevent some colors from being invisible
+
+```powershell
+$Options = @{
+    # Logging to file and to screen
+    ShowTime                     = $true
+    LogFile                      = "$PSScriptRoot\Logs\PasswordSolution_$(($Date).ToString('yyyy-MM-dd_HH_mm_ss')).log"
+    TimeFormat                   = "yyyy-MM-dd HH:mm:ss"
+    LogMaximum                   = 365
+    NotifyOnSkipUserManagerOnly  = $false
+    NotifyOnSecuritySend         = $true
+    NotifyOnManagerSend          = $true
+    NotifyOnUserSend             = $true
+    NotifyOnUserMatchingRule     = $false
+    NotifyOnUserDaysToExpireNull = $false
+    SearchPath                   = "$PSScriptRoot\Search\SearchLog_$((Get-Date).ToString('yyyy-MM')).xml"
+    EmailDateFormat              = "yyyy-MM-dd"
+    EmailDateFormatUTCConversion = $true
+    FilterOrganizationalUnit     = @(
+        "*OU=Accounts,OU=Administration,DC=ad,DC=evotec,DC=xyz"
+        "*OU=Administration,DC=ad,DC=evotec,DC=xyz"
+    )
+}
+New-PasswordConfigurationOption @Options
+```
+
 ## 1.2.7 - 2024.8.21
 - Adds sending email without credentials (using SMTP server)
 - Fixes `SkipCertificateValidation` typo in `New-PasswordConfigurationEmail`
