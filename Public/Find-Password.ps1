@@ -52,7 +52,10 @@
         [Parameter(DontShow)][System.Collections.IDictionary] $ExternalSystemReplacements = [ordered] @{
             Managers = [System.Collections.Generic.List[PSCustomObject]]::new()
             Users    = [System.Collections.Generic.List[PSCustomObject]]::new()
-        }
+        },
+        [string[]] $FilterOrganizationalUnit,
+        [System.Collections.IDictionary] $Cache = [ordered] @{},
+        [System.Collections.IDictionary] $CacheManager = [ordered] @{}
     )
 
     $ExternalSystemManagers = [ordered]@{}
@@ -138,6 +141,7 @@
             Write-Color '[e] Error: ', $ErrorMessage -Color White, Red
         }
     }
+    Write-Color -Text "[i] ", "Caching users for easy access" -Color Yellow, White
     foreach ($User in $Users) {
         $Cache[$User.DistinguishedName] = $User
         # SAmAccountName will overwrite itself when we have multiple domains and there are duplicates
@@ -166,6 +170,7 @@
     Write-Color -Text "[i] ", "Preparing all users for password expirations in forest ", $Forest.Name -Color Yellow, White, Yellow, White
     $CountUsers = 0
     foreach ($User in $Users) {
+        $SkipUser = $false
         $CountUsers++
         Write-Verbose -Message "Processing $($User.DisplayName) - $($CountUsers)/$($Users.Count)"
         $DateExpiry = $null
@@ -174,6 +179,21 @@
         $PasswordNeverExpires = $null
         $PasswordAtNextLogon = $null
         $HasMailbox = $null
+
+        $OUPath = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToOrganizationalUnit
+        # Allow filtering to prevent huge time processing for huge domains when only some users are needed
+        foreach ($OU in $FilterOrganizationalUnit) {
+            if ($null -eq $OUPath) {
+                $SkipUser = $true
+                break
+            } elseif ($OUPath -notlike "$OU") {
+                $SkipUser = $true
+                break
+            }
+        }
+        if ($SkipUser) {
+            continue
+        }
 
         # This is a special case for users that have a manager in a special field such as extensionAttributes
         # This is useful for service accounts or other accounts that don't have a manager in AD
@@ -191,6 +211,7 @@
 
         if ($ManagerSpecial) {
             # We have manager in different field such as extensionAttribute
+            $ManagerDN = $ManagerSpecial.DistinguishedName
             $Manager = $ManagerSpecial.DisplayName
             $ManagerSamAccountName = $ManagerSpecial.SamAccountName
             $ManagerDisplayName = $ManagerSpecial.DisplayName
@@ -234,6 +255,7 @@
             }
             $ManagerType = $ManagerSpecial.ObjectClass
         } elseif ($User.Manager) {
+            $ManagerDN = $Cache[$User.Manager].DistinguishedName
             $Manager = $Cache[$User.Manager].DisplayName
             $ManagerSamAccountName = $Cache[$User.Manager].SamAccountName
             $ManagerDisplayName = $Cache[$User.Manager].DisplayName
@@ -266,7 +288,6 @@
                     }
                 }
             }
-
             $ManagerEnabled = $Cache[$User.Manager].Enabled
             $ManagerLastLogon = $Cache[$User.Manager].LastLogonDate
             if ($ManagerLastLogon) {
@@ -281,6 +302,7 @@
             } else {
                 $ManagerStatus = 'Not available'
             }
+            $ManagerDN = $null
             $Manager = $null
             $ManagerSamAccountName = $null
             $ManagerDisplayName = $null
@@ -289,6 +311,20 @@
             $ManagerLastLogon = $null
             $ManagerLastLogonDays = $null
             $ManagerType = $null
+        }
+
+        if ($ManagerDN -and -not $CacheManager[$ManagerDN]) {
+            $CacheManager[$ManagerDN] = [PSCustomObject] @{
+                DistinguishedName = $ManagerDN
+                Domain            = ConvertFrom-DistinguishedName -DistinguishedName $ManagerDN -ToDomainCN
+                DisplayName       = $ManagerDisplayName
+                SamAccountName    = $ManagerSamAccountName
+                EmailAddress      = $ManagerEmail
+                Enabled           = $ManagerEnabled
+                LastLogonDate     = $ManagerLastLogon
+                LastLogonDays     = $ManagerLastLogonDays
+                Type              = $ManagerType
+            }
         }
 
         if ($OverwriteEmailProperty) {
@@ -456,7 +492,7 @@
                 Name                  = $User.Name
                 GivenName             = $User.GivenName
                 Surname               = $User.Surname
-                OrganizationalUnit    = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToOrganizationalUnit
+                OrganizationalUnit    = $OUPath
                 MemberOf              = $User.MemberOf
                 DistinguishedName     = $User.DistinguishedName
                 ManagerDN             = $User.Manager
@@ -533,6 +569,22 @@
         $CountContacts = 0
         foreach ($Contact in $Contacts) {
             $CountContacts++
+
+            $OUPath = ConvertFrom-DistinguishedName -DistinguishedName $Contact.DistinguishedName -ToOrganizationalUnit
+            # Allow filtering to prevent huge time processing for huge domains when only some users are needed
+            foreach ($OU in $FilterOrganizationalUnit) {
+                if ($null -eq $OUPath) {
+                    $SkipUser = $true
+                    break
+                } elseif ($OUPath -notlike "$OU") {
+                    $SkipUser = $true
+                    break
+                }
+            }
+            if ($SkipUser) {
+                continue
+            }
+
             Write-Verbose -Message "Processing $($Contact.DisplayName) - $($CountContacts)/$($Contacts.Count)"
             # create dummy objects for manager contacts
             $MyUser = [ordered] @{
@@ -566,7 +618,7 @@
                 Name                  = $Contact.Name
                 GivenName             = $null
                 Surname               = $null
-                OrganizationalUnit    = ConvertFrom-DistinguishedName -DistinguishedName $Contact.DistinguishedName -ToOrganizationalUnit
+                OrganizationalUnit    = $OUPath
                 MemberOf              = $Contact.MemberOf
                 DistinguishedName     = $Contact.DistinguishedName
                 ManagerDN             = $null

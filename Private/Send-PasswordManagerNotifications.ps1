@@ -2,14 +2,16 @@
     [CmdletBinding()]
     param(
         [System.Collections.IDictionary] $ManagerSection,
-        [System.Collections.IDictionary]  $Summary,
-        [System.Collections.IDictionary]    $CachedUsers,
+        [System.Collections.IDictionary] $Summary,
+        [System.Collections.IDictionary] $CachedUsers,
         [ScriptBlock] $TemplateManager,
         [string] $TemplateManagerSubject,
         [ScriptBlock] $TemplateManagerNotCompliant,
         [string] $TemplateManagerNotCompliantSubject,
-        [System.Collections.IDictionary]  $EmailParameters,
-        [System.Collections.IDictionary]  $Logging
+        [System.Collections.IDictionary] $EmailParameters,
+        [System.Collections.IDictionary] $Logging,
+        [System.Collections.IDictionary] $GlobalUsersCache,
+        [System.Collections.IDictionary] $GlobalManagersCache
     )
     if ($ManagerSection.Enable) {
         Write-Color -Text "[i] Sending notifications to managers " -Color White, Yellow, White, Yellow, White, Yellow, White
@@ -19,6 +21,17 @@
             if ($CachedUsers[$Manager]) {
                 # This user is "findable" in AD
                 $ManagerUser = $CachedUsers[$Manager]
+            } elseif ($GlobalManagersCache[$Manager]) {
+                # This user is findable in managers cache
+                # This is required when user uses `FilterOrganizationalUnit` feature and manager is not in the same OU
+                # This causes Manager Data to be not processed in the same way as User Data so we need to process it separately
+                $ManagerUser = $GlobalManagersCache[$Manager]
+            } elseif ($GlobalUsersCache[$Manager]) {
+                # This user is "findable" in AD, but in non processed cache
+                # This is required when user uses `FilterOrganizationalUnit` feature and manager is not in the same OU
+                # This causes Manager Data to be not processed in the same way as User Data so we need to process it separately
+                # Probably not needed, but alternative to above
+                $ManagerUser = $GlobalUsersCache[$Manager]
             } else {
                 # This user is provided by user in config file
                 $ManagerUser = $Summary['NotifyManager'][$Manager]['Manager']
@@ -78,7 +91,11 @@
             }
             $EmailResult = Send-PasswordEmail @EmailSplat
             if ($Logging.NotifyOnManagerSend) {
-                Write-Color -Text "[r] Sending notifications to managers ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+                if ($EmailResult.SentTo) {
+                    Write-Color -Text "[r] Sending notifications to managers ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+                } else {
+                    Write-Color -Text "[r] Sending notifications to managers ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+                }
             }
 
             [PSCustomObject] @{
@@ -103,7 +120,7 @@
             }
             if ($ManagerSection.SendCountMaximum -gt 0) {
                 if ($ManagerSection.SendCountMaximum -le $CountManagers) {
-                    Write-Color -Text "[i]", " Send count maximum reached. There may be more managers that match the rule." -Color Red, DarkMagenta
+                    Write-Color -Text "[i]", " Send count maximum reached. There may be more managers that match the rule." -Color Red, DarkRed
                     break
                 }
             }
@@ -111,6 +128,6 @@
         Write-Color -Text "[i] Sending notifications to managers (sent: ", $SummaryManagersEmails.Count, " out of ", $Summary['NotifyManager'].Values.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
         $SummaryManagersEmails
     } else {
-        Write-Color -Text "[i] Sending notifications to managers is ", "disabled!" -Color White, Yellow, DarkMagenta
+        Write-Color -Text "[i] Sending notifications to managers is ", "disabled!" -Color White, Yellow, DarkRed
     }
 }

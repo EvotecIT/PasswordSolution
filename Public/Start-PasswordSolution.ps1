@@ -113,7 +113,8 @@
         [Parameter(Mandatory, ParameterSetName = 'Legacy')][string] $TemplateAdminSubject,
         [Parameter(ParameterSetName = 'Legacy')][System.Collections.IDictionary] $Logging = @{},
         [Parameter(ParameterSetName = 'Legacy')][Array] $HTMLReports,
-        [Parameter(ParameterSetName = 'Legacy')][string] $SearchPath
+        [Parameter(ParameterSetName = 'Legacy')][string] $SearchPath,
+        [Parameter(ParameterSetName = 'Legacy')][string[]] $FilterOrganizationalUnit
     )
     $TimeStart = Start-TimeLog
     $Script:Reporting = [ordered] @{}
@@ -164,6 +165,7 @@
         HTMLReports                        = $HTMLReports
         SearchPath                         = $SearchPath
         UsersExternalSystem                = $UsersExternalSystem
+        FilterOrganizationalUnit           = $FilterOrganizationalUnit
     }
     $InitialVariables = Set-PasswordConfiguration @SplatPasswordConfiguration
     if (-not $InitialVariables) {
@@ -194,6 +196,7 @@
     $HTMLReports = $InitialVariables.HTMLReports
     $SearchPath = $InitialVariables.SearchPath
     $UsersExternalSystem = $InitialVariables.UsersExternalSystem
+    $FilterOrganizationalUnit = $InitialVariables.FilterOrganizationalUnit
 
     # this is to get properties from rules to be used in building up user output
     [Array] $ExtendedProperties = foreach ($Rule in $Rules ) {
@@ -209,7 +212,11 @@
 
     Write-Color -Text "[i]", " Starting process to find expiring users" -Color Yellow, White, Green, White, Green, White, Green, White
     $ExternalSystemReplacements = [ordered] @{}
-    $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty -RulesProperties $ExtendedProperties -OverwriteManagerProperty $OverwriteManagerProperty -UsersExternalSystem $UsersExternalSystem -ExternalSystemReplacements $ExternalSystemReplacements
+    # This is to cache users from AD before we start processing them
+    # Will be used by Managers and Security notifications when using filtering
+    $GlobalManagerCache = [ordered] @{}
+    $GlobalUsersCache = [ordered] @{}
+    $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty -RulesProperties $ExtendedProperties -OverwriteManagerProperty $OverwriteManagerProperty -UsersExternalSystem $UsersExternalSystem -ExternalSystemReplacements $ExternalSystemReplacements -FilterOrganizationalUnit $FilterOrganizationalUnit -Cache $GlobalUsersCache -CacheManager $GlobalManagerCache
 
     if ($Rules.Count -eq 0) {
         Write-Color -Text "[e]", " No rules found. Please add some rules to configuration" -Color Yellow, White, Red
@@ -253,6 +260,8 @@
         TemplateManagerNotCompliantSubject = $TemplateManagerNotCompliantSubject
         EmailParameters                    = $EmailParameters
         Loggin                             = $Logging
+        GlobalUsersCache                   = $GlobalUsersCache
+        GlobalManagersCache                = $GlobalManagerCache
     }
     [Array] $SummaryManagersEmails = Send-PasswordManagerNofifications @SplatManagerNotifications
 

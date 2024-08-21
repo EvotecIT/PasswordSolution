@@ -9,7 +9,6 @@
         [scriptBlock] $TemplatePostExpiry,
         [string] $TemplatePostExpirySubject,
         [System.Collections.IDictionary] $EmailParameters
-
     )
     if ($UserSection.Enable) {
         Write-Color -Text "[i] Sending notifications to users " -Color White, Yellow, White, Yellow, White, Yellow, White
@@ -122,11 +121,15 @@
                 }
             }
             if ($Logging.NotifyOnUserSend) {
-                Write-Color -Text "[i]", " Sending notifications to users ", $Notify.User.DisplayName, " (", $Notify.User.EmailAddress, ")", " status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ", details: ", $EmailResult.Error -Color Yellow, White, Yellow, White, Yellow, White, White, Blue, White, Blue
+                if ($EmailResult.SentTo) {
+                    Write-Color -Text "[i]", " Sending notifications to user ", $Notify.User.DisplayName, " (", $Notify.User.EmailAddress, ")", " status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ", details: ", $EmailResult.Error -Color Yellow, White, Yellow, White, Yellow, White, White, Blue, White, Blue
+                } else {
+                    Write-Color -Text "[i]", " Skipping notifications to user ", $Notify.User.DisplayName, " (", $Notify.User.EmailAddress, ")", " status: ", $EmailResult.Status, " details: ", $EmailResult.Error -Color Yellow, White, Yellow, White, Yellow, White, White, Blue, White, Blue
+                }
             }
             if ($UserSection.SendCountMaximum -gt 0) {
                 if ($UserSection.SendCountMaximum -le $CountUsers) {
-                    Write-Color -Text "[i]", " Send count maximum reached. There may be more accounts that match the rule." -Color Red, DarkMagenta
+                    Write-Color -Text "[i]", " Send count maximum reached. There may be more accounts that match the rule." -Color Red, DarkRed
                     break
                 }
             }
@@ -134,7 +137,7 @@
         Write-Color -Text "[i] Sending notifications to users (sent: ", $SummaryUsersEmails.Count, " out of ", $Summary['Notify'].Values.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
         $SummaryUsersEmails
     } else {
-        Write-Color -Text "[i] Sending notifications to users is ", "disabled!" -Color White, Yellow, DarkMagenta
+        Write-Color -Text "[i] Sending notifications to users is ", "disabled!" -Color White, Yellow, DarkRed
     }
 
 }
