@@ -1,4 +1,87 @@
 ﻿function New-PasswordConfigurationOption {
+    <#
+    .SYNOPSIS
+    Provides a way to create a PasswordConfigurationOption object.
+
+    .DESCRIPTION
+    This function provides a way to create a PasswordConfigurationOption object.
+    The object is used to store configuration options for the Password Solution module.
+
+    .PARAMETER ShowTime
+    Parameter description
+
+    .PARAMETER LogFile
+    File path to the log file. If not provided, there will be no logging.
+
+    .PARAMETER TimeFormat
+    Time format used in the log file.
+
+    .PARAMETER LogMaximum
+    Maximum number of log files to keep.
+
+    .PARAMETER NotifyOnSkipUserManagerOnly
+    Provides a way to control output to screen for SkipUserManagerOnly.
+
+    .PARAMETER NotifyOnSecuritySend
+    Provides a way to control output to screen for SecuritySend.
+
+    .PARAMETER NotifyOnManagerSend
+    Provides a way to control output to screen for ManagerSend.
+
+    .PARAMETER NotifyOnUserSend
+    Provides a way to control output to screen for UserSend.
+
+    .PARAMETER NotifyOnUserMatchingRule
+    Provides a way to control output to screen for UserMatchingRule.
+
+    .PARAMETER NotifyOnUserDaysToExpireNull
+    Provides a way to control output to screen for UserDaysToExpireNull.
+
+    .PARAMETER SearchPath
+    Path to XML file that will be used for storing search results.
+
+    .PARAMETER EmailDateFormat
+    Parameter description
+
+    .PARAMETER EmailDateFormatUTCConversion
+    Parameter description
+
+    .PARAMETER OverwriteEmailProperty
+    Parameter description
+
+    .PARAMETER OverwriteManagerProperty
+    Parameter description
+
+    .PARAMETER FilterOrganizationalUnit
+    Provides a way to filter users by Organizational Unit limiting the scope of the search.
+    The search is performed using 'like' operator, so you can use wildcards if needed.
+
+    .EXAMPLE
+    $Options = @{
+        # Logging to file and to screen
+        ShowTime                     = $true
+        LogFile                      = "$PSScriptRoot\Logs\PasswordSolution_$(($Date).ToString('yyyy-MM-dd_HH_mm_ss')).log"
+        TimeFormat                   = "yyyy-MM-dd HH:mm:ss"
+        LogMaximum                   = 365
+        NotifyOnSkipUserManagerOnly  = $false
+        NotifyOnSecuritySend         = $true
+        NotifyOnManagerSend          = $true
+        NotifyOnUserSend             = $true
+        NotifyOnUserMatchingRule     = $false
+        NotifyOnUserDaysToExpireNull = $false
+        SearchPath                   = "$PSScriptRoot\Search\SearchLog_$((Get-Date).ToString('yyyy-MM')).xml"
+        EmailDateFormat              = "yyyy-MM-dd"
+        EmailDateFormatUTCConversion = $true
+        FilterOrganizationalUnit     = @(
+            "*OU=Accounts,OU=Administration,DC=ad,DC=evotec,DC=xyz"
+            "*OU=Administration,DC=ad,DC=evotec,DC=xyz"
+        )
+    }
+    New-PasswordConfigurationOption @Options
+
+    .NOTES
+    General notes
+    #>
     [CmdletBinding()]
     param(
         [switch] $ShowTime                     , #= $true
@@ -15,7 +98,8 @@
         [string] $EmailDateFormat,
         [switch] $EmailDateFormatUTCConversion,
         [string] $OverwriteEmailProperty,
-        [string] $OverwriteManagerProperty
+        [string] $OverwriteManagerProperty,
+        [string[]] $FilterOrganizationalUnit
     )
 
     $Output = [ordered] @{
@@ -39,6 +123,8 @@
             OverwriteEmailProperty       = $OverwriteEmailProperty
             # manager property conversion (global)
             OverwriteManagerProperty     = $OverwriteManagerProperty
+            # filtering
+            FilterOrganizationalUnit     = $FilterOrganizationalUnit
         }
     }
     Remove-EmptyValue -Hashtable $Output.Settings
