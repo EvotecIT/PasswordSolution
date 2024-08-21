@@ -313,11 +313,12 @@ $PasswordSolution = [ordered] @{
         #endregion
         #region "All others"
         [ordered] @{
-            Name            = 'All others'
-            Enable          = $false # doesn't processes this section at all if $false
-            Reminders       = @(500..-500), 60, 30, 15, 7, 3, 2, 1, 0, -7, -15, -30, -45
-            IncludeExpiring = $true
-            SendToManager   = @{
+            Name                   = 'All others'
+            Enable                 = $true # doesn't processes this section at all if $false
+            Reminders              = @(500..-500), 60, 30, 15, 7, 3, 2, 1, 0, -7, -15, -30, -45
+            IncludeExpiring        = $true
+            OverwriteEmailProperty = 'extensionAttribute5'
+            SendToManager          = @{
                 Manager             = [ordered] @{
                     Enable    = $true
                     # it uses manager from AD in this section
