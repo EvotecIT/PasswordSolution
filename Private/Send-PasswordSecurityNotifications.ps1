@@ -85,7 +85,7 @@
             }
             if ($SecuritySection.SendCountMaximum -gt 0) {
                 if ($SecuritySection.SendCountMaximum -le $CountSecurity) {
-                    Write-Color -Text "[i]", " Send count maximum reached. There may be more managers that match the rule." -Color Red, DarkMagenta
+                    Write-Color -Text "[i]", " Send count maximum reached. There may be more managers that match the rule." -Color Red, DarkRed
                     break
                 }
             }
@@ -93,7 +93,7 @@
         Write-Color -Text "[i] Sending notifications to security (sent: ", $SummaryEscalationEmails.Count, " out of ", $Summary['NotifySecurity'].Values.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
         $SummaryEscalationEmails
     } else {
-        Write-Color -Text "[i] Sending notifications to security is ", "disabled!" -Color White, Yellow, DarkMagenta
+        Write-Color -Text "[i] Sending notifications to security is ", "disabled!" -Color White, Yellow, DarkRed
     }
 
 }
