@@ -8,16 +8,18 @@
     The object is used to store configuration options for the Password Solution module.
 
     .PARAMETER ShowTime
-    Parameter description
+    Show time in the console output. If not provided, time will not be shown.
+    Time in the log file is always shown.
 
     .PARAMETER LogFile
-    File path to the log file. If not provided, there will be no logging.
+    File path to the log file. If not provided, there will be no logging to file
 
     .PARAMETER TimeFormat
-    Time format used in the log file.
+    Time format used in the logging functionality.
 
     .PARAMETER LogMaximum
-    Maximum number of log files to keep.
+    Maximum number of log files to keep. Default is 0 (unlimited).
+    Once the number of log files exceeds the limit, the oldest log files will be deleted.
 
     .PARAMETER NotifyOnSkipUserManagerOnly
     Provides a way to control output to screen for SkipUserManagerOnly.

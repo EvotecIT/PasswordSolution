@@ -125,10 +125,6 @@
     $TodayDate = Get-Date
     $Today = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
-    Set-LoggingCapabilities -LogPath $Logging.LogFile -LogMaximum $Logging.LogMaximum -ShowTime:$Logging.ShowTime -TimeFormat $Logging.TimeFormat
-    # since the first entry didn't go to log file, this will
-    Write-Color -Text '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta -NoConsoleOutput
-
     $Summary = [ordered] @{}
     $Summary['Notify'] = [ordered] @{}
     $Summary['NotifyManager'] = [ordered] @{}
@@ -197,6 +193,10 @@
     $SearchPath = $InitialVariables.SearchPath
     $UsersExternalSystem = $InitialVariables.UsersExternalSystem
     $FilterOrganizationalUnit = $InitialVariables.FilterOrganizationalUnit
+
+    Set-LoggingCapabilities -LogPath $Logging.LogFile -LogMaximum $Logging.LogMaximum -ShowTime:$Logging.ShowTime -TimeFormat $Logging.TimeFormat
+    # since the first entry didn't go to log file, this will
+    Write-Color -Text '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta -NoConsoleOutput
 
     # this is to get properties from rules to be used in building up user output
     [Array] $ExtendedProperties = foreach ($Rule in $Rules ) {

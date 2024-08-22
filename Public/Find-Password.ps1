@@ -170,8 +170,9 @@
     Write-Color -Text "[i] ", "Preparing all users for password expirations in forest ", $Forest.Name -Color Yellow, White, Yellow, White
     $CountUsers = 0
     foreach ($User in $Users) {
-        $SkipUser = $false
         $CountUsers++
+        Write-Verbose -Message "Processing $($User.DisplayName) - $($CountUsers)/$($Users.Count)"
+        $SkipUser = $false
         $DateExpiry = $null
         $DaysToExpire = $null
         $PasswordDays = $null
@@ -193,8 +194,6 @@
         if ($SkipUser) {
             continue
         }
-
-        Write-Verbose -Message "Processing $($User.DisplayName) - $($CountUsers)/$($Users.Count)"
 
         # This is a special case for users that have a manager in a special field such as extensionAttributes
         # This is useful for service accounts or other accounts that don't have a manager in AD

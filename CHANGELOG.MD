@@ -1,7 +1,8 @@
 ﻿# PasswordSolution Release History
 
 ## 1.2.9 - 2024.08.22
-- Small move of verbose message
+- Fixes logging functionality when using modern settings
+
 ## 1.2.8 - 2024.08.22
 - Added `FilterOrganizationalUnit` to `New-PasswordConfigurationOption` to allow for filtering users based on OrganizationalUnit
   This speeds up the process of scanning users, and allows for more granular control over which users are scanned without having to go thru all users in the domain
