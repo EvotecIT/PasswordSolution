@@ -1,6 +1,8 @@
 ﻿# PasswordSolution Release History
 
-## 1.2.8 - 2024.8.22
+## 1.2.9 - 2024.08.22
+- Small move of verbose message
+## 1.2.8 - 2024.08.22
 - Added `FilterOrganizationalUnit` to `New-PasswordConfigurationOption` to allow for filtering users based on OrganizationalUnit
   This speeds up the process of scanning users, and allows for more granular control over which users are scanned without having to go thru all users in the domain
   The module still gets all the users but only processes the ones that match the filter
@@ -30,7 +32,7 @@ $Options = @{
 New-PasswordConfigurationOption @Options
 ```
 
-## 1.2.7 - 2024.8.21
+## 1.2.7 - 2024.08.21
 - Adds sending email without credentials (using SMTP server)
 - Fixes `SkipCertificateValidation` typo in `New-PasswordConfigurationEmail`
 - Small cleanup
