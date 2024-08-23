@@ -209,7 +209,10 @@
             $RemindersExecution = & $ReminderConfiguration
         } catch {
             Write-Color -Text "[e]", " Processing rule ", $Output.Name, " failed because of error: ", $_.Exception.Message -Color Yellow, White, Red
-            return
+            return [ordered] @{
+                Type  = 'PasswordConfigurationRule'
+                Error = $_.Exception.Message
+            }
         }
         foreach ($Reminder in $RemindersExecution) {
             if ($Reminder.Type -eq 'Manager') {

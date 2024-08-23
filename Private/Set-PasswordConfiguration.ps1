@@ -71,6 +71,9 @@
                 } elseif ($Configuration.Type -eq 'PasswordConfigurationReport') {
                     $HTMLReports += $Configuration.Settings
                 } elseif ($Configuration.Type -eq 'PasswordConfigurationRule') {
+                    if ($Configuration.Error) {
+                        return
+                    }
                     $Rules += $Configuration.Settings
                 } elseif ($Configuration.Type -eq "PasswordConfigurationTemplatePreExpiry") {
                     $TemplatePreExpiry = $Configuration.Settings.Template
