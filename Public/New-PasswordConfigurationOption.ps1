@@ -39,6 +39,12 @@
     .PARAMETER NotifyOnUserDaysToExpireNull
     Provides a way to control output to screen for UserDaysToExpireNull.
 
+    .PARAMETER NotifyOnUserMatchingRuleForManager
+    Provides a way to control output to screen for UserMatchingRuleForManager.
+
+    .PARAMETER NotifyOnUserMatchingRuleForManagerButNotCompliant
+    Provides a way to control output to screen for UserMatchingRuleForManagerButNotCompliant.
+
     .PARAMETER SearchPath
     Path to XML file that will be used for storing search results.
 
@@ -96,6 +102,8 @@
         [switch] $NotifyOnUserSend             , #= $true
         [switch] $NotifyOnUserMatchingRule     , #= $true
         [switch] $NotifyOnUserDaysToExpireNull , #= $true
+        [switch] $NotifyOnUserMatchingRuleForManager,
+        [switch] $NotifyOnUserMatchingRuleForManagerButNotCompliant,
         [string] $SearchPath,
         [string] $EmailDateFormat,
         [switch] $EmailDateFormatUTCConversion,
@@ -107,26 +115,28 @@
     $Output = [ordered] @{
         Type     = "PasswordConfigurationOption"
         Settings = [ordered] @{
-            ShowTime                     = $ShowTime.IsPresent
-            LogFile                      = $LogFile
-            TimeFormat                   = $TimeFormat
-            LogMaximum                   = $LogMaximum
-            NotifyOnSkipUserManagerOnly  = $NotifyOnSkipUserManagerOnly.IsPresent
-            NotifyOnSecuritySend         = $NotifyOnSecuritySend.IsPresent
-            NotifyOnManagerSend          = $NotifyOnManagerSend.IsPresent
-            NotifyOnUserSend             = $NotifyOnUserSend.IsPresent
-            NotifyOnUserMatchingRule     = $NotifyOnUserMatchingRule.IsPresent
-            NotifyOnUserDaysToExpireNull = $NotifyOnUserDaysToExpireNull.IsPresent
-            SearchPath                   = $SearchPath
+            ShowTime                                          = $ShowTime.IsPresent
+            LogFile                                           = $LogFile
+            TimeFormat                                        = $TimeFormat
+            LogMaximum                                        = $LogMaximum
+            NotifyOnSkipUserManagerOnly                       = $NotifyOnSkipUserManagerOnly.IsPresent
+            NotifyOnSecuritySend                              = $NotifyOnSecuritySend.IsPresent
+            NotifyOnManagerSend                               = $NotifyOnManagerSend.IsPresent
+            NotifyOnUserSend                                  = $NotifyOnUserSend.IsPresent
+            NotifyOnUserMatchingRule                          = $NotifyOnUserMatchingRule.IsPresent
+            NotifyOnUserDaysToExpireNull                      = $NotifyOnUserDaysToExpireNull.IsPresent
+            NotifyOnUserMatchingRuleForManager                = $NotifyOnUserMatchingRuleForManager.IsPresent
+            NotifyOnUserMatchingRuleForManagerButNotCompliant = $NotifyOnUserMatchingRuleForManagerButNotCompliant.IsPresent
+            SearchPath                                        = $SearchPath
             # conversion for DateExpiry/PasswordLastSet only
-            EmailDateFormat              = $EmailDateFormat
-            EmailDateFormatUTCConversion = $EmailDateFormatUTCConversion.IsPresent
+            EmailDateFormat                                   = $EmailDateFormat
+            EmailDateFormatUTCConversion                      = $EmailDateFormatUTCConversion.IsPresent
             # email property conversion (global)
-            OverwriteEmailProperty       = $OverwriteEmailProperty
+            OverwriteEmailProperty                            = $OverwriteEmailProperty
             # manager property conversion (global)
-            OverwriteManagerProperty     = $OverwriteManagerProperty
+            OverwriteManagerProperty                          = $OverwriteManagerProperty
             # filtering
-            FilterOrganizationalUnit     = $FilterOrganizationalUnit
+            FilterOrganizationalUnit                          = $FilterOrganizationalUnit
         }
     }
     Remove-EmptyValue -Hashtable $Output.Settings

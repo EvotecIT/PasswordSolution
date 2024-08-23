@@ -49,7 +49,7 @@
     Parameter description
 
     .PARAMETER ReminderDays
-    Parameter description
+    Days before expiration to send reminder. If not set and ProcessManagersOnly is not set, the rule will be throw an error.
 
     .PARAMETER ManagerReminder
     Parameter description
@@ -123,7 +123,7 @@
         [string[]] $IncludeGroup,
         [string[]] $ExcludeGroup,
 
-        [parameter(Mandatory)][alias('ExpirationDays', 'Days')][Array] $ReminderDays,
+        [alias('ExpirationDays', 'Days')][Array] $ReminderDays,
 
         [switch] $ManagerReminder,
 
@@ -148,6 +148,17 @@
         [switch] $OverwriteEmailFromExternalUsers
 
     )
+
+    if (-not $ProcessManagersOnly) {
+        if ($null -eq $ReminderDays) {
+            $ErrorMessage = "'ReminderDays' is required for rule '$Name', unless 'ProcessManagersOnly' is set. This is to make sure the rule is not skipped completly."
+            Write-Color -Text "[e]", " Processing rule ", $Name, " failed because of error: ", $ErrorMessage -Color Yellow, White, Red
+            return [ordered] @{
+                Type  = 'PasswordConfigurationRule'
+                Error = $ErrorMessage
+            }
+        }
+    }
 
     $Output = [ordered] @{
         Name                            = $Name
