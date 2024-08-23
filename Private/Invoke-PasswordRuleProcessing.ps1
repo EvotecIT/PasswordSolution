@@ -416,7 +416,7 @@
                         }
                     }
                 } else {
-                    if ($Rule.SendToManager.Manager) {
+                    if ($Rule.SendToManager.Manager -and $Rule.SendToManager.Manager.Enable -eq $true) {
                         # Manager rule is enabled but manager is not enabled or has no email
                         if ($Logging.NotifyOnUserMatchingRuleForManagerButNotCompliant) {
                             Write-Color -Text "[i]", " User (manager rule) ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire, ", manager status: ", $User.ManagerStatus, ". Reason to skip: ", "No manager or manager is not enabled or manager has no email " -Color Yellow, White, Yellow, White, Yellow, White, White, Red, White, Red, White, Red

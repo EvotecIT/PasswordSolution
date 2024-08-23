@@ -32,7 +32,7 @@
     )
     if ($ComparisonType -in 'eq', 'lt', 'gt') {
         if ($ExpirationDays.Count -gt 1) {
-            throw "Only one number for 'ExpirationDays' can be specified when using comparison types 'eq', 'lt', and 'gt'."
+            throw "Only one number for 'ExpirationDays' can be specified for RuleReminder when using comparison types 'eq', 'lt', and 'gt'. Current values are $($ExpirationDays -join ', ') for '$ComparisonType'"
         } else {
             $ExpirationDaysToUse = $ExpirationDays[0]
         }

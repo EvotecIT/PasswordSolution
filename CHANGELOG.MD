@@ -1,5 +1,9 @@
 ﻿# PasswordSolution Release History
 
+## 1.3.2 - 2024.08.23
+- Improvement on logging
+- Small improvement to message
+
 ## 1.3.1 - 2024.08.23
 - Fixes `FilterOrganizationalUnit` not working properly
 - Add more logs
