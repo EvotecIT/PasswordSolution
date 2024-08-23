@@ -167,11 +167,14 @@
         }
     }
 
-    Write-Color -Text "[i] ", "Preparing all users for password expirations in forest ", $Forest.Name -Color Yellow, White, Yellow, White
+    Write-Color -Text "[i] ", "Preparing users ", $Users.Count, " for password expirations in forest ", $Forest.Name -Color Yellow, White, Yellow, White, Yellow, White
+    foreach ($OU in $FilterOrganizationalUnit) {
+        Write-Color -Text "[i] ", "Filtering users by Organizational Unit ", $OU -Color Yellow, White, Yellow, White
+    }
     $CountUsers = 0
     foreach ($User in $Users) {
         $CountUsers++
-        Write-Verbose -Message "Processing $($User.DisplayName) - $($CountUsers)/$($Users.Count)"
+        Write-Verbose -Message "Processing $($User.DisplayName) / $($User.DistinguishedName) - $($CountUsers)/$($Users.Count)"
         $SkipUser = $false
         $DateExpiry = $null
         $DaysToExpire = $null
@@ -182,13 +185,13 @@
 
         $OUPath = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToOrganizationalUnit
         # Allow filtering to prevent huge time processing for huge domains when only some users are needed
+        # from specific Organizational Units
         foreach ($OU in $FilterOrganizationalUnit) {
-            if ($null -eq $OUPath) {
-                $SkipUser = $true
+            if ($null -ne $OUPath -and $OUPath -like "$OU") {
+                $SkipUser = $false
                 break
-            } elseif ($OUPath -notlike "$OU") {
+            } else {
                 $SkipUser = $true
-                break
             }
         }
         if ($SkipUser) {
