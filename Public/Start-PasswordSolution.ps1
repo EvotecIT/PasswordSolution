@@ -217,6 +217,8 @@
     $GlobalManagerCache = [ordered] @{}
     $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty -RulesProperties $ExtendedProperties -OverwriteManagerProperty $OverwriteManagerProperty -UsersExternalSystem $UsersExternalSystem -ExternalSystemReplacements $ExternalSystemReplacements -FilterOrganizationalUnit $FilterOrganizationalUnit -CacheManager $GlobalManagerCache
 
+    Write-Color -Text "[i]", " Found ", $CachedUsers.Count, " users to be processed by Password Rules according to filtering settings" -Color Yellow, White, Green, White, Green, White, Green, White
+
     if ($Rules.Count -eq 0) {
         Write-Color -Text "[e]", " No rules found. Please add some rules to configuration" -Color Yellow, White, Red
         return
