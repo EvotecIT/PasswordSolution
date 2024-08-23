@@ -1,5 +1,9 @@
 ﻿# PasswordSolution Release History
 
+## 1.3.1 - 2024.08.23
+- Fixes `FilterOrganizationalUnit` not working properly
+- Add more logs
+
 ## 1.3.0 - 2024.08.23
 - Added `NotifyOnUserMatchingRuleForManager`, `NotifyOnUserMatchingRuleForManagerButNotCompliant` to `New-PasswordConfigurationOption` to allow for more granular control over logging
 - Fixes sending emails to managers based on weekdays when using modern setup configuration
