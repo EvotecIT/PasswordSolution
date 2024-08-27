@@ -17,7 +17,8 @@
         [Array] $SummaryEscalationEmails,
         [System.Collections.IDictionary] $SummarySearch,
         [System.Collections.IDictionary] $Locations,
-        [System.Collections.IDictionary] $AllSkipped
+        [System.Collections.IDictionary] $AllSkipped,
+        [System.Collections.IDictionary] $ExternalSystemReplacements
     )
     $TranslateOperators = @{
         'lt' = 'Less than'
@@ -453,6 +454,36 @@
                 New-HTMLTable -DataTable $SummaryEscalationEmails {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+                } -Filtering
+            }
+        }
+        if ($Report.ShowExternalSystemReplacementsUsers) {
+            if ($ExternalSystemReplacements.Users.Count -gt 0) {
+                $Color = 'BrightTurquoise'
+                $IconSolid = 'sticky-note'
+            } else {
+                $Color = 'Amaranth'
+                $IconSolid = 'stop-circle'
+            }
+            New-HTMLTab -Name 'External System Users' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
+                New-HTMLTable -DataTable $ExternalSystemReplacements.Users {
+                    #New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                    #New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
+                } -Filtering
+            }
+        }
+        if ($Report.ShowExternalSystemReplacementsManagers) {
+            if ($ExternalSystemReplacements.Managers.Count -gt 0) {
+                $Color = 'BrightTurquoise'
+                $IconSolid = 'sticky-note'
+            } else {
+                $Color = 'Amaranth'
+                $IconSolid = 'stop-circle'
+            }
+            New-HTMLTab -Name 'External System Managers' -TextColor $Color -IconColor $Color -IconSolid $IconSolid {
+                New-HTMLTable -DataTable $ExternalSystemReplacements.Managers {
+                    #New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
+                    #New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
                 } -Filtering
             }
         }

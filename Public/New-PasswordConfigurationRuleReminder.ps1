@@ -28,11 +28,16 @@
         [Parameter(ParameterSetName = 'Daily')]
         [Parameter(ParameterSetName = 'DayOfWeek')]
         [Parameter(ParameterSetName = 'DayOfMonth')]
-        [ValidateSet('lt', 'gt', 'eq', 'in')][string] $ComparisonType
+        [ValidateSet('lt', 'gt', 'eq', 'in')][string] $ComparisonType = 'eq'
     )
-    # if user didn't choose anything, lets set the default
-    if (-not $ComparisonType) {
-        $ComparisonType = 'eq'
+    if ($ComparisonType -in 'eq', 'lt', 'gt') {
+        if ($ExpirationDays.Count -gt 1) {
+            throw "Only one number for 'ExpirationDays' can be specified for RuleReminder when using comparison types 'eq', 'lt', and 'gt'. Current values are $($ExpirationDays -join ', ') for '$ComparisonType'"
+        } else {
+            $ExpirationDaysToUse = $ExpirationDays[0]
+        }
+    } else {
+        $ExpirationDaysToUse = $ExpirationDays
     }
 
     if ($PSCmdlet.ParameterSetName -eq 'Daily') {
@@ -48,9 +53,9 @@
         $Reminders = [ordered] @{
             Type      = $Type
             Reminders = @{
-                OnDayOfWeek = [ordered] @{
+                OnDay = [ordered] @{
                     Enable         = $true
-                    Reminder       = $ExpirationDays
+                    Reminder       = $ExpirationDaysToUse
                     ComparisonType = $ComparisonType
                     Days           = $DayOfWeek
                 }
@@ -62,7 +67,7 @@
             Reminders = @{
                 OnDayOfMonth = [ordered] @{
                     Enable         = $true
-                    Reminder       = $ExpirationDays
+                    Reminder       = $ExpirationDaysToUse
                     ComparisonType = $ComparisonType
                     Days           = $DayOfMonth
                 }

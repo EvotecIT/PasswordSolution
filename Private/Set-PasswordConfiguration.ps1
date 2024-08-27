@@ -25,8 +25,8 @@
         [Array] $Rules,
         [string] $SearchPath,
         [string] $OverwriteEmailProperty,
-        [string] $OverwriteManagerProperty
-
+        [string] $OverwriteManagerProperty,
+        [string[]] $FilterOrganizationalUnit
     )
 
     if (-not $Rules) {
@@ -43,13 +43,18 @@
                 if ($Configuration.Type -eq 'PasswordConfigurationOption') {
                     if ($Configuration.Settings.SearchPath) {
                         $SearchPath = $Configuration.Settings.SearchPath
-                    } elseif ($Configuration.Settings.OverwriteEmailProperty) {
+                    }
+                    if ($Configuration.Settings.OverwriteEmailProperty) {
                         $OverwriteEmailProperty = $Configuration.Settings.OverwriteEmailProperty
-                    } elseif ($Configuration.Settings.OverwriteManagerProperty) {
+                    }
+                    if ($Configuration.Settings.OverwriteManagerProperty) {
                         $OverwriteManagerProperty = $Configuration.Settings.OverwriteManagerProperty
                     }
+                    if ($Configuration.Settings.FilterOrganizationalUnit) {
+                        $FilterOrganizationalUnit = $Configuration.Settings.FilterOrganizationalUnit
+                    }
                     foreach ($Setting in $Configuration.Settings.Keys) {
-                        if ($Setting -notin 'SearchPath', 'OverwriteEmailProperty', 'OverwriteManagerProperty') {
+                        if ($Setting -notin 'SearchPath', 'OverwriteEmailProperty', 'OverwriteManagerProperty', 'FilterOrganizationalUnit') {
                             $Logging[$Setting] = $Configuration.Settings[$Setting]
                         }
                     }
@@ -66,6 +71,9 @@
                 } elseif ($Configuration.Type -eq 'PasswordConfigurationReport') {
                     $HTMLReports += $Configuration.Settings
                 } elseif ($Configuration.Type -eq 'PasswordConfigurationRule') {
+                    if ($Configuration.Error) {
+                        return
+                    }
                     $Rules += $Configuration.Settings
                 } elseif ($Configuration.Type -eq "PasswordConfigurationTemplatePreExpiry") {
                     $TemplatePreExpiry = $Configuration.Settings.Template
@@ -329,6 +337,7 @@
         TemplateAdmin                      = $TemplateAdmin
         TemplateAdminSubject               = $TemplateAdminSubject
         UsersExternalSystem                = $UsersExternalSystem
+        FilterOrganizationalUnit           = $FilterOrganizationalUnit
     }
     $OutputInformation
 }

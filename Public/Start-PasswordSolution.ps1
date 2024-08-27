@@ -88,6 +88,7 @@
     #>
     [CmdletBinding(DefaultParameterSetName = 'DSL')]
     param(
+        [Parameter(ParameterSetName = 'Legacy', Position = 0)]
         [Parameter(ParameterSetName = 'DSL', Position = 0)][scriptblock] $ConfigurationDSL,
         [Parameter(Mandatory, ParameterSetName = 'Legacy')][System.Collections.IDictionary] $EmailParameters,
         [Parameter(ParameterSetName = 'Legacy')][string] $OverwriteEmailProperty,
@@ -112,7 +113,8 @@
         [Parameter(Mandatory, ParameterSetName = 'Legacy')][string] $TemplateAdminSubject,
         [Parameter(ParameterSetName = 'Legacy')][System.Collections.IDictionary] $Logging = @{},
         [Parameter(ParameterSetName = 'Legacy')][Array] $HTMLReports,
-        [Parameter(ParameterSetName = 'Legacy')][string] $SearchPath
+        [Parameter(ParameterSetName = 'Legacy')][string] $SearchPath,
+        [Parameter(ParameterSetName = 'Legacy')][string[]] $FilterOrganizationalUnit
     )
     $TimeStart = Start-TimeLog
     $Script:Reporting = [ordered] @{}
@@ -122,10 +124,6 @@
 
     $TodayDate = Get-Date
     $Today = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-
-    Set-LoggingCapabilities -LogPath $Logging.LogFile -LogMaximum $Logging.LogMaximum -ShowTime:$Logging.ShowTime -TimeFormat $Logging.TimeFormat
-    # since the first entry didn't go to log file, this will
-    Write-Color -Text '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta -NoConsoleOutput
 
     $Summary = [ordered] @{}
     $Summary['Notify'] = [ordered] @{}
@@ -163,6 +161,7 @@
         HTMLReports                        = $HTMLReports
         SearchPath                         = $SearchPath
         UsersExternalSystem                = $UsersExternalSystem
+        FilterOrganizationalUnit           = $FilterOrganizationalUnit
     }
     $InitialVariables = Set-PasswordConfiguration @SplatPasswordConfiguration
     if (-not $InitialVariables) {
@@ -193,6 +192,11 @@
     $HTMLReports = $InitialVariables.HTMLReports
     $SearchPath = $InitialVariables.SearchPath
     $UsersExternalSystem = $InitialVariables.UsersExternalSystem
+    $FilterOrganizationalUnit = $InitialVariables.FilterOrganizationalUnit
+
+    Set-LoggingCapabilities -LogPath $Logging.LogFile -LogMaximum $Logging.LogMaximum -ShowTime:$Logging.ShowTime -TimeFormat $Logging.TimeFormat
+    # since the first entry didn't go to log file, this will
+    Write-Color -Text '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta -NoConsoleOutput
 
     # this is to get properties from rules to be used in building up user output
     [Array] $ExtendedProperties = foreach ($Rule in $Rules ) {
@@ -207,7 +211,13 @@
     $SummarySearch = Import-SearchInformation -SearchPath $SearchPath
 
     Write-Color -Text "[i]", " Starting process to find expiring users" -Color Yellow, White, Green, White, Green, White, Green, White
-    $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty -RulesProperties $ExtendedProperties -OverwriteManagerProperty $OverwriteManagerProperty -UsersExternalSystem $UsersExternalSystem
+    $ExternalSystemReplacements = [ordered] @{}
+    # This is to cache users from AD before we start processing them
+    # Will be used by Managers and Security notifications when using filtering
+    $GlobalManagerCache = [ordered] @{}
+    $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty -RulesProperties $ExtendedProperties -OverwriteManagerProperty $OverwriteManagerProperty -UsersExternalSystem $UsersExternalSystem -ExternalSystemReplacements $ExternalSystemReplacements -FilterOrganizationalUnit $FilterOrganizationalUnit -CacheManager $GlobalManagerCache
+
+    Write-Color -Text "[i]", " Found ", $CachedUsers.Count, " users to be processed by Password Rules according to filtering settings" -Color Yellow, White, Green, White, Green, White, Green, White
 
     if ($Rules.Count -eq 0) {
         Write-Color -Text "[e]", " No rules found. Please add some rules to configuration" -Color Yellow, White, Red
@@ -251,6 +261,7 @@
         TemplateManagerNotCompliantSubject = $TemplateManagerNotCompliantSubject
         EmailParameters                    = $EmailParameters
         Loggin                             = $Logging
+        GlobalManagersCache                = $GlobalManagerCache
     }
     [Array] $SummaryManagersEmails = Send-PasswordManagerNofifications @SplatManagerNotifications
 
@@ -272,24 +283,25 @@
     foreach ($Report in $HTMLReports) {
         if ($Report.Enable) {
             $ReportSettings = @{
-                Report                  = $Report
-                EmailParameters         = $EmailParameters
-                Logging                 = $Logging
+                Report                     = $Report
+                EmailParameters            = $EmailParameters
+                Logging                    = $Logging
                 #FilePath                = $FilePath
-                SearchPath              = $SearchPath
-                Rules                   = $Rules
-                UserSection             = $UserSection
-                ManagerSection          = $ManagerSection
-                SecuritySection         = $SecuritySection
-                AdminSection            = $AdminSection
-                CachedUsers             = $CachedUsers
-                Summary                 = $Summary
-                SummaryUsersEmails      = $SummaryUsersEmails
-                SummaryManagersEmails   = $SummaryManagersEmails
-                SummaryEscalationEmails = $SummaryEscalationEmails
-                SummarySearch           = $SummarySearch
-                Locations               = $Locations
-                AllSkipped              = $AllSkipped
+                SearchPath                 = $SearchPath
+                Rules                      = $Rules
+                UserSection                = $UserSection
+                ManagerSection             = $ManagerSection
+                SecuritySection            = $SecuritySection
+                AdminSection               = $AdminSection
+                CachedUsers                = $CachedUsers
+                Summary                    = $Summary
+                SummaryUsersEmails         = $SummaryUsersEmails
+                SummaryManagersEmails      = $SummaryManagersEmails
+                SummaryEscalationEmails    = $SummaryEscalationEmails
+                SummarySearch              = $SummarySearch
+                Locations                  = $Locations
+                AllSkipped                 = $AllSkipped
+                ExternalSystemReplacements = $ExternalSystemReplacements
             }
             New-HTMLReport @ReportSettings
 

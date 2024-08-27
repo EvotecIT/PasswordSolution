@@ -1,6 +1,76 @@
 ﻿# PasswordSolution Release History
 
-## 1.1.2
+## 1.3.2 - 2024.08.23
+- Improvement on logging
+- Small improvement to message
+
+## 1.3.1 - 2024.08.23
+- Fixes `FilterOrganizationalUnit` not working properly
+- Add more logs
+
+## 1.3.0 - 2024.08.23
+- Added `NotifyOnUserMatchingRuleForManager`, `NotifyOnUserMatchingRuleForManagerButNotCompliant` to `New-PasswordConfigurationOption` to allow for more granular control over logging
+- Fixes sending emails to managers based on weekdays when using modern setup configuration
+- Added additional check logic to prevent wrong rules configuration
+
+## 1.2.9 - 2024.08.22
+- Fixes logging functionality when using modern settings
+
+## 1.2.8 - 2024.08.22
+- Added `FilterOrganizationalUnit` to `New-PasswordConfigurationOption` to allow for filtering users based on OrganizationalUnit
+  This speeds up the process of scanning users, and allows for more granular control over which users are scanned without having to go thru all users in the domain
+  The module still gets all the users but only processes the ones that match the filter
+- Improved console colors a bit, to prevent some colors from being invisible
+
+```powershell
+$Options = @{
+    # Logging to file and to screen
+    ShowTime                     = $true
+    LogFile                      = "$PSScriptRoot\Logs\PasswordSolution_$(($Date).ToString('yyyy-MM-dd_HH_mm_ss')).log"
+    TimeFormat                   = "yyyy-MM-dd HH:mm:ss"
+    LogMaximum                   = 365
+    NotifyOnSkipUserManagerOnly  = $false
+    NotifyOnSecuritySend         = $true
+    NotifyOnManagerSend          = $true
+    NotifyOnUserSend             = $true
+    NotifyOnUserMatchingRule     = $false
+    NotifyOnUserDaysToExpireNull = $false
+    SearchPath                   = "$PSScriptRoot\Search\SearchLog_$((Get-Date).ToString('yyyy-MM')).xml"
+    EmailDateFormat              = "yyyy-MM-dd"
+    EmailDateFormatUTCConversion = $true
+    FilterOrganizationalUnit     = @(
+        "*OU=Accounts,OU=Administration,DC=ad,DC=evotec,DC=xyz"
+        "*OU=Administration,DC=ad,DC=evotec,DC=xyz"
+    )
+}
+New-PasswordConfigurationOption @Options
+```
+
+## 1.2.7 - 2024.08.21
+- Adds sending email without credentials (using SMTP server)
+- Fixes `SkipCertificateValidation` typo in `New-PasswordConfigurationEmail`
+- Small cleanup
+
+## 1.2.6 - 2024.08.12
+- Fix wrong publish of cmdlets
+
+## 1.2.5 - 2024.07.16
+- Remove duplicate records from external managers
+
+## 1.2.4 - 2024.07.15
+- Fixes email address being wrong when using external system and using overwrite property
+
+## 1.2.3 - 2024.06.23
+- Small report improvements
+
+## 1.2.2 - 2024.06.23
+- Add reporting for replacements of emails from external sources
+
+## 1.2.1 - 2024.06.23
+- Allow using DSL and normal configuration at the same time
+
+## 1.2.0 - 2024.06.23
+- This version adds ability to allow overwritting email address from external system, or even CSV records based on prepared data
 - Added `New-PasswordConfigurationExternalUsers` to allow for overwritting emails with external data in form of array of objects
 
 ## 1.1.1 - 2024.01.16

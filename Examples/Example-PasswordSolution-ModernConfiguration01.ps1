@@ -6,19 +6,25 @@ $Date = Get-Date
 Start-PasswordSolution {
     $Options = @{
         # Logging to file and to screen
-        ShowTime                     = $true
-        LogFile                      = "$PSScriptRoot\Logs\PasswordSolution_$(($Date).ToString('yyyy-MM-dd_HH_mm_ss')).log"
-        TimeFormat                   = "yyyy-MM-dd HH:mm:ss"
-        LogMaximum                   = 365
-        NotifyOnSkipUserManagerOnly  = $false
-        NotifyOnSecuritySend         = $true
-        NotifyOnManagerSend          = $true
-        NotifyOnUserSend             = $true
-        NotifyOnUserMatchingRule     = $false
-        NotifyOnUserDaysToExpireNull = $false
-        SearchPath                   = "$PSScriptRoot\Search\SearchLog_$((Get-Date).ToString('yyyy-MM')).xml"
-        EmailDateFormat              = "yyyy-MM-dd"
-        EmailDateFormatUTCConversion = $true
+        ShowTime                                          = $false
+        LogFile                                           = "$PSScriptRoot\Logs\PasswordSolution_$(($Date).ToString('yyyy-MM-dd_HH_mm_ss')).log"
+        TimeFormat                                        = "yyyy-MM-dd HH:mm:ss"
+        LogMaximum                                        = 365
+        NotifyOnSkipUserManagerOnly                       = $true
+        NotifyOnSecuritySend                              = $true
+        NotifyOnManagerSend                               = $true
+        NotifyOnUserSend                                  = $true
+        NotifyOnUserMatchingRule                          = $true
+        NotifyOnUserDaysToExpireNull                      = $true
+        NotifyOnUserMatchingRuleForManager                = $true
+        NotifyOnUserMatchingRuleForManagerButNotCompliant = $true
+        SearchPath                                        = "$PSScriptRoot\Search\SearchLog_$((Get-Date).ToString('yyyy-MM')).xml"
+        EmailDateFormat                                   = "yyyy-MM-dd"
+        EmailDateFormatUTCConversion                      = $true
+        FilterOrganizationalUnit                          = @(
+            "*OU=Accounts,OU=Administration,DC=ad,DC=evotec,DC=xyz"
+            "*OU=Administration,DC=ad,DC=evotec,DC=xyz"
+        )
     }
     New-PasswordConfigurationOption @Options
 
@@ -33,14 +39,14 @@ Start-PasswordSolution {
         Graph      = $true
         Priority   = 'Normal'
         From       = 'przemyslaw.klys@evotec.pl'
-        WhatIf     = $false
+        WhatIf     = $true
         ReplyTo    = 'contact+testgithub@evotec.pl'
     }
     New-PasswordConfigurationEmail @EmailParameters
 
     # Configure behavior for different types of actions
-    New-PasswordConfigurationType -Type User -Enable -SendCountMaximum 2 -DefaultEmail 'przemyslaw.klys+testgithub1@evotec.pl'
-    New-PasswordConfigurationType -Type Manager -Enable -SendCountMaximum 1 -DefaultEmail 'przemyslaw.klys+testgithub2@evotec.pl'
+    New-PasswordConfigurationType -Type User -Enable -SendCountMaximum 10 -DefaultEmail 'przemyslaw.klys+testgithub1@evotec.pl'
+    New-PasswordConfigurationType -Type Manager -Enable -SendCountMaximum 10 -DefaultEmail 'przemyslaw.klys+testgithub2@evotec.pl'
     New-PasswordConfigurationType -Type Security -Enable -SendCountMaximum 1 -DefaultEmail 'przemyslaw.klys+testgithub3@evotec.pl' -AttachCSV
 
     # Configure reporting
@@ -56,8 +62,8 @@ Start-PasswordSolution {
         ShowUsersSent         = $true
         ShowManagersSent      = $true
         ShowEscalationSent    = $true
-        ShowSkippedUsers      = $true
-        ShowSkippedLocations  = $true
+        ShowSkippedUsers      = $false
+        ShowSkippedLocations  = $false
         ShowSearchUsers       = $true
         ShowSearchManagers    = $true
         ShowSearchEscalations = $true
@@ -86,14 +92,49 @@ Start-PasswordSolution {
     #     "ADM2_*"
     # )
 
-    New-PasswordConfigurationRule -Name 'All others' -Enable -ReminderDays @(500..-500), 60, 59, 30, 15, 7, 3, 2, 1, 0, -7, -15, -30, -45 {
-        # follow expiration days of a user, you need to enable ManagerReminder for this functionality to work
-        New-PasswordConfigurationRuleReminder -Type 'Manager'
-        # use a custom expiration days, and send only on specific days 1st, 10th and 15th of a month
-        New-PasswordConfigurationRuleReminder -Type 'Manager' -DayOfMonth 1, 10, 15 -ExpirationDays -45, -30, -15, -7, 0, 1, 2, 3, 7, 15, 30, 60
-        # use a custom expiration days (only if it's less then 10 days left), and send only on specific days of a week
-        New-PasswordConfigurationRuleReminder -Type 'Manager' -DayOfWeek Monday, Wednesday, Friday -ExpirationDays 10 -ComparisonType 'lt'
-    } -IncludeExpiring -OverwriteEmailProperty 'extensionAttribute5' -OverwriteManagerProperty 'extensionAttribute1' -ManagerReminder
+    # Configure rules for different types of users
+    $newPasswordConfigurationRuleSplat = @{
+        Name                             = 'Administrative Accounts'
+        Enable                           = $true
+        IncludeExpiring                  = $true
+        IncludePasswordNeverExpires      = $true
+        PasswordNeverExpiresDays         = 90
+        ReminderConfiguration            = {
+            # follow expiration days of a user
+            New-PasswordConfigurationRuleReminder -Type 'Manager' -DayOfWeek Monday, Wednesday, Friday -ExpirationDays 60 -ComparisonType lt #-ExpirationDays @(-200..-1), 0, 1, 2, 3, 7, 15, 30, 60 -ComparisonType lt
+            New-PasswordConfigurationRuleReminder -Type 'ManagerNotCompliant' -DayOfWeek Friday -ExpirationDays 300 -ComparisonType lt
+            New-PasswordConfigurationRuleReminder -Type 'Security' -DayOfWeek Monday -ExpirationDays -1 -ComparisonType lt
+        }
+        #ReminderDays                     = '-45', '-30', '-15', '-7' #, 0, 1, 2, 3, 7, 15, 30, 60, 29, 28
+        IncludeOU                        = @(
+            "*OU=Accounts,OU=Administration,DC=ad,DC=evotec,DC=xyz"
+            "*OU=Administration,DC=ad,DC=evotec,DC=xyz"
+        )
+        ManagerReminder                  = $true
+        ProcessManagersOnly              = $true
+        ManagerNotCompliant              = $true
+        ManagerNotCompliantDisplayName   = 'Global Service Desk'
+        ManagerNotCompliantEmailAddress  = 'przemyslaw.klys@test.pl'
+        ManagerNotCompliantDisabled      = $true
+        ManagerNotCompliantMissing       = $true
+        ManagerNotCompliantMissingEmail  = $true
+        ManagerNotCompliantLastLogonDays = 90
+        SecurityEscalation               = $true
+        SecurityEscalationDisplayName    = 'IT Security'
+        SecurityEscalationEmailAddress   = 'przemyslaw.klys@test.pl'
+    }
+
+    New-PasswordConfigurationRule @newPasswordConfigurationRuleSplat
+
+
+    # New-PasswordConfigurationRule -Name 'All others' -Enable -ReminderDays @(500..-500), 60, 59, 30, 15, 7, 3, 2, 1, 0, -7, -15, -30, -45 {
+    #     # follow expiration days of a user, you need to enable ManagerReminder for this functionality to work
+    #     New-PasswordConfigurationRuleReminder -Type 'Manager' -ExpirationDays -45, -30, -15, -7, 0, 1, 2, 3, 7, 15, 30, 60
+    #     # use a custom expiration days, and send only on specific days 1st, 10th and 15th of a month
+    #     New-PasswordConfigurationRuleReminder -Type 'Manager' -DayOfMonth 1, 10, 15 -ExpirationDays -45, -30, -15, -7, 0, 1, 2, 3, 7, 15, 30, 60
+    #     # use a custom expiration days (only if it's less then 10 days left), and send only on specific days of a week
+    #     New-PasswordConfigurationRuleReminder -Type 'Manager' -DayOfWeek Monday, Wednesday, Friday -ExpirationDays 10 -ComparisonType 'lt'
+    # } -IncludeExpiring -OverwriteEmailProperty 'extensionAttribute5' -OverwriteManagerProperty 'extensionAttribute1' -ManagerReminder
 
     # Template to user when sending email to user before password expires
     New-PasswordConfigurationTemplate -Type PreExpiry -Template {
