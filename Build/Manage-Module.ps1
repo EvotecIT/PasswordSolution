@@ -5,7 +5,7 @@ Invoke-ModuleBuild -ModuleName 'PasswordSolution' {
     # Usual defaults as per standard module
     $Manifest = [ordered] @{
         # Version number of this module.
-        ModuleVersion        = '1.1.X'
+        ModuleVersion        = '2.0.X'
         # Supported PSEditions
         CompatiblePSEditions = @('Desktop', 'Core')
 
@@ -40,10 +40,23 @@ Invoke-ModuleBuild -ModuleName 'PasswordSolution' {
     New-ConfigurationModule -Type ApprovedModule -Name 'PSSharedGoods', 'PSWriteColor', 'Connectimo', 'PSUnifi', 'PSWebToolbox', 'PSMyPassword'
 
     New-ConfigurationModuleSkip -IgnoreModuleName @(
-        'DSInternals'
+        # Default modules
         'NetTCPIP'
         'Microsoft.WSMan.Management'
-    ) #-IgnoreFunctionName 'Select-Unique', 'Compare-TwoArrays' # those functions are internal within private function
+        # Password Quality
+        'DSInternals'
+        # Graph Cmdlets
+        'Microsoft.Graph.Users'
+        'Microsoft.Graph.Identity.DirectoryManagement'
+    ) -IgnoreFunctionName @(
+        'Select-Unique', 'Compare-TwoArrays' # those functions are internal within private function
+        # Password Quality
+        'Get-ADReplAccount'
+        'Test-PasswordQuality'
+        # Graph Cmdlets
+        'Get-MgDomain'
+        'Get-MgUser'
+    )
 
     $ConfigurationFormat = [ordered] @{
         RemoveComments                              = $true
