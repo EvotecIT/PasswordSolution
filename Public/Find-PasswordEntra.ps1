@@ -30,6 +30,7 @@
         'country', 'AccountEnabled'
         'Manager', 'passwordPolicies', 'passwordProfile',
         'OnPremisesDistinguishedName', 'OnPremisesSyncEnabled', 'OnPremisesLastSyncDateTime', 'OnPremisesSamAccountName', 'UserType'
+        'assignedLicenses'
     )
 
     <#
@@ -60,14 +61,15 @@
     }
     if ($PasswordPolicies -eq '2147483647') {
         $GlobalPasswordPolicy = 'PasswordNeverExpires'
+        $GlobalPasswordPolicyDays = $null
     } else {
-        $GlobalPasswordPolicy = $PasswordPolicies + ' days'
+        $GlobalPasswordPolicy = "$PasswordPolicies days"
+        $GlobalPasswordPolicyDays = $PasswordPolicies
     }
     Write-Color -Text "[i] ", "Global password policy is set to $GlobalPasswordPolicy" -Color Yellow, White
-
-
     Write-Color -Text "[i] ", "Preparing all users for password expirations in EntraID" -Color Yellow, White, Yellow, White
     try {
+        # Get only members, not guests or other types -Filter "userType eq 'member'"
         $Users = Get-MgUser -All -ErrorAction Stop -Property $Properties -ConsistencyLevel eventual -ExpandProperty Manager | Select-Object -Property $Properties
     } catch {
         Write-Color -Text '[-] ', "Couldn't cache users. Please fix 'Find-PasswordEntra'. Error: ", "$($_.Exception.Message)" -Color Yellow, White, Red
@@ -101,12 +103,12 @@
         }
 
 
-        $DateExpiry = $null
-        $DaysToExpire = $null
+        #$DateExpiry = $null
+        #$DaysToExpire = $null
         $PasswordDays = $null
         $PasswordNeverExpires = $false
         $PasswordAtNextLogon = $null
-        $HasMailbox = $null
+        #$HasMailbox = $null
 
 
 
@@ -157,12 +159,30 @@
             $ManagerType = $null
         }
 
+        $IsSynchronized = $null -ne $User.OnPremisesDistinguishedName
+        $IsLicensed = $User.AssignedLicenses.Count -gt 0
+
         if ($User.lastPasswordChangeDateTime) {
             $PasswordLastSet = $User.lastPasswordChangeDateTime
             $PasswordDays = ($Today - $PasswordLastSet).Days
         }
-        if ($User.PasswordPolicies -contains 'DisablePasswordExpiration') {
+        if ($null -eq $User.PasswordPolicies -or $User.PasswordPolicies -eq 'None') {
+            $PasswordNeverExpires = If ($GlobalPasswordPolicy -eq 'PasswordNeverExpires') { $true } else { $false }
+        } elseif ($User.PasswordPolicies -contains 'DisablePasswordExpiration') {
             $PasswordNeverExpires = $true
+        } else {
+            Write-Color -Text '[-] ', "Password policy ($($User.PasswordPolicies)) not supported. We need to investigate what changed" -Color Yellow, White, Red
+            return
+        }
+
+        if ($PasswordNeverExpires) {
+            $PasswordExpired = $false
+        } else {
+            if ($PasswordDays -gt $GlobalPasswordPolicyDays) {
+                $PasswordExpired = $true
+            } else {
+                $PasswordExpired = $false
+            }
         }
 
         if ($OverwriteEmailProperty) {
@@ -202,25 +222,35 @@
 
         if ($AddEmptyProperties.Count -gt 0) {
             $StartUser = [ordered] @{
-                UserPrincipalName    = $User.UserPrincipalName
-                #SamAccountName       = $User.SamAccountName
-                #Domain               = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToDomainCN
-                RuleName             = ''
-                RuleOptions          = [System.Collections.Generic.List[string]]::new()
-                Enabled              = $User.AccountEnabled
-                HasMailbox           = $HasMailbox
-                EmailAddress         = $EmailAddress
-                SystemEmailAddress   = $User.Mail
-                DateExpiry           = $DateExpiry
-                DaysToExpire         = $DaysToExpire
-                PasswordExpired      = $User.PasswordExpired
-                PasswordDays         = $PasswordDays
-                PasswordAtNextLogon  = $PasswordAtNextLogon
-                PasswordLastSet      = $User.lastPasswordChangeDateTime
+                UserPrincipalName                    = $User.UserPrincipalName
+                SamAccountName                       = $User.OnPremisesSamAccountName
+                Domain                               = ConvertFrom-DistinguishedName -DistinguishedName $User.OnPremisesDistinguishedName -ToDomainCN
+
+                RuleName                             = ''
+                RuleOptions                          = [System.Collections.Generic.List[string]]::new()
+                Enabled                              = $User.AccountEnabled
+                IsLicensed                           = $IsLicensed
+                EmailAddress                         = $EmailAddress
+                SystemEmailAddress                   = $User.Mail
+
+                UserType                             = $User.UserType
+                IsSynchronized                       = $IsSynchronized
+                PasswordPolicies                     = if ($User.PasswordPolicies) { $User.PasswordPolicies } else { 'Not set' }
+                ForceChangePasswordNextSignIn        = $User.PasswordProfile.ForceChangePasswordNextSignIn
+                ForceChangePasswordNextSignInWithMfa = $User.PasswordProfile.ForceChangePasswordNextSignInWithMfa
+                Password                             = $User.PasswordProfile.Password
+                PasswordProfileAdditionalProperties  = if ($User.PasswordProfile.AdditionalProperties.Keys.Count -gt 0) { $User.PasswordProfile.AdditionalProperties } else { $null }
+
+                #DateExpiry                           = $DateExpiry
+                #DaysToExpire                         = $DaysToExpire
+                PasswordExpired                      = $PasswordExpired
+                PasswordDays                         = $PasswordDays
+                PasswordAtNextLogon                  = $PasswordAtNextLogon
+                PasswordLastSet                      = $User.lastPasswordChangeDateTime
                 #PasswordNotRequired  = $User.PasswordNotRequired
-                PasswordNeverExpires = $PasswordNeverExpires
-                LastLogonDate        = $LastLogonDate
-                LastLogonDays        = $LastLogonDays
+                PasswordNeverExpires                 = $PasswordNeverExpires
+                LastLogonDate                        = $LastLogonDate
+                LastLogonDays                        = $LastLogonDays
             }
             foreach ($Property in $AddEmptyProperties) {
                 $StartUser.$Property = $null
@@ -248,43 +278,52 @@
             $MyUser = $StartUser + $EndUser
         } else {
             $MyUser = [ordered] @{
-                UserPrincipalName     = $User.UserPrincipalName
-                # SamAccountName        = $User.SamAccountName
-                # Domain                = ConvertFrom-DistinguishedName -DistinguishedName $User.DistinguishedName -ToDomainCN
-                RuleName              = ''
-                RuleOptions           = [System.Collections.Generic.List[string]]::new()
-                Enabled               = $User.AccountEnabled
-                HasMailbox            = $HasMailbox
-                EmailAddress          = $EmailAddress
-                SystemEmailAddress    = $User.Mail
-                DateExpiry            = $DateExpiry
-                DaysToExpire          = $DaysToExpire
-                PasswordExpired       = $User.PasswordExpired
-                PasswordDays          = $PasswordDays
-                PasswordAtNextLogon   = $PasswordAtNextLogon
-                PasswordLastSet       = $User.lastPasswordChangeDateTime
+                UserPrincipalName                    = $User.UserPrincipalName
+                SamAccountName                       = $User.OnPremisesSamAccountName
+                Domain                               = ConvertFrom-DistinguishedName -DistinguishedName $User.OnPremisesDistinguishedName -ToDomainCN
+                RuleName                             = ''
+                RuleOptions                          = [System.Collections.Generic.List[string]]::new()
+                Enabled                              = $User.AccountEnabled
+                IsLicensed                           = $IsLicensed
+                EmailAddress                         = $EmailAddress
+                SystemEmailAddress                   = $User.Mail
+
+                UserType                             = $User.UserType
+                IsSynchronized                       = $IsSynchronized
+                PasswordPolicies                     = if ($User.PasswordPolicies) { $User.PasswordPolicies } else { 'Not set' }
+                ForceChangePasswordNextSignIn        = $User.PasswordProfile.ForceChangePasswordNextSignIn
+                ForceChangePasswordNextSignInWithMfa = $User.PasswordProfile.ForceChangePasswordNextSignInWithMfa
+                Password                             = $User.PasswordProfile.Password
+                PasswordProfileAdditionalProperties  = if ($User.PasswordProfile.AdditionalProperties.Keys.Count -gt 0) { $User.PasswordProfile.AdditionalProperties } else { $null }
+
+                #DateExpiry                           = $DateExpiry
+                #DaysToExpire                         = $DaysToExpire
+                PasswordExpired                      = $PasswordExpired
+                PasswordDays                         = $PasswordDays
+                PasswordAtNextLogon                  = $PasswordAtNextLogon
+                PasswordLastSet                      = $User.lastPasswordChangeDateTime
                 #PasswordNotRequired   = $User.PasswordNotRequired
-                PasswordNeverExpires  = $PasswordNeverExpires
-                LastLogonDate         = $LastLogonDate
-                LastLogonDays         = $LastLogonDays
-                Manager               = $Manager
-                ManagerDisplayName    = $ManagerDisplayName
-                ManagerSamAccountName = $ManagerSamAccountName
-                ManagerEmail          = $ManagerEmail
-                ManagerStatus         = $ManagerStatus
-                ManagerLastLogonDays  = $ManagerLastLogonDays
-                ManagerType           = $ManagerType
-                DisplayName           = $User.DisplayName
-                Name                  = $User.Name
-                GivenName             = $User.GivenName
-                Surname               = $User.Surname
-                OrganizationalUnit    = ConvertFrom-DistinguishedName -DistinguishedName $User.OnPremisesDistinguishedName -ToOrganizationalUnit
-                MemberOf              = $User.MemberOf
-                DistinguishedName     = $User.OnPremisesDistinguishedName
-                ManagerDN             = $User.Manager
-                Country               = $Country
-                CountryCode           = $CountryCode
-                Type                  = 'User'
+                PasswordNeverExpires                 = $PasswordNeverExpires
+                LastLogonDate                        = $LastLogonDate
+                LastLogonDays                        = $LastLogonDays
+                Manager                              = $Manager
+                ManagerDisplayName                   = $ManagerDisplayName
+                ManagerSamAccountName                = $ManagerSamAccountName
+                ManagerEmail                         = $ManagerEmail
+                ManagerStatus                        = $ManagerStatus
+                ManagerLastLogonDays                 = $ManagerLastLogonDays
+                ManagerType                          = $ManagerType
+                DisplayName                          = $User.DisplayName
+                Name                                 = $User.Name
+                GivenName                            = $User.GivenName
+                Surname                              = $User.Surname
+                OrganizationalUnit                   = ConvertFrom-DistinguishedName -DistinguishedName $User.OnPremisesDistinguishedName -ToOrganizationalUnit
+                MemberOf                             = $User.MemberOf
+                DistinguishedName                    = $User.OnPremisesDistinguishedName
+                ManagerDN                            = $User.Manager
+                Country                              = $Country
+                CountryCode                          = $CountryCode
+                Type                                 = 'User'
             }
         }
         foreach ($Property in $ConditionProperties) {
