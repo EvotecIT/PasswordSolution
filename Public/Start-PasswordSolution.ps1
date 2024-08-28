@@ -71,6 +71,15 @@
     .PARAMETER TemplateAdminSubject
     Parameter description
 
+    .PARAMETER Entra
+    Parameter description
+
+    .PARAMETER OverwriteManagerProperty
+    Parameter description
+
+    .PARAMETER FilterOrganizationalUnit
+    Parameter description
+
     .PARAMETER Logging
     Parameter description
 
@@ -111,7 +120,8 @@
         [Parameter(Mandatory, ParameterSetName = 'Legacy')][string] $TemplateManagerNotCompliantSubject,
         [Parameter(Mandatory, ParameterSetName = 'Legacy')][scriptblock] $TemplateAdmin,
         [Parameter(Mandatory, ParameterSetName = 'Legacy')][string] $TemplateAdminSubject,
-        [Parameter(ParameterSetName = 'Legacy')][System.Collections.IDictionary] $Logging = @{},
+        [Parameter(ParameterSetName = 'Legacy')][System.Collections.IDictionary] $Entra = [ordered] @{},
+        [Parameter(ParameterSetName = 'Legacy')][System.Collections.IDictionary] $Logging = [ordered]  @{},
         [Parameter(ParameterSetName = 'Legacy')][Array] $HTMLReports,
         [Parameter(ParameterSetName = 'Legacy')][string] $SearchPath,
         [Parameter(ParameterSetName = 'Legacy')][string[]] $FilterOrganizationalUnit
@@ -162,6 +172,7 @@
         SearchPath                         = $SearchPath
         UsersExternalSystem                = $UsersExternalSystem
         FilterOrganizationalUnit           = $FilterOrganizationalUnit
+        Entra                              = $Entra
     }
     $InitialVariables = Set-PasswordConfiguration @SplatPasswordConfiguration
     if (-not $InitialVariables) {
@@ -193,6 +204,7 @@
     $SearchPath = $InitialVariables.SearchPath
     $UsersExternalSystem = $InitialVariables.UsersExternalSystem
     $FilterOrganizationalUnit = $InitialVariables.FilterOrganizationalUnit
+    $Entra = $InitialVariables.Entra
 
     Set-LoggingCapabilities -LogPath $Logging.LogFile -LogMaximum $Logging.LogMaximum -ShowTime:$Logging.ShowTime -TimeFormat $Logging.TimeFormat
     # since the first entry didn't go to log file, this will
@@ -215,15 +227,21 @@
     # This is to cache users from AD before we start processing them
     # Will be used by Managers and Security notifications when using filtering
     $GlobalManagerCache = [ordered] @{}
-    $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty -RulesProperties $ExtendedProperties -OverwriteManagerProperty $OverwriteManagerProperty -UsersExternalSystem $UsersExternalSystem -ExternalSystemReplacements $ExternalSystemReplacements -FilterOrganizationalUnit $FilterOrganizationalUnit -CacheManager $GlobalManagerCache
-
+    if ($Entra.Enabled) {
+        # Doesn't support external system replacements
+        $CachedUsers = Find-PasswordEntra -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty -RulesProperties $ExtendedProperties -OverwriteManagerProperty $OverwriteManagerProperty -UsersExternalSystem $UsersExternalSystem -ExternalSystemReplacements $ExternalSystemReplacements -FilterOrganizationalUnit $FilterOrganizationalUnit -CacheManager $GlobalManagerCache
+    } else {
+        $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty -RulesProperties $ExtendedProperties -OverwriteManagerProperty $OverwriteManagerProperty -UsersExternalSystem $UsersExternalSystem -ExternalSystemReplacements $ExternalSystemReplacements -FilterOrganizationalUnit $FilterOrganizationalUnit -CacheManager $GlobalManagerCache
+    }
+    if (-not $CachedUsers -or $CachedUsers.Count -eq 0) {
+        Write-Color -Text "[e]", " No users found to be processed by Password Rules according to filtering settings. Terminating" -Color Yellow, White, Red
+        return
+    }
     Write-Color -Text "[i]", " Found ", $CachedUsers.Count, " users to be processed by Password Rules according to filtering settings" -Color Yellow, White, Green, White, Green, White, Green, White
-
     if ($Rules.Count -eq 0) {
         Write-Color -Text "[e]", " No rules found. Please add some rules to configuration" -Color Yellow, White, Red
         return
     }
-
     foreach ($Rule in $Rules) {
         $SplatProcessingRule = [ordered] @{
             Rule                = $Rule
@@ -234,6 +252,7 @@
             Loggin              = $Logging
             TodayDate           = $TodayDate
             UsersExternalSystem = $UsersExternalSystem
+            Entra               = $Entra
         }
         Invoke-PasswordRuleProcessing @SplatProcessingRule
     }
@@ -286,7 +305,6 @@
                 Report                     = $Report
                 EmailParameters            = $EmailParameters
                 Logging                    = $Logging
-                #FilePath                = $FilePath
                 SearchPath                 = $SearchPath
                 Rules                      = $Rules
                 UserSection                = $UserSection
