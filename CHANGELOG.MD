@@ -1,5 +1,11 @@
 ﻿# PasswordSolution Release History
 
+## 2.0.0
+- Added basic support for Microsoft Entra ID (Azure AD)
+- Improved reporting allowing to exclude properties from HTML reports to make them smaller
+- Hide **'Manager', 'ManagerDN', 'MemberOf'** by default in HTML reports (zero out ExcludeProperties to get rid of this behavior)
+- Made `ScrollX` default to `true` in HTML reports to make them more readable
+
 ## 1.3.2 - 2024.08.23
 - Improvement on logging
 - Small improvement to message
