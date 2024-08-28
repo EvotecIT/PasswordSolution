@@ -6,15 +6,26 @@
         [string] $ManagerType,
         [Object] $Key,
         [PSCustomObject] $User,
-        [PSCustomObject] $Rule
+        [PSCustomObject] $Rule,
+        [System.Collections.IDictionary] $Entra
     )
     if ($Key) {
-        if ($Key -is [string]) {
-            $KeyDN = $Key
+        if ($Entra.Enabled) {
+            # If entra is enabled we can use UserPrincipalName
+            $UserSearchString = $User.UserPrincipalName
+            if ($Key -is [string]) {
+                $KeyDN = $Key
+            } else {
+                $KeyDN = $Key.AdditionalProperties.displayName
+            }
         } else {
-            $KeyDN = $Key.DisplayName
+            $UserSearchString = $User.DistinguishedName
+            if ($Key -is [string]) {
+                $KeyDN = $Key
+            } else {
+                $KeyDN = $Key.DisplayName
+            }
         }
-
         if (-not $SummaryDictionary[$KeyDN]) {
             $SummaryDictionary[$KeyDN] = [ordered] @{
                 Manager             = $Key
@@ -23,7 +34,7 @@
                 Security            = [ordered] @{}
             }
         }
-        $SummaryDictionary[$KeyDN][$Type][$User.DistinguishedName] = [ordered] @{
+        $SummaryDictionary[$KeyDN][$Type][$UserSearchString] = [ordered] @{
             Manager       = $User.ManagerDN
             User          = $User
             Rule          = $Rule
@@ -46,9 +57,9 @@
                 'Manager'       = $User.Manager
                 'Manager Email' = $User.ManagerEmail
             }
-            $SummaryDictionary[$KeyDN][$Type][$User.DistinguishedName]['Output'] = [PSCustomObject] ( $Extended + $Default)
+            $SummaryDictionary[$KeyDN][$Type][$UserSearchString]['Output'] = [PSCustomObject] ( $Extended + $Default)
         } else {
-            $SummaryDictionary[$KeyDN][$Type][$User.DistinguishedName]['Output'] = [PSCustomObject] $Default
+            $SummaryDictionary[$KeyDN][$Type][$UserSearchString]['Output'] = [PSCustomObject] $Default
         }
     }
 }
