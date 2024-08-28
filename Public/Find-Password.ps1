@@ -28,6 +28,26 @@
     .PARAMETER RulesProperties
     Add additional properties to be returned from rules
 
+    .PARAMETER UsersExternalSystem
+
+    .PARAMETER ExternalSystemReplacements
+
+    .PARAMETER FilterOrganizationalUnit
+
+    .PARAMETER AsHashTable
+
+    .PARAMETER AsHashTableObject
+
+    .PARAMETER AddEmptyProperties
+
+    .PARAMETER ReturnObjectsType
+
+    .PARAMETER Cache
+
+    .PARAMETER HashtableField
+
+    .PARAMETER CacheManager
+
     .EXAMPLE
     Find-Password | ft
 
