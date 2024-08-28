@@ -76,6 +76,11 @@
     This setting forces separate tab for all rules.
     The default value is $false.
 
+    .PARAMETER ExcludeProperties
+    Specifies an array of properties to exclude from the report. The default value is @('Manager', 'ManagerDN', 'MemberOf').
+    Manager, ManagerDN are not really needed in the report as they are already displayed in other form.
+    MemberOf is not needed as it's not really relevant to the report, and can take a lot of space.
+
     .OUTPUTS
     The function returns an ordered dictionary that contains the report settings.
 
@@ -130,7 +135,8 @@
         [switch] $AttachToEmail,
         [switch] $NestedRules,
         [switch] $ShowExternalSystemReplacementsUsers,
-        [switch] $ShowExternalSystemReplacementsManagers
+        [switch] $ShowExternalSystemReplacementsManagers,
+        [string[]] $ExcludeProperties = @('Manager', 'ManagerDN', 'MemberOf')
     )
 
     $Output = [ordered] @{
@@ -157,6 +163,7 @@
             NestedRules                            = $NestedRules.IsPresent
             ShowExternalSystemReplacementsUsers    = $ShowExternalSystemReplacementsUsers.IsPresent
             ShowExternalSystemReplacementsManagers = $ShowExternalSystemReplacementsManagers.IsPresent
+            ExcludeProperties                      = $ExcludeProperties
         }
     }
     $Output
