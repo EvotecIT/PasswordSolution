@@ -3,8 +3,32 @@
     param(
         [Parameter(DontShow)][string] $HashtableField = 'UserPrincipalName',
         [Parameter(DontShow)][switch] $AsHashTable,
-        [Parameter(DontShow)][System.Collections.IDictionary] $UsersExternalSystem
+        [string] $OverwriteEmailProperty,
+        [Parameter(DontShow)][string[]] $AddEmptyProperties = @(),
+        [Parameter(DontShow)][string[]] $RulesProperties,
+        [string] $OverwriteManagerProperty,
+        [System.Collections.IDictionary] $Cache = [ordered] @{},
+        [System.Collections.IDictionary] $CacheManager = [ordered] @{},
+        [Parameter(DontShow)][System.Collections.IDictionary] $UsersExternalSystem,
+        [Parameter(DontShow)][System.Collections.IDictionary] $ExternalSystemReplacements = [ordered] @{
+            Managers = [System.Collections.Generic.List[PSCustomObject]]::new()
+            Users    = [System.Collections.Generic.List[PSCustomObject]]::new()
+        },
+        [string[]] $FilterOrganizationalUnit
     )
+
+    $ExternalSystemManagers = [ordered]@{}
+    if ($UsersExternalSystem.Name) {
+        Write-Color -Text '[i] ', "Using external system ", $UsersExternalSystem.Name, " for EMAIL replacement functionality" -Color Yellow, White, Yellow, White
+        Write-Color -Text '[i] ', "There are ", $UsersExternalSystem.Users.Count, " users in the external system" -Color Yellow, White, Yellow, White
+    }
+    if (-not $ExternalSystemReplacements.Users) {
+        $ExternalSystemReplacements.Users = [System.Collections.Generic.List[PSCustomObject]]::new()
+    }
+    if (-not $ExternalSystemReplacements.Managers) {
+        $ExternalSystemReplacements.Managers = [System.Collections.Generic.List[PSCustomObject]]::new()
+    }
+
 
     $Today = Get-Date
 
@@ -18,31 +42,32 @@
     }
 
     $Properties = @(
-        # 'Manager', 'DisplayName', 'GivenName', 'Surname', 'SamAccountName', 'EmailAddress',
-        # 'msDS-UserPasswordExpiryTimeComputed', 'PasswordExpired', 'PasswordLastSet', 'PasswordNotRequired',
-        # 'Enabled', 'PasswordNeverExpires', 'Mail', 'MemberOf', 'LastLogonDate', 'Name'
-        # 'userAccountControl'
-        # 'pwdLastSet', 'ObjectClass'
-        # 'LastLogonDate'
-        # 'Country'
         'DisplayName', 'GivenName', 'Surname', 'Mail', 'UserPrincipalName', 'Id'
         'lastPasswordChangeDateTime', 'signInActivity'
         'country', 'AccountEnabled'
         'Manager', 'passwordPolicies', 'passwordProfile',
         'OnPremisesDistinguishedName', 'OnPremisesSyncEnabled', 'OnPremisesLastSyncDateTime', 'OnPremisesSamAccountName', 'UserType'
         'assignedLicenses'
+        if ($UsersExternalSystem -and $UsersExternalSystem.Type -eq 'ExternalUsers') {
+            $UsersExternalSystem.ActiveDirectoryProperty
+        }
+        if ($OverwriteEmailProperty) {
+            $OverwriteEmailProperty
+        }
+        if ($OverwriteManagerProperty) {
+            $OverwriteManagerProperty
+        }
+        foreach ($Rule in $RulesProperties) {
+            $Rule
+        }
     )
 
-    <#
-    - passwordPolicies
-    Specifies password policies for the user. This value is an enumeration with one possible value being DisableStrongPassword, which allows weaker passwords than the default policy to be specified. DisablePasswordExpiration can also be specified. The two may be specified together; for example: DisablePasswordExpiration, DisableStrongPassword. For more information on the default password policies, see Microsoft Entra password policies.
-    Supports $filter (ne, not, and eq on null values).
-
-    - passwordProfile
-    Specifies the password profile for the user. The profile contains the user's password. This property is required when a user is created. The password in the profile must satisfy minimum requirements as specified by the passwordPolicies property. By default, a strong password is required.
-    #>
-
     $Properties = $Properties | Sort-Object -Unique
+    # lets build extended properties that need
+    [Array] $ExtendedProperties = foreach ($Rule in $RulesProperties) {
+        $Rule
+    }
+    [Array] $ExtendedProperties = $ExtendedProperties | Sort-Object -Unique
 
     <# 'signInActivity'
     LastNonInteractiveSignInDateTime LastNonInteractiveSignInRequestId    LastSignInDateTime  LastSignInRequestId
@@ -52,7 +77,12 @@
     # $Users[-2].Manager.AdditionalProperties
 
 
-    $PasswordPolicies = Get-MgDomain
+    try {
+        $PasswordPolicies = Get-MgDomain -ErrorAction Stop
+    } catch {
+        Write-Color -Text '[-] ', "Couldn't get password policies. Unable to asses. Error: ", $_.Exception.Message -Color Yellow, White, Red
+        return
+    }
     if ($PasswordPolicies) {
         $PasswordPolicies = $PasswordPolicies.PasswordValidityPeriodInDays | Select-Object -First 1
     } else {
@@ -103,8 +133,8 @@
         }
 
 
-        #$DateExpiry = $null
-        #$DaysToExpire = $null
+        $DateExpiry = $null
+        $DaysToExpire = $null
         $PasswordDays = $null
         $PasswordNeverExpires = $false
         $PasswordAtNextLogon = $null
@@ -166,10 +196,37 @@
             $PasswordLastSet = $User.lastPasswordChangeDateTime
             $PasswordDays = ($Today - $PasswordLastSet).Days
         }
+
+
+        <#
+        This value is an enumeration with one possible value being DisableStrongPassword,
+        which allows weaker passwords than the default policy to be specified.
+        DisablePasswordExpiration can also be specified.
+        The two may be specified together; for example:
+        DisablePasswordExpiration, DisableStrongPassword.
+        For more information on the default password policies, see Microsoft Entra password policies.
+        Supports $filter (ne, not, and eq on null values).
+        #>
         if ($null -eq $User.PasswordPolicies -or $User.PasswordPolicies -eq 'None') {
-            $PasswordNeverExpires = If ($GlobalPasswordPolicy -eq 'PasswordNeverExpires') { $true } else { $false }
+            If ($GlobalPasswordPolicy -contains 'PasswordNeverExpires') {
+                $PasswordNeverExpires = $true
+                $DaysToExpire = $null
+                $DateExpiry = $null
+            } else {
+                $PasswordNeverExpires = $false
+                try {
+                    # Get the date when password expires based on PasswordLastSet and GlobalPasswordPolicyDays
+                    $DateExpiry = $PasswordLastSet.AddDays($GlobalPasswordPolicyDays)
+                    $DaysToExpire = ($DateExpiry - $Today).Days
+                } catch {
+                    $DaysToExpire = $null
+                    $DateExpiry = $null
+                }
+            }
         } elseif ($User.PasswordPolicies -contains 'DisablePasswordExpiration') {
             $PasswordNeverExpires = $true
+            $DaysToExpire = $null
+            $DateExpiry = $null
         } else {
             Write-Color -Text '[-] ', "Password policy ($($User.PasswordPolicies)) not supported. We need to investigate what changed" -Color Yellow, White, Red
             return
@@ -238,16 +295,12 @@
                 PasswordPolicies                     = if ($User.PasswordPolicies) { $User.PasswordPolicies } else { 'Not set' }
                 ForceChangePasswordNextSignIn        = $User.PasswordProfile.ForceChangePasswordNextSignIn
                 ForceChangePasswordNextSignInWithMfa = $User.PasswordProfile.ForceChangePasswordNextSignInWithMfa
-                Password                             = $User.PasswordProfile.Password
-                PasswordProfileAdditionalProperties  = if ($User.PasswordProfile.AdditionalProperties.Keys.Count -gt 0) { $User.PasswordProfile.AdditionalProperties } else { $null }
-
-                #DateExpiry                           = $DateExpiry
-                #DaysToExpire                         = $DaysToExpire
+                DateExpiry                           = $DateExpiry
+                DaysToExpire                         = $DaysToExpire
                 PasswordExpired                      = $PasswordExpired
                 PasswordDays                         = $PasswordDays
                 PasswordAtNextLogon                  = $PasswordAtNextLogon
                 PasswordLastSet                      = $User.lastPasswordChangeDateTime
-                #PasswordNotRequired  = $User.PasswordNotRequired
                 PasswordNeverExpires                 = $PasswordNeverExpires
                 LastLogonDate                        = $LastLogonDate
                 LastLogonDays                        = $LastLogonDays
@@ -293,16 +346,12 @@
                 PasswordPolicies                     = if ($User.PasswordPolicies) { $User.PasswordPolicies } else { 'Not set' }
                 ForceChangePasswordNextSignIn        = $User.PasswordProfile.ForceChangePasswordNextSignIn
                 ForceChangePasswordNextSignInWithMfa = $User.PasswordProfile.ForceChangePasswordNextSignInWithMfa
-                Password                             = $User.PasswordProfile.Password
-                PasswordProfileAdditionalProperties  = if ($User.PasswordProfile.AdditionalProperties.Keys.Count -gt 0) { $User.PasswordProfile.AdditionalProperties } else { $null }
-
-                #DateExpiry                           = $DateExpiry
-                #DaysToExpire                         = $DaysToExpire
+                DateExpiry                           = $DateExpiry
+                DaysToExpire                         = $DaysToExpire
                 PasswordExpired                      = $PasswordExpired
                 PasswordDays                         = $PasswordDays
                 PasswordAtNextLogon                  = $PasswordAtNextLogon
                 PasswordLastSet                      = $User.lastPasswordChangeDateTime
-                #PasswordNotRequired   = $User.PasswordNotRequired
                 PasswordNeverExpires                 = $PasswordNeverExpires
                 LastLogonDate                        = $LastLogonDate
                 LastLogonDays                        = $LastLogonDays
