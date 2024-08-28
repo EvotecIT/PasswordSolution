@@ -8,7 +8,8 @@
         [System.Collections.IDictionary] $Locations,
         [System.Collections.IDictionary] $Logging,
         [System.Collections.IDictionary] $UsersExternalSystem,
-        [DateTime] $TodayDate
+        [DateTime] $TodayDate,
+        [System.Collections.IDictionary] $Entra
     )
     # Go for each rule and check if the user is in any of those rules
     if ($Rule.Enable -eq $true) {
@@ -21,6 +22,11 @@
         # for example: (-150..-100),(-60..0), 1, 2, 3
         $Rule.Reminders = $Rule.Reminders | ForEach-Object { $_ }
         foreach ($User in $CachedUsers.Values) {
+            if ($Entra.Enabled) {
+                $UserSearchString = $User.UserPrincipalName
+            } else {
+                $UserSearchString = $User.DistinguishedName
+            }
             if ($User.Enabled -eq $false) {
                 # We don't want to have disabled users
                 continue
@@ -112,7 +118,7 @@
                     continue
                 }
             }
-            if ($Summary['Notify'][$User.DistinguishedName] -and $Summary['Notify'][$User.DistinguishedName].ProcessManagersOnly -ne $true) {
+            if ($Summary['Notify'][$UserSearchString] -and $Summary['Notify'][$UserSearchString].ProcessManagersOnly -ne $true) {
                 # User already exists in the notifications - rules are overlapping, we only take the first one
                 # We also check for ProcessManagersOnly because we don't want first rule to ignore any other rules for users
                 continue
@@ -161,7 +167,7 @@
                 }
                 # if days to expire is not set, password last set is not set either
                 # this means account either was never used or account we're using to has no permissions over that account
-                $AllSkipped[$User.DistinguishedName] = $User
+                $AllSkipped[$UserSearchString] = $User
 
                 $Location = $User.OrganizationalUnit
                 if (-not $Location) {
@@ -215,25 +221,25 @@
                         }
                     }
 
-                    $Summary['Notify'][$User.DistinguishedName] = [ordered] @{
+                    $Summary['Notify'][$UserSearchString] = [ordered] @{
                         User                = $User
                         Rule                = $Rule
                         ProcessManagersOnly = $Rule.ProcessManagersOnly
                     }
                     # If we need to send an email to manager we need to update rules, just in case the user has not matched for user section
-                    if ($Summary['Rules'][$Rule.Name][$User.DistinguishedName]) {
+                    if ($Summary['Rules'][$Rule.Name][$UserSearchString]) {
                         # User exists, update reason
-                        $Summary['Rules'][$Rule.Name][$User.DistinguishedName].User.RuleOptions.Add('User')
-                        $Summary['Rules'][$Rule.Name][$User.DistinguishedName].User.RuleName = $Rule.Name
+                        $Summary['Rules'][$Rule.Name][$UserSearchString].User.RuleOptions.Add('User')
+                        $Summary['Rules'][$Rule.Name][$UserSearchString].User.RuleName = $Rule.Name
                     } else {
                         # User doesn't exists in rules, add it
-                        $Summary['Rules'][$Rule.Name][$User.DistinguishedName] = [ordered] @{
+                        $Summary['Rules'][$Rule.Name][$UserSearchString] = [ordered] @{
                             User                = $User
                             Rule                = $Rule
                             ProcessManagersOnly = $Rule.ProcessManagersOnly
                         }
-                        $Summary['Rules'][$Rule.Name][$User.DistinguishedName].User.RuleOptions.Add('User')
-                        $Summary['Rules'][$Rule.Name][$User.DistinguishedName].User.RuleName = $Rule.Name
+                        $Summary['Rules'][$Rule.Name][$UserSearchString].User.RuleOptions.Add('User')
+                        $Summary['Rules'][$Rule.Name][$UserSearchString].User.RuleName = $Rule.Name
                     }
                 }
             }
@@ -388,19 +394,19 @@
                                 Write-Color -Text "[i]", " User (manager rule) ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire, " " -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
                             }
                             # If we need to send an email to manager we need to update rules, just in case the user has not matched for user section
-                            if ($Summary['Rules'][$Rule.Name][$User.DistinguishedName]) {
+                            if ($Summary['Rules'][$Rule.Name][$UserSearchString]) {
                                 # User exists, update reason
-                                $Summary['Rules'][$Rule.Name][$User.DistinguishedName].User.RuleOptions.Add('Manager')
-                                $Summary['Rules'][$Rule.Name][$User.DistinguishedName].User.RuleName = $Rule.Name
+                                $Summary['Rules'][$Rule.Name][$UserSearchString].User.RuleOptions.Add('Manager')
+                                $Summary['Rules'][$Rule.Name][$UserSearchString].User.RuleName = $Rule.Name
                             } else {
                                 # User doesn't exists in rules, add it
-                                $Summary['Rules'][$Rule.Name][$User.DistinguishedName] = [ordered] @{
+                                $Summary['Rules'][$Rule.Name][$UserSearchString] = [ordered] @{
                                     User                = $User
                                     Rule                = $Rule
                                     ProcessManagersOnly = $Rule.ProcessManagersOnly
                                 }
-                                $Summary['Rules'][$Rule.Name][$User.DistinguishedName].User.RuleOptions.Add('Manager')
-                                $Summary['Rules'][$Rule.Name][$User.DistinguishedName].User.RuleName = $Rule.Name
+                                $Summary['Rules'][$Rule.Name][$UserSearchString].User.RuleOptions.Add('Manager')
+                                $Summary['Rules'][$Rule.Name][$UserSearchString].User.RuleName = $Rule.Name
                             }
 
                             # Push manager to list
@@ -411,6 +417,7 @@
                                 Key               = $User.ManagerDN
                                 User              = $User
                                 Rule              = $Rule
+                                Entra             = $Entra
                             }
                             Add-ManagerInformation @Splat
                         }
@@ -612,19 +619,19 @@
                                 Write-Color -Text "[i]", " User (manager not compliant rule) ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire, " " -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
                             }
                             # If we need to send an email to manager we need to update rules, just in case the user has not matched for user section
-                            if ($Summary['Rules'][$Rule.Name][$User.DistinguishedName]) {
+                            if ($Summary['Rules'][$Rule.Name][$UserSearchString]) {
                                 # User exists, update reason
-                                $Summary['Rules'][$Rule.Name][$User.DistinguishedName].User.RuleOptions.Add('Manager Not Compliant')
-                                $Summary['Rules'][$Rule.Name][$User.DistinguishedName].User.RuleName = $Rule.Name
+                                $Summary['Rules'][$Rule.Name][$UserSearchString].User.RuleOptions.Add('Manager Not Compliant')
+                                $Summary['Rules'][$Rule.Name][$UserSearchString].User.RuleName = $Rule.Name
                             } else {
                                 # User doesn't exists in rules, add it
-                                $Summary['Rules'][$Rule.Name][$User.DistinguishedName] = [ordered] @{
+                                $Summary['Rules'][$Rule.Name][$UserSearchString] = [ordered] @{
                                     User                = $User
                                     Rule                = $Rule
                                     ProcessManagersOnly = $Rule.ProcessManagersOnly
                                 }
-                                $Summary['Rules'][$Rule.Name][$User.DistinguishedName].User.RuleOptions.Add('Manager Not Compliant')
-                                $Summary['Rules'][$Rule.Name][$User.DistinguishedName].User.RuleName = $Rule.Name
+                                $Summary['Rules'][$Rule.Name][$UserSearchString].User.RuleOptions.Add('Manager Not Compliant')
+                                $Summary['Rules'][$Rule.Name][$UserSearchString].User.RuleName = $Rule.Name
                             }
                         } else {
                             if ($User.ManagerStatus -eq 'Enabled') {
@@ -763,19 +770,19 @@
                         Write-Color -Text "[i]", " User (security escalation) ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire, " " -Color Yellow, White, Yellow, White, Yellow, White, White, Blue
                     }
                     # If we need to send an email to manager we need to update rules, just in case the user has not matched for user section
-                    if ($Summary['Rules'][$Rule.Name][$User.DistinguishedName]) {
+                    if ($Summary['Rules'][$Rule.Name][$UserSearchString]) {
                         # User exists, update reason
-                        $Summary['Rules'][$Rule.Name][$User.DistinguishedName].User.RuleOptions.Add('Security esclation')
-                        $Summary['Rules'][$Rule.Name][$User.DistinguishedName].User.RuleName = $Rule.Name
+                        $Summary['Rules'][$Rule.Name][$UserSearchString].User.RuleOptions.Add('Security esclation')
+                        $Summary['Rules'][$Rule.Name][$UserSearchString].User.RuleName = $Rule.Name
                     } else {
                         # User doesn't exists in rules, add it
-                        $Summary['Rules'][$Rule.Name][$User.DistinguishedName] = [ordered] @{
+                        $Summary['Rules'][$Rule.Name][$UserSearchString] = [ordered] @{
                             User                = $User
                             Rule                = $Rule
                             ProcessManagersOnly = $Rule.ProcessManagersOnly
                         }
-                        $Summary['Rules'][$Rule.Name][$User.DistinguishedName].User.RuleOptions.Add('Security esclation')
-                        $Summary['Rules'][$Rule.Name][$User.DistinguishedName].User.RuleName = $Rule.Name
+                        $Summary['Rules'][$Rule.Name][$UserSearchString].User.RuleOptions.Add('Security esclation')
+                        $Summary['Rules'][$Rule.Name][$UserSearchString].User.RuleName = $Rule.Name
                     }
 
                     $Splat = [ordered] @{
