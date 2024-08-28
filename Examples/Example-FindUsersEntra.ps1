@@ -1,6 +1,5 @@
 ﻿Import-Module .\PasswordSolution.psd1 -Force
 
-
 Connect-MgGraph -Scopes "User.Read.All" -NoWelcome
 
 $Users = Find-PasswordEntra #-Verbose
