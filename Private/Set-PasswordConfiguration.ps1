@@ -26,7 +26,8 @@
         [string] $SearchPath,
         [string] $OverwriteEmailProperty,
         [string] $OverwriteManagerProperty,
-        [string[]] $FilterOrganizationalUnit
+        [string[]] $FilterOrganizationalUnit,
+        [System.Collections.IDictionary] $Entra
     )
 
     if (-not $Rules) {
@@ -95,6 +96,8 @@
                     $TemplateAdminSubject = $Configuration.Settings.Subject
                 } elseif ($Configuration.Type -eq 'ExternalUsers') {
                     $UsersExternalSystem = $Configuration
+                } elseif ($Configuration.Type -eq 'PasswordConfigurationEntra') {
+                    $Entra = $Configuration.Settings
                 }
             }
         } catch {
@@ -338,6 +341,7 @@
         TemplateAdminSubject               = $TemplateAdminSubject
         UsersExternalSystem                = $UsersExternalSystem
         FilterOrganizationalUnit           = $FilterOrganizationalUnit
+        Entra                              = $Entra
     }
     $OutputInformation
 }
