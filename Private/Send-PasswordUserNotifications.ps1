@@ -122,7 +122,11 @@
             }
             if ($Logging.NotifyOnUserSend) {
                 if ($EmailResult.SentTo) {
-                    Write-Color -Text "[i]", " Sending notifications to user ", $Notify.User.DisplayName, " (", $Notify.User.EmailAddress, ")", " status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ", details: ", $EmailResult.Error -Color Yellow, White, Yellow, White, Yellow, White, White, Blue, White, Blue
+                    if ($EmailResult.Error) {
+                        Write-Color -Text "[i]", " Sending notifications to user ", $Notify.User.DisplayName, " (", $Notify.User.EmailAddress, ")", " status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ", details: ", $EmailResult.Error -Color Yellow, White, Yellow, White, Yellow, White, White, Blue, White, Blue
+                    } else {
+                        Write-Color -Text "[i]", " Sending notifications to user ", $Notify.User.DisplayName, " (", $Notify.User.EmailAddress, ")", " status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo -Color Yellow, White, Yellow, White, Yellow, White, White, Blue, White
+                    }
                 } else {
                     Write-Color -Text "[i]", " Skipping notifications to user ", $Notify.User.DisplayName, " (", $Notify.User.EmailAddress, ")", " status: ", $EmailResult.Status, " details: ", $EmailResult.Error -Color Yellow, White, Yellow, White, Yellow, White, White, Blue, White, Blue
                 }
