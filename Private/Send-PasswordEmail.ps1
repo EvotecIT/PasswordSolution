@@ -73,7 +73,7 @@
             PasswordNotRequired                  = $User.PasswordNotRequired   # : False
             PasswordNeverExpires                 = $User.PasswordNeverExpires  # : True
             ManagerSamAccountName                = $User.ManagerSamAccountName # : przemyslaw.klys
-            ManagerEmail                         = $User.ManagerEmail          # : przemyslaw.klys@evotec.pl
+            ManagerEmail                         = $User.ManagerEmail          # : przemyslaw.klys@test.pl
             ManagerStatus                        = $User.ManagerStatus         # : Enabled
             ManagerLastLogonDays                 = $User.ManagerLastLogonDays  # : 0
             Manager                              = $User.Manager               # : Przemysław Kłys
