@@ -48,6 +48,7 @@ Start-PasswordSolution {
     New-PasswordConfigurationType -Type User -Enable -SendCountMaximum 10 -DefaultEmail 'przemyslaw.klys+testgithub1@evotec.pl'
     New-PasswordConfigurationType -Type Manager -Enable -SendCountMaximum 10 -DefaultEmail 'przemyslaw.klys+testgithub2@evotec.pl'
     New-PasswordConfigurationType -Type Security -Enable -SendCountMaximum 1 -DefaultEmail 'przemyslaw.klys+testgithub3@evotec.pl' -AttachCSV
+    New-PasswordConfigurationType -Type Admin -Enable -EmailAddress 'przemyslaw.klys+testgithub3@evotec.pl' -DisplayName 'Administrators'
 
     # Configure reporting
     $Report = [ordered] @{
