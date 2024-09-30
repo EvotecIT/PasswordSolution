@@ -1,0 +1,1 @@
+﻿(Get-Credential -UserName 'test' -Message 'Password').Password | ConvertFrom-SecureString | Set-Clipboard
