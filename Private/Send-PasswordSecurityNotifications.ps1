@@ -61,7 +61,11 @@
             }
             $EmailResult = Send-PasswordEmail @EmailSplat
             if ($Logging.NotifyOnSecuritySend) {
-                Write-Color -Text "[r] Sending notifications to security ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+                if ($EmailResult.Error) {
+                    Write-Color -Text "[r] Sending notifications to security ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ", error: ", $EmailResult.Error, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+                } else {
+                    Write-Color -Text "[r] Sending notifications to security ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+                }
             }
             [PSCustomObject] @{
                 DisplayName    = $ManagerUser.DisplayName
