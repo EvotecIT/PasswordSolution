@@ -1,5 +1,9 @@
 ﻿# PasswordSolution Release History
 
+## 2.0.1 - 2024.09.30
+- Fixes `AdminSection` not working properly for modern configuration
+- Improve error reporting when sending emails
+
 ## 2.0.0 - 2024.09.08 - **EXPERIMENTAL**
 - Added basic support for Microsoft Entra ID (Azure AD)
 - Improved reporting allowing to exclude properties from HTML reports to make them smaller
