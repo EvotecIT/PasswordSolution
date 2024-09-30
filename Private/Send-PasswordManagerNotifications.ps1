@@ -84,10 +84,18 @@
             }
             $EmailResult = Send-PasswordEmail @EmailSplat
             if ($Logging.NotifyOnManagerSend) {
-                if ($EmailResult.SentTo) {
-                    Write-Color -Text "[r] Sending notifications to managers ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+                if ($EmailResult.Error) {
+                    if ($EmailResult.SentTo) {
+                        Write-Color -Text "[r] Sending notifications to managers ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ", error: ", $EmailResult.Error, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+                    } else {
+                        Write-Color -Text "[r] Sending notifications to managers ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status, ", error: ", $EmailResult.Error, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+                    }
                 } else {
-                    Write-Color -Text "[r] Sending notifications to managers ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+                    if ($EmailResult.SentTo) {
+                        Write-Color -Text "[r] Sending notifications to managers ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+                    } else {
+                        Write-Color -Text "[r] Sending notifications to managers ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+                    }
                 }
             }
 
