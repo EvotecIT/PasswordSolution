@@ -39,13 +39,14 @@
             if ($HtmlAttachments.Count -gt 0) {
                 $EmailSplat.Attachments = $HtmlAttachments
             }
-            Write-Color -Text "[i] Sending summary information ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+            Write-Color -Text "[i] Sending summary information ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
 
             $EmailResult = Send-PasswordEmail @EmailSplat
 
-            Write-Color -Text "[r] Sending summary information ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") (SendToDefaultEmail: ", $ManagerSection.SendToDefaultEmail, ") (status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
             if ($EmailResult.Error) {
-                Write-Color -Text "[r] Error: ", $EmailResult.Error -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+                Write-Color -Text "[r] Sending summary information ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") ) (status: ", $EmailResult.Status, ", sent to: ", $EmailResult.SentTo, ", error: ", $EmailResult.Error, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
+            } else {
+                Write-Color -Text "[r] Sending summary information ", $ManagerUser.DisplayName, " (", $ManagerUser.EmailAddress, ") ) (status: ", $EmailResult.Status, ", sent to: ", $EmailResult.SentTo, ")" -Color White, Yellow, White, Yellow, White, Yellow, White, Yellow, White, Yellow
             }
             [PSCustomObject] @{
                 DisplayName    = $ManagerUser.DisplayName
