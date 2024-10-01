@@ -132,7 +132,7 @@
     [Array] $ExtendedProperties = $ExtendedProperties | Sort-Object -Unique
 
     $PropertiesContacts = @(
-        'SamAccountName', 'CanonicalName', 'WhenChanged', 'WhenChanged', 'DisplayName', 'DistinguishedName', 'Name', 'Mail', 'TargetAddress', 'ObjectClass'
+        'SamAccountName', 'CanonicalName', 'WhenChanged', 'WhenChanged', 'DisplayName', 'DistinguishedName', 'Name', 'Mail', 'ObjectClass'
     )
 
     # We're caching all users in their inital form to make sure it's speedy gonzales when querying for Managers
