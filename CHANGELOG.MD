@@ -1,6 +1,6 @@
 ﻿# PasswordSolution Release History
 
-## 2.0.2
+## 2.0.2 - 2024.10.01
 - Add `SearchBase` when managers are not required, or the scope for both users and managers is very limited (use FilterOrganizationalUnit instead)
 
 ## 2.0.1 - 2024.09.30
