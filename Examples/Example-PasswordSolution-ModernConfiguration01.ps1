@@ -25,6 +25,12 @@ Start-PasswordSolution {
             "*OU=Accounts,OU=Administration,DC=ad,DC=evotec,DC=xyz"
             "*OU=Administration,DC=ad,DC=evotec,DC=xyz"
         )
+        # Using SearchBase is risky, as it can lead to missing managers "connection" to users, which may be filtered out
+        # If you use Manager functionality use FilterOrganizationalUnit instead, unless you're sure what you're doing
+        #SearchBase                                        = @(
+        #    "OU=Accounts,OU=Administration,DC=ad,DC=evotec,DC=xyz"
+        #    "OU=Administration,DC=ad,DC=evotec,DC=xyz"
+        #)
     }
     New-PasswordConfigurationOption @Options
 
@@ -38,17 +44,17 @@ Start-PasswordSolution {
         Credential = ConvertTo-GraphCredential -ClientID $GraphCredentials.ClientID -ClientSecret $GraphCredentials.ClientSecret -DirectoryID $GraphCredentials.DirectoryID
         Graph      = $true
         Priority   = 'Normal'
-        From       = 'przemyslaw.klys@evotec.pl'
+        From       = 'przemyslaw.klys@test.pl'
         WhatIf     = $true
-        ReplyTo    = 'contact+testgithub@evotec.pl'
+        ReplyTo    = 'contact+testgithub@test.pl'
     }
     New-PasswordConfigurationEmail @EmailParameters
 
     # Configure behavior for different types of actions
-    New-PasswordConfigurationType -Type User -Enable -SendCountMaximum 10 -DefaultEmail 'przemyslaw.klys+testgithub1@evotec.pl'
-    New-PasswordConfigurationType -Type Manager -Enable -SendCountMaximum 10 -DefaultEmail 'przemyslaw.klys+testgithub2@evotec.pl'
-    New-PasswordConfigurationType -Type Security -Enable -SendCountMaximum 1 -DefaultEmail 'przemyslaw.klys+testgithub3@evotec.pl' -AttachCSV
-    New-PasswordConfigurationType -Type Admin -Enable -EmailAddress 'przemyslaw.klys+testgithub3@evotec.pl' -DisplayName 'Administrators'
+    New-PasswordConfigurationType -Type User -Enable -SendCountMaximum 10 -DefaultEmail 'przemyslaw.klys+testgithub1@test.pl'
+    New-PasswordConfigurationType -Type Manager -Enable -SendCountMaximum 10 -DefaultEmail 'przemyslaw.klys+testgithub2@test.pl'
+    New-PasswordConfigurationType -Type Security -Enable -SendCountMaximum 1 -DefaultEmail 'przemyslaw.klys+testgithub3@test.pl' -AttachCSV
+    New-PasswordConfigurationType -Type Admin -Enable -EmailAddress 'przemyslaw.klys+testgithub3@test.pl' -DisplayName 'Administrators'
 
     # Configure reporting
     $Report = [ordered] @{
