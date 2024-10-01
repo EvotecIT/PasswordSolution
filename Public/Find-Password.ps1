@@ -170,7 +170,7 @@
 
         if ($SearchBase) {
             foreach ($SB in $SearchBaseCache[$Domain]) {
-                Write-Color -Text "[i] ", "Getting users from ", "$($Domain)", " using ", $Server, " and SearchBase ", $SB -Color Yellow, White, Yellow, White, Yellow, White,Yellow
+                Write-Color -Text "[i] ", "Getting users from ", "$($Domain)", " using ", $Server, " and SearchBase ", $SB -Color Yellow, White, Yellow, White, Yellow, White, Yellow
                 try {
                     Get-ADUser -Server $Server -Filter '*' -SearchBase $SB -Properties $Properties -ErrorAction Stop
                 } catch {
@@ -201,12 +201,24 @@
             Write-Color -Text "[i] ", "Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color Yellow, White, Yellow, White
             $Server = $ForestInformation['QueryServers'][$Domain]['HostName'][0]
 
-            Write-Color -Text "[i] ", "Getting contacts from ", "$($Domain)", " using ", $Server -Color Yellow, White, Yellow, White
-            try {
-                Get-ADObject -LDAPFilter "objectClass=Contact" -Server $Server -Properties $PropertiesContacts -ErrorAction Stop
-            } catch {
-                $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
-                Write-Color '[e] Error: ', $ErrorMessage -Color White, Red
+            if ($SearchBase) {
+                foreach ($SB in $SearchBaseCache[$Domain]) {
+                    Write-Color -Text "[i] ", "Getting contacts from ", "$($Domain)", " using ", $Server, " and SearchBase ", $SB -Color Yellow, White, Yellow, White, Yellow, White, Yellow
+                    try {
+                        Get-ADObject -LDAPFilter "objectClass=Contact" -Server $Server -SearchBase $SB -Properties $PropertiesContacts -ErrorAction Stop
+                    } catch {
+                        $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
+                        Write-Color '[e] Error: ', $ErrorMessage -Color White, Red
+                    }
+                }
+            } else {
+                Write-Color -Text "[i] ", "Getting contacts from ", "$($Domain)", " using ", $Server -Color Yellow, White, Yellow, White
+                try {
+                    Get-ADObject -LDAPFilter "objectClass=Contact" -Server $Server -Properties $PropertiesContacts -ErrorAction Stop
+                } catch {
+                    $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
+                    Write-Color '[e] Error: ', $ErrorMessage -Color White, Red
+                }
             }
         }
         foreach ($Contact in $Contacts) {
