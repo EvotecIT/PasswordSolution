@@ -1,5 +1,8 @@
 ﻿# PasswordSolution Release History
 
+## 2.0.2
+- Add `SearchBase` when managers are not required, or the scope for both users and managers is very limited (use FilterOrganizationalUnit instead)
+
 ## 2.0.1 - 2024.09.30
 - Fixes `AdminSection` not working properly for modern configuration
 - Improve error reporting when sending emails
