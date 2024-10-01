@@ -34,6 +34,8 @@
 
     .PARAMETER FilterOrganizationalUnit
 
+    .PARAMETER SearchBase
+
     .PARAMETER AsHashTable
 
     .PARAMETER AsHashTableObject
@@ -74,6 +76,7 @@
             Users    = [System.Collections.Generic.List[PSCustomObject]]::new()
         },
         [string[]] $FilterOrganizationalUnit,
+        [string[]] $SearchBase,
         [System.Collections.IDictionary] $Cache = [ordered] @{},
         [System.Collections.IDictionary] $CacheManager = [ordered] @{}
     )
@@ -143,6 +146,18 @@
     Write-Color -Text '[i] ', "Discovering forest information" -Color Yellow, White
     $ForestInformation = Get-WinADForestDetails -PreferWritable -Extended -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
 
+    $SearchBaseCache = [ordered]@{}
+    if ($SearchBase) {
+        foreach ($S in $SearchBase) {
+            $ConvertedS = ConvertFrom-DistinguishedName -DistinguishedName $S -ToDomainCN
+            if (-not $SearchBaseCache[$ConvertedS]) {
+                $SearchBaseCache[$ConvertedS] = [System.Collections.Generic.List[string]]::new()
+            }
+            $SearchBaseCache[$ConvertedS].Add($S)
+        }
+    }
+
+
     # lets get domain name / netbios hashtable for easy use
     $DNSNetBios = @{ }
     foreach ($NETBIOS in $ForestInformation.DomainsExtendedNetBIOS.Keys) {
@@ -153,12 +168,24 @@
         Write-Color -Text "[i] ", "Discovering DC for domain ", "$($Domain)", " in forest ", $ForestInformation.Name -Color Yellow, White, Yellow, White
         $Server = $ForestInformation['QueryServers'][$Domain]['HostName'][0]
 
-        Write-Color -Text "[i] ", "Getting users from ", "$($Domain)", " using ", $Server -Color Yellow, White, Yellow, White
-        try {
-            Get-ADUser -Server $Server -Filter '*' -Properties $Properties -ErrorAction Stop
-        } catch {
-            $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
-            Write-Color '[e] Error: ', $ErrorMessage -Color White, Red
+        if ($SearchBase) {
+            foreach ($SB in $SearchBaseCache[$Domain]) {
+                Write-Color -Text "[i] ", "Getting users from ", "$($Domain)", " using ", $Server, " and SearchBase ", $SB -Color Yellow, White, Yellow, White, Yellow, White,Yellow
+                try {
+                    Get-ADUser -Server $Server -Filter '*' -SearchBase $SB -Properties $Properties -ErrorAction Stop
+                } catch {
+                    $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
+                    Write-Color '[e] Error: ', $ErrorMessage -Color White, Red
+                }
+            }
+        } else {
+            Write-Color -Text "[i] ", "Getting users from ", "$($Domain)", " using ", $Server -Color Yellow, White, Yellow, White
+            try {
+                Get-ADUser -Server $Server -Filter '*' -Properties $Properties -ErrorAction Stop
+            } catch {
+                $ErrorMessage = $_.Exception.Message -replace "`n", " " -replace "`r", " "
+                Write-Color '[e] Error: ', $ErrorMessage -Color White, Red
+            }
         }
     }
     Write-Color -Text "[i] ", "Caching users for easy access" -Color Yellow, White

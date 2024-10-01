@@ -27,6 +27,7 @@
         [string] $OverwriteEmailProperty,
         [string] $OverwriteManagerProperty,
         [string[]] $FilterOrganizationalUnit,
+        [string[]] $SearchBase,
         [System.Collections.IDictionary] $Entra
     )
 
@@ -53,6 +54,9 @@
                     }
                     if ($Configuration.Settings.FilterOrganizationalUnit) {
                         $FilterOrganizationalUnit = $Configuration.Settings.FilterOrganizationalUnit
+                    }
+                    if ($Configuration.Settings.SearchBase) {
+                        $SearchBase = $Configuration.Settings.SearchBase
                     }
                     foreach ($Setting in $Configuration.Settings.Keys) {
                         if ($Setting -notin 'SearchPath', 'OverwriteEmailProperty', 'OverwriteManagerProperty', 'FilterOrganizationalUnit') {
@@ -341,6 +345,7 @@
         TemplateAdminSubject               = $TemplateAdminSubject
         UsersExternalSystem                = $UsersExternalSystem
         FilterOrganizationalUnit           = $FilterOrganizationalUnit
+        SearchBase                         = $SearchBase
         Entra                              = $Entra
     }
     $OutputInformation

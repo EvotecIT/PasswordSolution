@@ -64,6 +64,11 @@
     Provides a way to filter users by Organizational Unit limiting the scope of the search.
     The search is performed using 'like' operator, so you can use wildcards if needed.
 
+    .PARAMETER SearchBase
+    Provides a way to filter users by Organizational Unit limiting the scope of the search.
+    The search is passed to Get-ADUser cmdlet. This command should only be used when not using manager functionality.
+    Otherwise you won't be able to find matching managers for your users. Use FilterOrganizationalUnit instead.
+
     .EXAMPLE
     $Options = @{
         # Logging to file and to screen
@@ -109,7 +114,8 @@
         [switch] $EmailDateFormatUTCConversion,
         [string] $OverwriteEmailProperty,
         [string] $OverwriteManagerProperty,
-        [string[]] $FilterOrganizationalUnit
+        [string[]] $FilterOrganizationalUnit,
+        [string[]] $SearchBase
     )
 
     $Output = [ordered] @{
@@ -137,6 +143,8 @@
             OverwriteManagerProperty                          = $OverwriteManagerProperty
             # filtering
             FilterOrganizationalUnit                          = $FilterOrganizationalUnit
+            # SearchBase
+            SearchBase                                        = $SearchBase
         }
     }
     Remove-EmptyValue -Hashtable $Output.Settings

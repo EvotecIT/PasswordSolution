@@ -78,7 +78,13 @@
     Parameter description
 
     .PARAMETER FilterOrganizationalUnit
-    Parameter description
+    Provides a way to filter users by Organizational Unit limiting the scope of the search.
+    The search is performed using 'like' operator, so you can use wildcards if needed.
+
+    .PARAMETER SearchBase
+    Provides a way to filter users by Organizational Unit limiting the scope of the search.
+    The search is passed to Get-ADUser cmdlet. This command should only be used when not using manager functionality.
+    Otherwise you won't be able to find matching managers for your users. Use FilterOrganizationalUnit instead.
 
     .PARAMETER Logging
     Parameter description
@@ -124,7 +130,8 @@
         [Parameter(ParameterSetName = 'Legacy')][System.Collections.IDictionary] $Logging = [ordered]  @{},
         [Parameter(ParameterSetName = 'Legacy')][Array] $HTMLReports,
         [Parameter(ParameterSetName = 'Legacy')][string] $SearchPath,
-        [Parameter(ParameterSetName = 'Legacy')][string[]] $FilterOrganizationalUnit
+        [Parameter(ParameterSetName = 'Legacy')][string[]] $FilterOrganizationalUnit,
+        [Parameter(ParameterSetName = 'Legacy')][string[]] $SearchBase
     )
     $TimeStart = Start-TimeLog
     $Script:Reporting = [ordered] @{}
@@ -172,6 +179,7 @@
         SearchPath                         = $SearchPath
         UsersExternalSystem                = $UsersExternalSystem
         FilterOrganizationalUnit           = $FilterOrganizationalUnit
+        SearchBase                         = $SearchBase
         Entra                              = $Entra
     }
     $InitialVariables = Set-PasswordConfiguration @SplatPasswordConfiguration
@@ -204,6 +212,7 @@
     $SearchPath = $InitialVariables.SearchPath
     $UsersExternalSystem = $InitialVariables.UsersExternalSystem
     $FilterOrganizationalUnit = $InitialVariables.FilterOrganizationalUnit
+    $SearchBase = $InitialVariables.SearchBase
     $Entra = $InitialVariables.Entra
 
     Set-LoggingCapabilities -LogPath $Logging.LogFile -LogMaximum $Logging.LogMaximum -ShowTime:$Logging.ShowTime -TimeFormat $Logging.TimeFormat
@@ -231,7 +240,7 @@
         # Doesn't support external system replacements
         $CachedUsers = Find-PasswordEntra -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty -RulesProperties $ExtendedProperties -OverwriteManagerProperty $OverwriteManagerProperty -UsersExternalSystem $UsersExternalSystem -ExternalSystemReplacements $ExternalSystemReplacements -FilterOrganizationalUnit $FilterOrganizationalUnit -CacheManager $GlobalManagerCache
     } else {
-        $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty -RulesProperties $ExtendedProperties -OverwriteManagerProperty $OverwriteManagerProperty -UsersExternalSystem $UsersExternalSystem -ExternalSystemReplacements $ExternalSystemReplacements -FilterOrganizationalUnit $FilterOrganizationalUnit -CacheManager $GlobalManagerCache
+        $CachedUsers = Find-Password -AsHashTable -OverwriteEmailProperty $OverwriteEmailProperty -RulesProperties $ExtendedProperties -OverwriteManagerProperty $OverwriteManagerProperty -UsersExternalSystem $UsersExternalSystem -ExternalSystemReplacements $ExternalSystemReplacements -FilterOrganizationalUnit $FilterOrganizationalUnit -CacheManager $GlobalManagerCache -SearchBase $SearchBase
     }
     if (-not $CachedUsers -or $CachedUsers.Count -eq 0) {
         Write-Color -Text "[e]", " No users found to be processed by Password Rules according to filtering settings. Terminating" -Color Yellow, White, Red
