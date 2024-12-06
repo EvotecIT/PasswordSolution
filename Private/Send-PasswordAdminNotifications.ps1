@@ -1,13 +1,13 @@
 ﻿function Send-PasswordAdminNotifications {
     [CmdletBinding()]
     param(
-        $AdminSection,
-        $TemplateAdmin,
-        $TemplateAdminSubject,
-        $TimeEnd,
-        $EmailParameters,
-        $HtmlAttachments,
-        $Logging
+        [System.Collections.IDictionary] $AdminSection,
+        [scriptblock] $TemplateAdmin,
+        [string] $TemplateAdminSubject,
+        [string] $TimeEnd,
+        [System.Collections.IDictionary] $EmailParameters,
+        [Array] $HtmlAttachments,
+        [System.Collections.IDictionary] $Logging
     )
 
     if ($AdminSection.Enable) {
