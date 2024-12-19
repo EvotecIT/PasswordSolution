@@ -192,7 +192,7 @@
                                 New-HTMLListItem -Text @(
                                     "$($Statistic)",
                                     " property shows there are "
-                                    "$ValueEnabled"
+                                    "$ValueEnabled "
                                     "enabled accounts, and "
                                     $ValueDisabled
                                     " disabled accounts having duplicate passwords with other accounts."
