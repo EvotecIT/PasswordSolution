@@ -215,7 +215,8 @@
     $SearchBase = $InitialVariables.SearchBase
     $Entra = $InitialVariables.Entra
 
-    Set-LoggingCapabilities -LogPath $Logging.LogFile -LogMaximum $Logging.LogMaximum -ShowTime:$Logging.ShowTime -TimeFormat $Logging.TimeFormat
+    Set-LoggingCapabilities -LogPath $Logging.LogFile -LogMaximum $Logging.LogMaximum -ShowTime:$Logging.ShowTime -TimeFormat $Logging.TimeFormat -ScriptPath $MyInvocation.ScriptName
+
     # since the first entry didn't go to log file, this will
     Write-Color -Text '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta -NoConsoleOutput
 
@@ -329,6 +330,8 @@
                 Locations                  = $Locations
                 AllSkipped                 = $AllSkipped
                 ExternalSystemReplacements = $ExternalSystemReplacements
+                TemplateAdmin              = $TemplateAdmin
+                TemplateAdminSubject       = $TemplateAdminSubject
             }
             New-HTMLReport @ReportSettings
 

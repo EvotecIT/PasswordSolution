@@ -73,7 +73,8 @@
 
     Write-Color -Text '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
 
-    Set-LoggingCapabilities -LogPath $LogPath -LogMaximum $LogMaximum -ShowTime:$LogShowTime.IsPresent -TimeFormat $TimeFormat
+    Set-LoggingCapabilities -LogPath $LogPath -LogMaximum $LogMaximum -ShowTime:$LogShowTime -TimeFormat $LogTimeFormat -ScriptPath $MyInvocation.ScriptName
+
     # since the first entry didn't go to log file, this will
     Write-Color -Text '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta -NoConsoleOutput
 
@@ -159,7 +160,7 @@
                             if ($WeakPasswordsFileInformation.WeakPasswordHashesStats) {
                                 New-HTMLListItem -Text @(
                                     "This report uses weak passwords hashes from ", $WeakPasswordsFileInformation.WeakPasswordHashesStats.FullName, " to check for, as provided during runtime, size ", $WeakPasswordsFileInformation.WeakPasswordHashesStats.Size, ", last write time ", $WeakPasswordsFileInformation.WeakPasswordHashesStats.LastWriteTime, "."
-                                ) -FontSize 12px -Color None, Red, None, Blue, None, Blue, None -FontWeight  normal, bold, normal, bold, normal, bold, normal
+                                ) -FontSize 12px -Color None, Red, None, Blue, None, Blue, None -FontWeight normal, bold, normal, bold, normal, bold, normal
                             }
                             if ($WeakPasswordsFileInformation.WeakPasswordHashesSortedStats) {
                                 New-HTMLListItem -Text @(
