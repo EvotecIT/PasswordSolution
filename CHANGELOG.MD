@@ -2,6 +2,7 @@
 
 ## 2.0.3
 - Fix formatting in HTML output
+- Fix deletion of log files/reports to specific extensions only [#24](https://github.com/EvotecIT/PasswordSolution/issues/24)
 
 ## 2.0.2 - 2024.10.01
 - Add `SearchBase` when managers are not required, or the scope for both users and managers is very limited (use FilterOrganizationalUnit instead)
