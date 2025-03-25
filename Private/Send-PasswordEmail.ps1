@@ -52,6 +52,26 @@
             $ExpiryDate = $User.DateExpiry
         }
 
+        # Simplify counting for a user used variables
+        $CountUserEmails = 0
+        $CountUserEmailsSent = 0
+        $CountUserEmailsNotSentLackOfEmail = 0
+        $CountUserEmailsNotSentOther = 0
+        foreach ($User in $SummaryUsersEmails) {
+            $CountUserEmails++
+            if ($User.Status -eq $true) {
+                $CountUserEmailsSent++
+            } else {
+                if ($User.StatusError -eq 'No email address for user') {
+                    $CountUserEmailsNotSentLackOfEmail++
+                } else {
+                    $CountUserEmailsNotSentOther++
+                }
+            }
+        }
+        $CountManagerEmails = $SummaryManagersEmails.Count
+        $CountEscalationEmails = $SummaryEscalationEmails.Count
+
         $SourceParameters = [ordered] @{
             ManagerDisplayName                   = $User.DisplayName
             ManagerUsersTable                    = $ManagedUsers
@@ -60,6 +80,15 @@
             SummaryManagersEmails                = $SummaryManagersEmails
             SummaryUsersEmails                   = $SummaryUsersEmails
             TimeToProcess                        = $TimeToProcess
+
+            # Summary counting
+            CountUserEmails                      = $CountUserEmails
+            CountUserEmailsSent                  = $CountUserEmailsSent
+            CountUserEmailsNotSentLackOfEmail    = $CountUserEmailsNotSentLackOfEmail
+            CountUserEmailsNotSentOther          = $CountUserEmailsNotSentOther
+            CountManagerEmails                   = $CountManagerEmails
+            CountEscalationEmails                = $CountEscalationEmails
+
             # Only works if User is set
             UserPrincipalName                    = $User.UserPrincipalName     # : adm.pklys@ad.evotec.xyz
             SamAccountName                       = $User.SamAccountName        # : adm.pklys
