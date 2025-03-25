@@ -6,9 +6,9 @@
         [System.Collections.IDictionary] $Logging,
         [string] $SearchPath,
         [Array] $Rules,
-        [System.Collections.IDictionary]  $UserSection,
-        [System.Collections.IDictionary]  $ManagerSection,
-        [System.Collections.IDictionary]  $SecuritySection,
+        [System.Collections.IDictionary] $UserSection,
+        [System.Collections.IDictionary] $ManagerSection,
+        [System.Collections.IDictionary] $SecuritySection,
         [System.Collections.IDictionary] $AdminSection,
         [System.Collections.IDictionary] $CachedUsers,
         [System.Collections.IDictionary] $Summary,
@@ -18,7 +18,9 @@
         [System.Collections.IDictionary] $SummarySearch,
         [System.Collections.IDictionary] $Locations,
         [System.Collections.IDictionary] $AllSkipped,
-        [System.Collections.IDictionary] $ExternalSystemReplacements
+        [System.Collections.IDictionary] $ExternalSystemReplacements,
+        $TemplateAdmin,
+        $TemplateAdminSubject
     )
     $TranslateOperators = @{
         'lt' = 'Less than'
@@ -122,7 +124,7 @@
                         New-HTMLSection -HeaderText "Admin Section" {
                             New-HTMLList {
                                 New-HTMLListItem -Text "Enabled: ", $AdminSection.Enable -FontWeight normal, bold -TextDecoration underline, none
-                                New-HTMLListItem -Text "Subject: ", $AdminSection.Subject -FontWeight normal, bold -TextDecoration underline, none
+                                New-HTMLListItem -Text "Subject: ", $TemplateAdminSubject -FontWeight normal, bold -TextDecoration underline, none
                                 New-HTMLListItem -Text "Manager: ", $AdminSection.Manager.DisplayName -FontWeight normal, bold -TextDecoration underline, none
                                 New-HTMLListItem -Text "Manager Email: ", ($AdminSection.Manager.EmailAddress -join ", ") -FontWeight normal, bold -TextDecoration underline, none
                             }
