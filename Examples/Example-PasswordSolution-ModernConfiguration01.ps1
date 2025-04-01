@@ -301,12 +301,12 @@ Start-PasswordSolution {
         EmailText -Text "Here's the summary of password notifications:"
 
         EmailList {
-            EmailListItem -Text "Found users matching rule to send emails: ", $SummaryUsersEmails.Count
-            EmailListItem -Text "Sent emails to users: ", ($SummaryUsersEmails | Where-Object { $_.Status -eq $true }).Count
-            EmailListItem -Text "Couldn't send emails because of no email: ", ($SummaryUsersEmails | Where-Object { $_.Status -eq $false -and $_.StatusError -eq 'No email address for user' }).Count
-            EmailListItem -Text "Couldn't send emails because other reasons: ", ($SummaryUsersEmails | Where-Object { $_.Status -eq $false -and $_.StatusError -ne 'No email address for user' }).Count
-            EmailListItem -Text "Sent emails to managers: ", $SummaryManagersEmails.Count
-            EmailListItem -Text "Sent emails to security: ", $SummaryEscalationEmails.Count
+            EmailListItem -Text "Found users matching rule to send emails: ", $CountUserEmails
+            EmailListItem -Text "Sent emails to users: ", $CountUserEmailsSent
+            EmailListItem -Text "Couldn't send emails because of no email: ", $CountUserEmailsNotSentLackOfEmail
+            EmailListItem -Text "Couldn't send emails because other reasons: ", $CountUserEmailsNotSentOther
+            EmailListItem -Text "Sent emails to managers: ", $CountManagerEmails
+            EmailListItem -Text "Sent emails to security: ", $CountEscalationEmails
         }
 
         EmailText -Text "It took ", $TimeToProcess , " seconds to process the template." -LineBreak
