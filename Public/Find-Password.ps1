@@ -226,7 +226,7 @@
         }
     }
 
-    Write-Color -Text "[i] ", "Preparing users ", $Users.Count, " for password expirations in forest ", $Forest.Name -Color Yellow, White, Yellow, White, Yellow, White
+    Write-Color -Text "[i] ", "Preparing users ", $Users.Count, " for analysis across the forest ", $Forest.Name -Color Yellow, White, Yellow, White, Yellow, White
     foreach ($OU in $FilterOrganizationalUnit) {
         Write-Color -Text "[i] ", "Filtering users by Organizational Unit ", $OU -Color Yellow, White, Yellow, White
     }
