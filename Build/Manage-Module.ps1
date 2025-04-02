@@ -5,7 +5,7 @@ Invoke-ModuleBuild -ModuleName 'PasswordSolution' {
     # Usual defaults as per standard module
     $Manifest = [ordered] @{
         # Version number of this module.
-        ModuleVersion        = '2.0.X'
+        ModuleVersion        = '2.1.X'
         # Supported PSEditions
         CompatiblePSEditions = @('Desktop', 'Core')
 
