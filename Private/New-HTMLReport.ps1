@@ -505,7 +505,7 @@
                     New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -Value $false -ComparisonType string
                     New-TableCondition -Name 'PasswordExpired' -BackgroundColor Salmon -Value $true -ComparisonType string
                     New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                } -Filtering
+                } -Filtering -AllProperties
             }
         }
         if ($Report.ShowSearchManagers) {
@@ -521,7 +521,7 @@
                 New-HTMLTable -DataTable $ShowSearchManagers {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                } -Filtering
+                } -Filtering -AllProperties
             }
         }
         if ($Report.ShowSearchEscalations) {
@@ -537,7 +537,7 @@
                 New-HTMLTable -DataTable $ShowSearchEscalations {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                } -Filtering
+                } -Filtering -AllProperties
             }
         }
         if ($Report.ShowSkippedUsers) {
