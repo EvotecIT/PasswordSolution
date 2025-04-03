@@ -20,7 +20,13 @@
         }
         # this will make sure to expand array of multiple arrays of ints if provided
         # for example: (-150..-100),(-60..0), 1, 2, 3
-        $Rule.Reminders = $Rule.Reminders | ForEach-Object { $_ }
+        if ($null -ne $Rule.Reminders) {
+            $Rule.Reminders = $Rule.Reminders | ForEach-Object { $_ }
+        }
+        # Do the same for DisableDays, if provided
+        if ($null -ne $Rule.DisableDays) {
+            $Rule.DisableDays = $Rule.DisableDays | ForEach-Object { $_ }
+        }
         foreach ($User in $CachedUsers.Values) {
             if ($Entra.Enabled) {
                 $UserSearchString = $User.UserPrincipalName
