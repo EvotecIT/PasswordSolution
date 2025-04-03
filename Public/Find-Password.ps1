@@ -4,7 +4,10 @@
     Scan Active Directory forest for all users and their password expiration date
 
     .DESCRIPTION
-    Scan Active Directory forest for all users and their password expiration date
+    Scan Active Directory forest for all users and their password expiration date.
+    This function retrieves detailed information about user accounts from Active Directory,
+    including password status, manager information, and email addresses.
+    It can scan multiple domains, filter by organizational units, and integrate with external systems.
 
     .PARAMETER Forest
     Target different Forest, by default current forest is used
@@ -16,45 +19,102 @@
     Include only specific domains, by default whole forest is scanned
 
     .PARAMETER ExtendedForestInformation
-    Ability to provide Forest Information from another command to speed up processing
+    Ability to provide Forest Information from another command to speed up processing.
+    This is useful when you already have forest information cached.
 
     .PARAMETER OverwriteEmailProperty
-    Overwrite EmailAddress property with different property name
+    Overwrite EmailAddress property with different property name.
+    Useful when the email address is stored in a non-standard attribute.
 
     .PARAMETER OverwriteManagerProperty
     Overwrite Manager property with different property name.
-    Can use DistinguishedName or SamAccountName
+    Can use DistinguishedName or SamAccountName.
+    This is useful for service accounts or other accounts that don't have a standard manager field in AD.
 
     .PARAMETER RulesProperties
-    Add additional properties to be returned from rules
+    Add additional properties to be returned from rules.
+    These properties will be added to the output objects for use in further processing.
 
     .PARAMETER UsersExternalSystem
+    A dictionary containing external user information that can be used to supplement AD data.
+    This allows integration with external identity management systems.
 
     .PARAMETER ExternalSystemReplacements
+    A dictionary that tracks email replacements made from external systems.
+    This helps maintain a record of changes for auditing purposes.
 
     .PARAMETER FilterOrganizationalUnit
+    Filter results to include only users from specified organizational units.
+    This helps reduce processing time for large domains when only specific OUs are needed.
 
     .PARAMETER SearchBase
+    Limit the search to specific containers in Active Directory.
+    Provides an alternative way to filter results by specifying exact search paths.
 
     .PARAMETER AsHashTable
+    Return results as a hashtable instead of objects.
+    This is useful for lookups when you need to quickly find specific users.
 
     .PARAMETER AsHashTableObject
+    Return results as a hashtable of ordered dictionaries instead of PSObjects.
+    This gives more flexibility when manipulating the results programmatically.
 
     .PARAMETER AddEmptyProperties
+    Add empty properties to the output objects.
+    Useful when you need consistent object properties even when some data is missing.
 
     .PARAMETER ReturnObjectsType
+    Specify which types of objects to return (Users, Contacts).
+    Default is both Users and Contacts.
 
     .PARAMETER Cache
+    A dictionary used to cache user information for faster processing.
+    Particularly useful when dealing with large datasets.
 
     .PARAMETER HashtableField
+    Field to use as the key when returning results as a hashtable.
+    Default is 'DistinguishedName'.
 
     .PARAMETER CacheManager
+    A dictionary used to cache manager information for faster processing.
+
+    .PARAMETER Replacements
+    A list of replacement configurations for property values.
+    Allows for standardizing or translating values in the result set.
 
     .EXAMPLE
-    Find-Password | ft
+    Find-Password | Format-Table
+
+    Retrieves all users from the current forest and displays them in a table format.
+
+    .EXAMPLE
+    Find-Password -IncludeDomains "contoso.com" -FilterOrganizationalUnit "OU=Sales,DC=contoso,DC=com"
+
+    Retrieves users only from the contoso.com domain, filters to only those in the Sales OU,
+    and then further filters to show only users with expired passwords.
+
+    .EXAMPLE
+    $replacements = @(
+        New-PasswordConfigurationReplacement -PropertyName 'Country' -Type eq -PropertyReplacementHash @{
+            'PL' = 'Poland'
+            'DE' = 'Germany'
+        } -OverwritePropertyName 'CountryCode'
+    )
+    Find-Password -Replacements $replacements | Select-Object SamAccountName, CountryCode, Country
+
+    Retrieves users and replaces country codes with full country names using the specified replacement configuration.
 
     .NOTES
-    General notes
+    This function is part of the PasswordSolution module.
+    It requires Active Directory PowerShell module to be installed.
+
+    Performance considerations:
+    - For large environments, consider using filters like FilterOrganizationalUnit or SearchBase
+    - Pre-caching forest information can speed up execution when running multiple queries
+    - Using AsHashTable can improve lookup performance for subsequent operations
+
+    For integration with external systems, use the UsersExternalSystem parameter with a properly
+    configured external user repository.
     #>
     [CmdletBinding()]
     param(
