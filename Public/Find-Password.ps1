@@ -78,7 +78,8 @@
         [string[]] $FilterOrganizationalUnit,
         [string[]] $SearchBase,
         [System.Collections.IDictionary] $Cache = [ordered] @{},
-        [System.Collections.IDictionary] $CacheManager = [ordered] @{}
+        [System.Collections.IDictionary] $CacheManager = [ordered] @{},
+        [System.Collections.IDictionary[]] $Replacements
     )
 
     $ExternalSystemManagers = [ordered]@{}
@@ -143,6 +144,18 @@
     if (-not $CachedUsers) {
         $CachedUsers = [ordered] @{ }
     }
+
+    $CachedReplacements = [ordered] @{}
+
+    foreach ($ReplacementItem in $Replacements.Settings) {
+        $CachedReplacements[$ReplacementItem.PropertyName] = [ordered] @{
+            OverwritePropertyName = $ReplacementItem.OverwritePropertyName
+        }
+        foreach ($Replacement in $ReplacementItem.PropertyReplacementHash.Keys) {
+            $CachedReplacements[$ReplacementItem.PropertyName][$Replacement] = $ReplacementItem.PropertyReplacementHash[$Replacement]
+        }
+    }
+
     Write-Color -Text '[i] ', "Discovering forest information" -Color Yellow, White
     $ForestInformation = Get-WinADForestDetails -PreferWritable -Extended -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
 
@@ -624,6 +637,37 @@
                 $CachedUsers["$($User.$HashtableField)"] = $MyUser
             } else {
                 $CachedUsers["$($User.$HashtableField)"] = [PSCustomObject] $MyUser
+            }
+        }
+        # This function is used to replace values in the object with the replacement values
+        # It uses the $CachedReplacements hashtable to find the replacement values
+        # It uses the $MyUser object to find the values to be replaced
+        <# For example:
+        $Replacements = @(
+            New-PasswordConfigurationReplacement -PropertyName 'Country' -Type eq -PropertyReplacementHash @{
+                'PL'      = 'Poland'
+                'DE'      = 'Germany'
+                'AT'      = 'Austria'
+                'IT'      = 'Italy'
+                'Unknown' = 'Dupa'
+            } -OverwritePropertyName 'CountryCode'
+        )
+
+        $Users = Find-PasswordQuality -Replacements $Replacements
+        $Users | Format-Table
+        #>
+        if ($CachedReplacements.Count -gt 0) {
+            foreach ($PropertyName in $CachedReplacements.Keys) {
+                $ReplacementData = $CachedReplacements[$PropertyName]
+                $SearchValue = $MyUser[$PropertyName]
+                if ($ReplacementData.OverwritePropertyName) {
+                    $ExpectedPropertyName = $ReplacementData.OverwritePropertyName
+                } else {
+                    $ExpectedPropertyName = $PropertyName
+                }
+                if ($MyUser[$PropertyName] -and $ReplacementData[$SearchValue]) {
+                    $MyUser[$ExpectedPropertyName] = $ReplacementData[$SearchValue]
+                }
             }
         }
     }

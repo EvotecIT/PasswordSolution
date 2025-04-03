@@ -33,11 +33,28 @@
     .PARAMETER ExtendedForestInformation
     Ability to provide Forest Information from another command to speed up processing
 
+    .PARAMETER Replacements
+    Ability to provide replacements for properties to be used in the output
+
     .EXAMPLE
     Find-PasswordQuality -WeakPasswords "Test1", "Test2", "Test3"
 
     .EXAMPLE
     Find-PasswordQuality -WeakPasswords "Test1", "Test2", "Test3" -IncludeStatistics
+
+    .EXAMPLE
+    $Replacements = @(
+        New-PasswordConfigurationReplacement -PropertyName 'Country' -Type eq -PropertyReplacementHash @{
+            'PL'      = 'Poland'
+            'DE'      = 'Germany'
+            'AT'      = 'Austria'
+            'IT'      = 'Italy'
+            'Unknown' = 'Poland'
+        } -OverwritePropertyName 'CountryCode'
+    )
+
+    $Users = Find-PasswordQuality -Replacements $Replacements
+    $Users | Format-Table
 
     .NOTES
     General notes
@@ -53,7 +70,8 @@
         [alias('ForestName')][string] $Forest,
         [string[]] $ExcludeDomains,
         [alias('Domain', 'Domains')][string[]] $IncludeDomains,
-        [System.Collections.IDictionary] $ExtendedForestInformation
+        [System.Collections.IDictionary] $ExtendedForestInformation,
+        [System.Collections.IDictionary[]] $Replacements
     )
 
     $PropertiesToAdd = @(
@@ -104,7 +122,7 @@
         Write-Color -Text "[e] ", "DSInternals module is not installed. Please install it using Install-Module DSInternals -Verbose" -Color Yellow, Red
         return
     }
-    $AllUsers = Find-Password -AsHashTable -HashtableField NetBiosSamAccountName -ReturnObjectsType Users -AsHashTableObject -AddEmptyProperties $PropertiesToAdd -Forest $Forest -IncludeDomains $IncludeDomains -ExcludeDomains $ExcludeDomains
+    $AllUsers = Find-Password -AsHashTable -HashtableField NetBiosSamAccountName -ReturnObjectsType Users -AsHashTableObject -AddEmptyProperties $PropertiesToAdd -Forest $Forest -IncludeDomains $IncludeDomains -ExcludeDomains $ExcludeDomains -Replacements $Replacements
 
     Write-Color -Text "[i] ", "Discovering forest information" -Color Yellow, Gray, White, Yellow, White, Yellow, White
     $ForestInformation = Get-WinADForestDetails -PreferWritable -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
