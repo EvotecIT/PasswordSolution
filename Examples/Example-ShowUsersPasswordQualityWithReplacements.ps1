@@ -9,13 +9,13 @@ $showPasswordQualitySplat = @{
     LogPath                 = "$PSScriptRoot\Logs\PasswordQuality_$(Get-Date -f yyyy-MM-dd_HHmmss).log"
     Online                  = $true
     LogMaximum              = 5
-    Replacements            = New-PasswordConfigurationReplacement -PropertyName 'Country' -Type eq -PropertyReplacementHash @{
+    Replacements            = New-PasswordConfigurationReplacement -PropertyName 'ExtensionAttribute4' -Type eq -PropertyReplacementHash @{
         'PL'      = 'Poland'
         'DE'      = 'Germany'
         'AT'      = 'Austria'
         'IT'      = 'Italy'
         'Unknown' = 'Not specified in AD'
-    } #-OverwritePropertyName 'CountryCode'
+    } #-OverwritePropertyName 'AddMe'
 }
 
 Show-PasswordQuality @showPasswordQualitySplat -Verbose

@@ -101,6 +101,19 @@
         $ExchangeProperty = 'msExchMailboxGuid'
     }
 
+    $CachedReplacements = [ordered] @{}
+
+    $CachedReplacementsProperties = [System.Collections.Generic.List[string]]::new()
+    foreach ($ReplacementItem in $Replacements.Settings) {
+        $CachedReplacementsProperties.Add($ReplacementItem.PropertyName)
+        $CachedReplacements[$ReplacementItem.PropertyName] = [ordered] @{
+            OverwritePropertyName = $ReplacementItem.OverwritePropertyName
+        }
+        foreach ($Replacement in $ReplacementItem.PropertyReplacementHash.Keys) {
+            $CachedReplacements[$ReplacementItem.PropertyName][$Replacement] = $ReplacementItem.PropertyReplacementHash[$Replacement]
+        }
+    }
+
     $Properties = @(
         'Manager', 'DisplayName', 'GivenName', 'Surname', 'SamAccountName', 'EmailAddress',
         'msDS-UserPasswordExpiryTimeComputed', 'PasswordExpired', 'PasswordLastSet', 'PasswordNotRequired',
@@ -124,6 +137,11 @@
         foreach ($Rule in $RulesProperties) {
             $Rule
         }
+        if ($CachedReplacementsProperties.Count -gt 0) {
+            foreach ($PropertyName in $CachedReplacementsProperties) {
+                $PropertyName
+            }
+        }
     )
     $Properties = $Properties | Sort-Object -Unique
     # lets build extended properties that need
@@ -145,16 +163,6 @@
         $CachedUsers = [ordered] @{ }
     }
 
-    $CachedReplacements = [ordered] @{}
-
-    foreach ($ReplacementItem in $Replacements.Settings) {
-        $CachedReplacements[$ReplacementItem.PropertyName] = [ordered] @{
-            OverwritePropertyName = $ReplacementItem.OverwritePropertyName
-        }
-        foreach ($Replacement in $ReplacementItem.PropertyReplacementHash.Keys) {
-            $CachedReplacements[$ReplacementItem.PropertyName][$Replacement] = $ReplacementItem.PropertyReplacementHash[$Replacement]
-        }
-    }
 
     Write-Color -Text '[i] ', "Discovering forest information" -Color Yellow, White
     $ForestInformation = Get-WinADForestDetails -PreferWritable -Extended -Forest $Forest -ExcludeDomains $ExcludeDomains -IncludeDomains $IncludeDomains -ExtendedForestInformation $ExtendedForestInformation
@@ -660,13 +668,16 @@
             foreach ($PropertyName in $CachedReplacements.Keys) {
                 $ReplacementData = $CachedReplacements[$PropertyName]
                 $SearchValue = $MyUser[$PropertyName]
+                $SearchValueFromUser = $User.$PropertyName
                 if ($ReplacementData.OverwritePropertyName) {
                     $ExpectedPropertyName = $ReplacementData.OverwritePropertyName
                 } else {
                     $ExpectedPropertyName = $PropertyName
                 }
-                if ($MyUser[$PropertyName] -and $ReplacementData[$SearchValue]) {
+                if ($null -ne $SearchValue -and $ReplacementData[$SearchValue]) {
                     $MyUser[$ExpectedPropertyName] = $ReplacementData[$SearchValue]
+                } elseif ($null -ne $SearchValueFromUser -and $ReplacementData[$SearchValueFromUser]) {
+                    $MyUser[$ExpectedPropertyName] = $ReplacementData[$SearchValueFromUser]
                 }
             }
         }
