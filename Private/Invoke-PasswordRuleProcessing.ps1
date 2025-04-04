@@ -37,9 +37,29 @@
                 # We don't want to have disabled users
                 continue
             }
+            if ($Rule.ExcludeOUFromOtherRules) {
+                # Rule defined that user within OU's already used in processed Rules are excluded
+                $FoundOU = $false
+                foreach ($OU in $Summary.Tracking.IncludeOU) {
+                    if ($User.OrganizationalUnit -like $OU) {
+                        $FoundOU = $true
+                        break
+                    }
+                }
+                # if OU is found we need to exclude the user
+                if ($FoundOU) {
+                    continue
+                }
+            }
+
             if ($Rule.ExcludeOU.Count -gt 0) {
+                # Rule defined that user within specific OU has to be excluded
                 $FoundOU = $false
                 foreach ($OU in $Rule.ExcludeOU) {
+                    # Lets update global tracking
+                    if ($Summary['Tracking']['ExcludeOU'] -notcontains $OU) {
+                        $Summary['Tracking']['ExcludeOU'].Add($OU)
+                    }
                     if ($User.OrganizationalUnit -like $OU) {
                         $FoundOU = $true
                         break
@@ -54,6 +74,10 @@
                 # Rule defined that only user within specific OU has to be found
                 $FoundOU = $false
                 foreach ($OU in $Rule.IncludeOU) {
+                    # Lets update global tracking
+                    if ($Summary['Tracking']['IncludeOU'] -notcontains $OU) {
+                        $Summary['Tracking']['IncludeOU'].Add($OU)
+                    }
                     if ($User.OrganizationalUnit -like $OU) {
                         $FoundOU = $true
                         break
