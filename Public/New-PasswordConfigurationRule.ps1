@@ -98,6 +98,20 @@
     Sending emails to users within the rule will be skipped completly.
     This is useful if users would have email addresses, that would normally trigger an email to them.
 
+    .PARAMETER DisableDays
+    Define days to disable the user. This is used to disable users that are not already expired.
+
+    .PARAMETER DisableWhatIf
+    If set, the user will not be disabled, but a message will be shown that the user would be disabled.
+
+    .PARAMETER DisableType
+    Type of comparison to use for the DisableDays parameter. Default is 'eq'.
+    Possible values are 'eq', 'in', 'lt', 'gt'.
+    'eq' - Days of expiration has to be equal to the value of DisableDays
+    'in' - Days of expiration has to be in the value of DisableDays
+    'lt' - Days of expiration has to be less than the value of DisableDays
+    'gt' - Days of expiration has to be greater than the value of DisableDays
+
     .EXAMPLE
     An example
 
@@ -145,10 +159,14 @@
 
         [switch] $ProcessManagersOnly,
 
-        [switch] $OverwriteEmailFromExternalUsers
+        [switch] $OverwriteEmailFromExternalUsers,
+
+        [ValidateSet('eq', 'in', 'lt', 'gt')][string] $DisableType = 'eq',
+        [Array] $DisableDays,
+        [switch] $DisableWhatIf
 
     )
-
+    # Check if the parameters are set correctly
     if (-not $ProcessManagersOnly) {
         if ($null -eq $ReminderDays) {
             $ErrorMessage = "'ReminderDays' is required for rule '$Name', unless 'ProcessManagersOnly' is set. This is to make sure the rule is not skipped completly."
@@ -157,6 +175,23 @@
                 Type  = 'PasswordConfigurationRule'
                 Error = $ErrorMessage
             }
+        }
+    }
+    # Logic to check if the DisableDays is set and if the DisableType is valid
+    if ($DisableDays.Count -gt 0) {
+        if ($DisableType -in 'eq', 'lt', 'gt') {
+            if ($DisableDays.Count -gt 1) {
+                $ErrorMessage = "Only one number for 'DisableDays' can be specified for Rule when using comparison types 'eq', 'lt', and 'gt'. Current values are $($DisableDays -join ', ') for '$DisableType'"
+                Write-Color -Text "[e]", " Processing rule ", $Name, " failed because of error: ", $ErrorMessage -Color Yellow, White, Red
+                return [ordered] @{
+                    Type  = 'PasswordConfigurationRule'
+                    Error = $ErrorMessage
+                }
+            } else {
+                $DisableDaysToUse = $DisableDays[0]
+            }
+        } else {
+            $DisableDaysToUse = $DisableDays
         }
     }
 
@@ -180,6 +215,10 @@
         OverwriteManagerProperty        = $OverwriteManagerProperty
 
         OverwriteEmailFromExternalUsers = $OverwriteEmailFromExternalUsers.IsPresent
+
+        DisableType                     = $DisableType
+        DisableDays                     = $DisableDaysToUse
+        DisableWhatIf                   = $DisableWhatIf.IsPresent
     }
     $Output.SendToManager['Manager'] = [ordered] @{
         Enable    = $false
