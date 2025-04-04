@@ -109,16 +109,16 @@ Start-PasswordSolution {
         ReminderConfiguration            = {
             # follow expiration days of a user
             New-PasswordConfigurationRuleReminder -Type 'Manager' -DayOfWeek Monday, Wednesday, Friday -ExpirationDays 60 -ComparisonType lt #-ExpirationDays @(-200..-1), 0, 1, 2, 3, 7, 15, 30, 60 -ComparisonType lt
-            New-PasswordConfigurationRuleReminder -Type 'ManagerNotCompliant' -DayOfWeek Friday -ExpirationDays 300 -ComparisonType lt
-            New-PasswordConfigurationRuleReminder -Type 'Security' -DayOfWeek Monday -ExpirationDays -1 -ComparisonType lt
+            #New-PasswordConfigurationRuleReminder -Type 'ManagerNotCompliant' -DayOfWeek Friday -ExpirationDays 300 -ComparisonType lt
+            #New-PasswordConfigurationRuleReminder -Type 'Security' -DayOfWeek Monday -ExpirationDays -1 -ComparisonType lt
         }
-        #ReminderDays                     = '-45', '-30', '-15', '-7' #, 0, 1, 2, 3, 7, 15, 30, 60, 29, 28
+        ReminderDays                     = '-45', '-30', '-15', '-7', -195 #, 0, 1, 2, 3, 7, 15, 30, 60, 29, 28
         IncludeOU                        = @(
             "*OU=Accounts,OU=Administration,DC=ad,DC=evotec,DC=xyz"
             "*OU=Administration,DC=ad,DC=evotec,DC=xyz"
         )
         ManagerReminder                  = $true
-        ProcessManagersOnly              = $true
+        ProcessManagersOnly              = $false
         ManagerNotCompliant              = $true
         ManagerNotCompliantDisplayName   = 'Global Service Desk'
         ManagerNotCompliantEmailAddress  = 'przemyslaw.klys@test.pl'
@@ -129,19 +129,21 @@ Start-PasswordSolution {
         SecurityEscalation               = $true
         SecurityEscalationDisplayName    = 'IT Security'
         SecurityEscalationEmailAddress   = 'przemyslaw.klys@test.pl'
+        #DisableDays                      = @(-171,-170,-172,-200)
+        #DisableType                      = 'in'
+        #DisableWhatIf                    = $true
     }
 
     New-PasswordConfigurationRule @newPasswordConfigurationRuleSplat
 
-
-    # New-PasswordConfigurationRule -Name 'All others' -Enable -ReminderDays @(500..-500), 60, 59, 30, 15, 7, 3, 2, 1, 0, -7, -15, -30, -45 {
-    #     # follow expiration days of a user, you need to enable ManagerReminder for this functionality to work
-    #     New-PasswordConfigurationRuleReminder -Type 'Manager' -ExpirationDays -45, -30, -15, -7, 0, 1, 2, 3, 7, 15, 30, 60
-    #     # use a custom expiration days, and send only on specific days 1st, 10th and 15th of a month
-    #     New-PasswordConfigurationRuleReminder -Type 'Manager' -DayOfMonth 1, 10, 15 -ExpirationDays -45, -30, -15, -7, 0, 1, 2, 3, 7, 15, 30, 60
-    #     # use a custom expiration days (only if it's less then 10 days left), and send only on specific days of a week
-    #     New-PasswordConfigurationRuleReminder -Type 'Manager' -DayOfWeek Monday, Wednesday, Friday -ExpirationDays 10 -ComparisonType 'lt'
-    # } -IncludeExpiring -OverwriteEmailProperty 'extensionAttribute5' -OverwriteManagerProperty 'extensionAttribute1' -ManagerReminder
+    New-PasswordConfigurationRule -Name 'All others' -Enable -ReminderDays @(500..-500), 60, 59, 30, 15, 7, 3, 2, 1, 0, -7, -15, -30, -45 {
+        # follow expiration days of a user, you need to enable ManagerReminder for this functionality to work
+        New-PasswordConfigurationRuleReminder -Type 'Manager' -ExpirationDays -45, -30, -15, -7, 0, 1, 2, 3, 7, 15, 30, 60 -ComparisonType 'in'
+        # use a custom expiration days, and send only on specific days 1st, 10th and 15th of a month
+        #New-PasswordConfigurationRuleReminder -Type 'Manager' -DayOfMonth 1, 10, 15 -ExpirationDays -45, -30, -15, -7, 0, 1, 2, 3, 7, 15, 30, 60 -ComparisonType 'in'
+        # use a custom expiration days (only if it's less then 10 days left), and send only on specific days of a week
+        #New-PasswordConfigurationRuleReminder -Type 'Manager' -DayOfWeek Monday, Wednesday, Friday -ExpirationDays 10 -ComparisonType 'lt'
+    } -ExcludeOUFromOtherRules -IncludeExpiring -OverwriteEmailProperty 'extensionAttribute5' -OverwriteManagerProperty 'extensionAttribute1' -ManagerReminder #-DisableType 'in' -DisableDays @(-171,-200) -DisableWhatIf
 
     # Template to user when sending email to user before password expires
     New-PasswordConfigurationTemplate -Type PreExpiry -Template {
