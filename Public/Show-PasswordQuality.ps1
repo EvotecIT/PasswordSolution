@@ -37,6 +37,29 @@
     .PARAMETER SeparateDuplicateGroups
     If specified, report will show duplicate groups separately, one group per tab.
 
+    .PARAMETER PassThru
+    If specified, the function will return PowerShell object with all relevant information.
+
+    .PARAMETER AddWorldMap
+    If specified, a world map will be added to the report.
+
+    .PARAMETER LogFile
+    Path to the log file where the script will write its log entries.
+
+    .PARAMETER LogMaximum
+    Maximum number of files to keep in the log folder.
+
+    .PARAMETER LogShowTime
+    If specified, the log in console will show time on the left side.
+
+    .PARAMETER LogTimeFormat
+    Format of the time in the log file.
+
+    Default is "yyyy-MM-dd HH:mm:ss".
+
+    .PARAMETER Replacements
+    List of replacements to be used in the report.
+
     .EXAMPLE
     Show-PasswordQuality -FilePath $PSScriptRoot\Reporting\PasswordQuality.html -Online -WeakPasswords "Test1", "Test2", "Test3" -Verbose
 
@@ -65,7 +88,8 @@
         [alias('LogFile')][string] $LogPath,
         [int] $LogMaximum,
         [switch] $LogShowTime,
-        [string] $LogTimeFormat = "yyyy-MM-dd HH:mm:ss"
+        [string] $LogTimeFormat = "yyyy-MM-dd HH:mm:ss",
+        [System.Collections.IDictionary[]] $Replacements
     )
     $TimeStart = Start-TimeLog
     $Script:Reporting = [ordered] @{}
@@ -91,6 +115,9 @@
         ExcludeDomains                = $ExcludeDomains
         IncludeDomains                = $IncludeDomains
         ExtendedForestInformation     = $ExtendedForestInformation
+    }
+    if ($Replacements) {
+        $findPasswordQualitySplat['Replacements'] = $Replacements
     }
     $PasswordQuality = Find-PasswordQuality @findPasswordQualitySplat
     if (-not $PasswordQuality) {
@@ -274,7 +301,7 @@
                     New-HTMLTableCondition -Name $Property -ComparisonType string -Operator eq -Value $true -BackgroundColor Salmon -FailBackgroundColor LightGreen
                 }
                 New-HTMLTableCondition -Name 'DuplicatePasswordGroups' -ComparisonType string -Operator ne -Value "" -BackgroundColor Orange -FailBackgroundColor LightGreen
-            } -ScrollX -ExcludeProperty 'RuleName', 'RuleOptions', 'CountryCode', 'Type', 'ManagerDN', 'DistinguishedName', 'MemberOf'
+            } -ScrollX -ExcludeProperty 'RuleName', 'RuleOptions', 'CountryCode', 'Type', 'ManagerDN', 'DistinguishedName', 'MemberOf' -AllProperties
 
         }
         if ($SeparateDuplicateGroups) {

@@ -147,7 +147,10 @@
     $Summary['NotifyManager'] = [ordered] @{}
     $Summary['NotifySecurity'] = [ordered] @{}
     $Summary['Rules'] = [ordered] @{}
-
+    $Summary['Tracking'] = [ordered] @{
+        'IncludeOU' = [System.Collections.Generic.List[string]]::new()
+        'ExcludeOU' = [System.Collections.Generic.List[string]]::new()
+    }
     $AllSkipped = [ordered] @{}
     $Locations = [ordered] @{}
 
@@ -332,6 +335,8 @@
                 ExternalSystemReplacements = $ExternalSystemReplacements
                 TemplateAdmin              = $TemplateAdmin
                 TemplateAdminSubject       = $TemplateAdminSubject
+                SearchBase                 = $SearchBase
+                FilterOrganizationalUnit   = $FilterOrganizationalUnit
             }
             New-HTMLReport @ReportSettings
 

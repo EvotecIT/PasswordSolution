@@ -6,9 +6,9 @@
         [System.Collections.IDictionary] $Logging,
         [string] $SearchPath,
         [Array] $Rules,
-        [System.Collections.IDictionary]  $UserSection,
-        [System.Collections.IDictionary]  $ManagerSection,
-        [System.Collections.IDictionary]  $SecuritySection,
+        [System.Collections.IDictionary] $UserSection,
+        [System.Collections.IDictionary] $ManagerSection,
+        [System.Collections.IDictionary] $SecuritySection,
         [System.Collections.IDictionary] $AdminSection,
         [System.Collections.IDictionary] $CachedUsers,
         [System.Collections.IDictionary] $Summary,
@@ -18,7 +18,11 @@
         [System.Collections.IDictionary] $SummarySearch,
         [System.Collections.IDictionary] $Locations,
         [System.Collections.IDictionary] $AllSkipped,
-        [System.Collections.IDictionary] $ExternalSystemReplacements
+        [System.Collections.IDictionary] $ExternalSystemReplacements,
+        [ScriptBlock] $TemplateAdmin,
+        [string] $TemplateAdminSubject,
+        [Array] $FilterOrganizationalUnit,
+        [Array] $SearchBase
     )
     $TranslateOperators = @{
         'lt' = 'Less than'
@@ -87,8 +91,44 @@
                         }
                         New-HTMLSection -HeaderText "Other" {
                             New-HTMLList {
-                                New-HTMLListItem -Text 'FilePath', ": ", $Report.FilePath -FontWeight normal, normal, bold
-                                New-HTMLListItem -Text 'SearchPath', ": ", $SearchPath -FontWeight normal, normal, bold
+                                if ($Report.FilePath) {
+                                    New-HTMLListItem -Text 'FilePath', ": ", $Report.FilePath -FontWeight normal, normal, bold
+                                } else {
+                                    New-HTMLListItem -Text 'FilePath', ": ", "Not set" -FontWeight normal, normal, bold
+                                }
+                                if ($Report.Email) {
+                                    New-HTMLListItem -Text 'Email', ": ", $Report.Email -FontWeight normal, normal, bold
+                                } else {
+                                    New-HTMLListItem -Text 'Email', ": ", "Not set" -FontWeight normal, normal, bold
+                                }
+                                if ($SearchPath) {
+                                    New-HTMLListItem -Text 'SearchPath', ": ", $SearchPath -FontWeight normal, normal, bold
+                                } else {
+                                    New-HTMLListItem -Text 'SearchPath', ": ", "Not set" -FontWeight normal, normal, bold
+                                }
+                                if ($FilterOrganizationalUnit.Count -gt 0) {
+                                    New-HTMLListItem -Text 'FilterOrganizationalUnit', ": " {
+                                        New-HTMLList {
+                                            foreach ($OU in $FilterOrganizationalUnit) {
+                                                New-HTMLListItem -Text 'OU', ": ", $OU -FontWeight normal, normal, bold
+                                            }
+                                        }
+                                    } -FontWeight normal, normal, bold
+
+                                } else {
+                                    New-HTMLListItem -Text 'FilterOrganizationalUnit', ": ", "Not set" -FontWeight normal, normal, bold
+                                }
+                                if ($SearchBase.Count -gt 0) {
+                                    New-HTMLListItem -Text 'SearchBase', ": " {
+                                        New-HTMLList {
+                                            foreach ($OU in $SearchBase) {
+                                                New-HTMLListItem -Text 'OU', ": ", $OU -FontWeight normal, normal, bold
+                                            }
+                                        }
+                                    } -FontWeight normal, normal, bold
+                                } else {
+                                    New-HTMLListItem -Text 'SearchBase', ": ", "Not set" -FontWeight normal, normal, bold
+                                }
                             }
                         }
                     }
@@ -122,7 +162,7 @@
                         New-HTMLSection -HeaderText "Admin Section" {
                             New-HTMLList {
                                 New-HTMLListItem -Text "Enabled: ", $AdminSection.Enable -FontWeight normal, bold -TextDecoration underline, none
-                                New-HTMLListItem -Text "Subject: ", $AdminSection.Subject -FontWeight normal, bold -TextDecoration underline, none
+                                New-HTMLListItem -Text "Subject: ", $TemplateAdminSubject -FontWeight normal, bold -TextDecoration underline, none
                                 New-HTMLListItem -Text "Manager: ", $AdminSection.Manager.DisplayName -FontWeight normal, bold -TextDecoration underline, none
                                 New-HTMLListItem -Text "Manager Email: ", ($AdminSection.Manager.EmailAddress -join ", ") -FontWeight normal, bold -TextDecoration underline, none
                             }
@@ -424,7 +464,11 @@
                     New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -Value $false -ComparisonType string
                     New-TableCondition -Name 'PasswordExpired' -BackgroundColor Salmon -Value $true -ComparisonType string
                     New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                } -Filtering
+
+                    New-TableCondition -Name 'Disabled' -BackgroundColor LawnGreen -Value $true -ComparisonType string -HighlightHeaders 'Disabled', 'DisabledError'
+                    New-TableCondition -Name 'Disabled' -BackgroundColor Salmon -Value $false -ComparisonType string
+                    New-TableCondition -Name 'DisabledError' -BackgroundColor ColumbiaBlue -Value 'WhatIf' -ComparisonType string -HighlightHeaders 'Disabled', 'DisabledError'
+                } -Filtering -ScrollX
             }
         }
         if ($Report.ShowManagersSent) {
@@ -439,7 +483,9 @@
                 New-HTMLTable -DataTable $SummaryManagersEmails {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                } -Filtering
+
+                    New-TableCondition -Name 'DisabledAccountsError' -BackgroundColor LawnGreen -Value 'Not disabled', 'WhatIf', '' -ComparisonType string -Operator notin -HighlightHeaders 'DisabledAccounts', 'DisabledAccountsCount', 'DisabledAccountsError'
+                } -Filtering -ScrollX
             }
         }
         if ($Report.ShowEscalationSent) {
@@ -454,7 +500,7 @@
                 New-HTMLTable -DataTable $SummaryEscalationEmails {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                } -Filtering
+                } -Filtering -ScrollX
             }
         }
         if ($Report.ShowExternalSystemReplacementsUsers) {
@@ -503,7 +549,11 @@
                     New-TableCondition -Name 'PasswordExpired' -BackgroundColor LawnGreen -Value $false -ComparisonType string
                     New-TableCondition -Name 'PasswordExpired' -BackgroundColor Salmon -Value $true -ComparisonType string
                     New-TableCondition -Name 'PasswordNeverExpires' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $false -ComparisonType string
-                } -Filtering
+
+                    New-TableCondition -Name 'Disabled' -BackgroundColor LawnGreen -Value $true -ComparisonType string -HighlightHeaders 'Disabled', 'DisabledError'
+                    New-TableCondition -Name 'Disabled' -BackgroundColor Salmon -Value $false -ComparisonType string
+                    New-TableCondition -Name 'DisabledError' -BackgroundColor ColumbiaBlue -Value 'WhatIf' -ComparisonType string -HighlightHeaders 'Disabled', 'DisabledError'
+                } -Filtering -AllProperties -ScrollX
             }
         }
         if ($Report.ShowSearchManagers) {
@@ -519,7 +569,8 @@
                 New-HTMLTable -DataTable $ShowSearchManagers {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                } -Filtering
+                    New-TableCondition -Name 'DisabledAccountsError' -BackgroundColor LawnGreen -Value 'Not disabled', 'WhatIf', '' -ComparisonType string -Operator notin -HighlightHeaders 'DisabledAccounts', 'DisabledAccountsCount', 'DisabledAccountsError'
+                } -Filtering -AllProperties -ScrollX
             }
         }
         if ($Report.ShowSearchEscalations) {
@@ -535,7 +586,7 @@
                 New-HTMLTable -DataTable $ShowSearchEscalations {
                     New-TableHeader -Names 'Status', 'StatusError', 'SentTo', 'StatusWhen' -Title 'Email Summary'
                     New-TableCondition -Name 'Status' -BackgroundColor LawnGreen -FailBackgroundColor Salmon -Value $true -ComparisonType string -HighlightHeaders 'Status', 'StatusWhen', 'StatusError', 'SentTo'
-                } -Filtering
+                } -Filtering -AllProperties -ScrollX
             }
         }
         if ($Report.ShowSkippedUsers) {
@@ -559,7 +610,7 @@
                     New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Missing', 'Disabled' -BackgroundColor Salmon -Operator in
                     New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Enabled' -BackgroundColor LawnGreen
                     New-TableCondition -Name 'ManagerStatus' -HighlightHeaders Manager, ManagerSamAccountName, ManagerEmail, ManagerStatus -ComparisonType string -Value 'Not available' -BackgroundColor BlueSmoke
-                }
+                } -ScrollX
             }
         }
         if ($Report.ShowSkippedLocations) {
@@ -569,7 +620,7 @@
                 } -Invisible
                 New-HTMLTable -DataTable $Locations.Values -Filtering {
                     New-TableHeader -ResponsiveOperations none -Names 'Names', 'NamesExpired'
-                }
+                } -ScrollX
             }
         }
     } -ShowHTML:$Report.ShowHTML -FilePath $Report.FilePath -Online:$Report.Online -WarningAction $WarningAction -TitleText $Report.Title
