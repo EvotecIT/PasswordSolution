@@ -37,19 +37,22 @@
     Exclude user from rule if any of the properties match the value as defined in ExcludeName
 
     .PARAMETER IncludeOU
-    Parameter description
+    Include user in rule if user is in any of the OUs defined in the IncludeOU parameter
 
     .PARAMETER ExcludeOU
-    Parameter description
+    Exclude user from rule if users are in any of the OUs defined in the ExcludeOU parameter
+
+    .PARAMETER ExcludeOUFromOtherRules
+    Exclude users from rule if the user is in any of the OUs defined in the IncludeOU parameter in all other rules above it
 
     .PARAMETER IncludeGroup
-    Parameter description
+    Include user in rule if users are in any of the groups defined in the IncludeGroup parameter
 
     .PARAMETER ExcludeGroup
-    Parameter description
+    Exclude user from rule if users are in any of the groups defined in the ExcludeGroup parameter
 
     .PARAMETER ReminderDays
-    Days before expiration to send reminder. If not set and ProcessManagersOnly is not set, the rule will be throw an error.
+    Days before expiration to send reminder. If not set and ProcessManagersOnly is not set, the rule will throw an error.
 
     .PARAMETER ManagerReminder
     Parameter description
@@ -85,10 +88,14 @@
     Parameter description
 
     .PARAMETER OverwriteEmailProperty
-    Parameter description
+    Overwrite email property for specific rule. This is used to overwrite the email address of the user in the rule.
+    For example, if the user has an email address in the property 'mail' and you want to use the property 'ExtensionAttribute7' instead,
+    you can set this parameter to 'ExtensionAttribute7'. The email address will be used for the user in the rule.
 
     .PARAMETER OverwriteManagerProperty
-    Parameter description
+    Overwrite manager property for specific rule. This is used to overwrite the manager of the user in the rule.
+    For example, if the user has a manager in the property 'manager' and you want to use the property 'ExtensionAttribute8' instead,
+    you can set this parameter to 'ExtensionAttribute8'. The manager will be used for the user in the rule.
 
     .PARAMETER OverwriteEmailFromExternalUsers
     Allow to overwrite email from external users for specific rule
@@ -133,6 +140,8 @@
         [string[]] $ExcludeName,
 
         [string[]] $IncludeOU,
+        [switch] $ExcludeOUFromOtherRules,
+
         [string[]] $ExcludeOU,
         [string[]] $IncludeGroup,
         [string[]] $ExcludeGroup,
@@ -205,6 +214,7 @@
         IncludeNameProperties           = $IncludeNameProperties
         IncludeName                     = $IncludeName
         IncludeOU                       = $IncludeOU
+        ExcludeOUFromOtherRules         = $ExcludeOUFromOtherRules.IsPresent
         ExcludeOU                       = $ExcludeOU
         SendToManager                   = [ordered] @{}
 
@@ -264,22 +274,36 @@
                 Error = $_.Exception.Message
             }
         }
+        $ManagerRemindersFound = $false
         foreach ($Reminder in $RemindersExecution) {
             if ($Reminder.Type -eq 'Manager') {
                 foreach ($ReminderReminders in $Reminder.Reminders) {
                     $Output.SendToManager['Manager'].Reminders += $ReminderReminders
+                    $ManagerRemindersFound = $true
                 }
             } elseif ($Reminder.Type -eq 'ManagerNotCompliant') {
                 foreach ($ReminderReminders in $Reminder.Reminders) {
                     $Output.SendToManager['ManagerNotCompliant'].Reminders += $ReminderReminders
+                    $ManagerRemindersFound = $true
                 }
             } elseif ($Reminder.Type -eq 'Security') {
                 foreach ($ReminderReminders in $Reminder.Reminders) {
                     $Output.SendToManager['SecurityEscalation'].Reminders += $ReminderReminders
+                    $ManagerRemindersFound = $true
                 }
             } else {
                 # Should not happen
                 throw "Invalid reminder type: $($Reminder.Type)"
+            }
+        }
+        if ($ProcessManagersOnly) {
+            if (-not $ManagerRemindersFound) {
+                $ErrorMessage = "At least 1 reminder in 'ReminderConfiguration' is required for rule '$Name' when 'ProcessManagersOnly' is set. This is to make sure the rule is not skipped completly."
+                Write-Color -Text "[e]", " Processing rule ", $Name, " failed because of error: ", $ErrorMessage -Color Yellow, White, Red
+                return [ordered] @{
+                    Type  = 'PasswordConfigurationRule'
+                    Error = $ErrorMessage
+                }
             }
         }
     }
