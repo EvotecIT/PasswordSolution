@@ -77,6 +77,36 @@
             } else {
                 $EmailSplat.EmailParameters.To = $UserSection.DefaultEmail
             }
+
+            $Disabled = $null
+            $DisabledError = $null
+            if ($null -ne $Rule.DisableDays) {
+                if ($User.DaysToExpire -in $Rule.DisableDays) {
+                    Write-Color -Text "[i]", " Disabling User (DisableDays - $($Rule.Name)) ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Magenta, White, Magenta, White, White, Blue
+                    if ($Rule.DisableWhatIf) {
+                        Write-Color -Text "[i]", " Disabling user ", $User.DisplayName, " (", $User.UserPrincipalName, ") would be disabled" -Color Yellow, White, Red
+                        $Disabled = $false
+                        $DisabledError = 'WhatIf'
+                    } else {
+                        if ($User.Enabled) {
+                            try {
+                                Disable-ADAccount -Identity $User.DistinguishedName -Confirm:$false -ErrorAction Stop
+                                $Disabled = $true
+                                $DisabledError = $null
+                            } catch {
+                                $Disabled = $false
+                                $DisabledError = $_.Exception.Message
+                                Write-Color -Text "[e]", " Disabling user ", $User.DisplayName, " (", $User.UserPrincipalName, ") failed because of error: ", $_.Exception.Message -Color Yellow, White, Red
+                            }
+                        } else {
+                            $Disabled = $false
+                            $DisabledError = 'Already disabled'
+                            Write-Color -Text "[i]", " User ", $User.DisplayName, " (", $User.UserPrincipalName, ") is already disabled" -Color Yellow, White, Red
+                        }
+                    }
+                }
+            }
+
             if ($Notify.User.EmailAddress -like "*@*") {
                 # Regardless if we send email to default email or to user, if user doesn't have email address we shouldn't send an email
                 $EmailResult = Send-PasswordEmail @EmailSplat
@@ -95,6 +125,8 @@
                     PasswordNeverExpires = $EmailSplat.User.PasswordNeverExpires
                     PasswordLastSet      = $EmailSplat.User.PasswordLastSet
                     EmailFrom            = $EmailSplat.User.EmailFrom
+                    Disabled             = $Disabled
+                    DisabledError        = $DisabledError
                 }
             } else {
                 # Email not sent
@@ -118,6 +150,8 @@
                     PasswordNeverExpires = $EmailSplat.User.PasswordNeverExpires
                     PasswordLastSet      = $EmailSplat.User.PasswordLastSet
                     EmailFrom            = $EmailSplat.User.EmailFrom
+                    Disabled             = $Disabled
+                    DisabledError        = $DisabledError
                 }
             }
             if ($Logging.NotifyOnUserSend) {
