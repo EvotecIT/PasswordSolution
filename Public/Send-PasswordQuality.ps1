@@ -21,7 +21,8 @@
         [switch] $LogShowTime,
         [string] $LogTimeFormat = "yyyy-MM-dd HH:mm:ss",
         [System.Collections.IDictionary[]] $Replacements,
-        [Array] $EmailRedirect
+        [Array] $EmailRedirect,
+        [int] $EmailLimit
     )
 
     $TimeStart = Start-TimeLog
@@ -65,15 +66,22 @@
     }
     $Users = $PasswordQuality.Users
     $Statistics = $PasswordQuality.Statistics
-    $Countries = $PasswordQuality.StatisticsCountry
-    $CountriesCodes = $PasswordQuality.StatisticsCountryCode
-    $Continents = $PasswordQuality.StatisticsContinents
+    #$Countries = $PasswordQuality.StatisticsCountry
+    #$CountriesCodes = $PasswordQuality.StatisticsCountryCode
+    #$Continents = $PasswordQuality.StatisticsContinents
 
     $EndLogPasswords = Stop-TimeLog -Time $TimeStartPasswords -Option OneLiner
 
     Write-Color '[i]', ' Time to gather passwords data ', $EndLogPasswords -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
 
-    $OutputData = Send-InternalPasswordQualityEmails -Configuration $ConfigurationData -Users $Users -Statistics $Statistics -EmailRedirect $EmailRedirect
+    $sendInternalPasswordQualityEmailsSplat = @{
+        Configuration = $ConfigurationData
+        Users         = $Users
+        Statistics    = $Statistics
+        EmailRedirect = $EmailRedirect
+        EmailLimit    = $EmailLimit
+    }
+    $OutputData = Send-InternalPasswordQualityEmails @sendInternalPasswordQualityEmailsSplat
 
     $EndLog = Stop-TimeLog -Time $TimeStart -Option OneLiner
     Write-Color '[i]', ' Time to generate HTML ', $EndLogHTML -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
