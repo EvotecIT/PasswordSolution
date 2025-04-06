@@ -60,6 +60,10 @@
     .PARAMETER Replacements
     List of replacements to be used in the report.
 
+    .PARAMETER GroupBy
+    List of properties to group by in the report.
+    This expands 'DuplicatePasswordGroups' to improve information about given group from existing properties
+
     .EXAMPLE
     Show-PasswordQuality -FilePath $PSScriptRoot\Reporting\PasswordQuality.html -Online -WeakPasswords "Test1", "Test2", "Test3" -Verbose
 
@@ -89,7 +93,8 @@
         [int] $LogMaximum,
         [switch] $LogShowTime,
         [string] $LogTimeFormat = "yyyy-MM-dd HH:mm:ss",
-        [System.Collections.IDictionary[]] $Replacements
+        [System.Collections.IDictionary[]] $Replacements,
+        [string[]] $GroupBy
     )
     $TimeStart = Start-TimeLog
     $Script:Reporting = [ordered] @{}
@@ -104,6 +109,9 @@
 
     Write-Color '[i]', ' Gathering passwords data' -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
     Write-Color '[i]', ' Using provided ', $WeakPasswords.Count, " weak passwords to verify against." -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
+
+    $ReplacementProperties = [System.Collections.Generic.List[string]]::new()
+
     $TimeStartPasswords = Start-TimeLog
     $findPasswordQualitySplat = @{
         IncludeStatistics             = $true
@@ -118,6 +126,14 @@
     }
     if ($Replacements) {
         $findPasswordQualitySplat['Replacements'] = $Replacements
+        # Let's check if we have any replacements that are not in the list of properties
+        foreach ($Replacement in $Replacements.Settings) {
+            if ($Replacement.OverwritePropertyName -and $Replacement.OverwritePropertyName -notin $ReplacementProperties) {
+                $ReplacementProperties.Add($Replacement.OverwritePropertyName)
+            } elseif ($Replacement.PropertyName -and $Replacement.PropertyName -notin $ReplacementProperties) {
+                $ReplacementProperties.Add($Replacement.PropertyName)
+            }
+        }
     }
     $PasswordQuality = Find-PasswordQuality @findPasswordQualitySplat
     if (-not $PasswordQuality) {
@@ -319,7 +335,7 @@
                             $DisabledUsersInDuplicateGroups++
                         }
                         if (-not $DuplicateGroups[$User.DuplicatePasswordGroups]) {
-                            $DuplicateGroups[$User.DuplicatePasswordGroups] = [PSCustomObject] @{
+                            $DuplicateGroups[$User.DuplicatePasswordGroups] = [ordered] @{
                                 GroupName             = $User.DuplicatePasswordGroups
                                 UsersTotal            = 0
                                 UsersEnabled          = 0
@@ -331,6 +347,13 @@
                                 UsersByUPN            = [System.Collections.Generic.List[string]]::new()
                                 UsersByEmail          = [System.Collections.Generic.List[string]]::new()
                             }
+                            foreach ($Property in $ReplacementProperties) {
+                                $DuplicateGroups[$User.DuplicatePasswordGroups].$Property = [System.Collections.Generic.List[string]]::new()
+                            }
+                            foreach ($Property in $GroupBy | Sort-Object -Unique) {
+                                $DuplicateGroups[$User.DuplicatePasswordGroups].$Property = [System.Collections.Generic.List[string]]::new()
+                            }
+                            $DuplicateGroups[$User.DuplicatePasswordGroups] = [PSCustomObject] $DuplicateGroups[$User.DuplicatePasswordGroups]
                         }
                         if ($User.WeakPassword) {
                             $DuplicateGroups[$User.DuplicatePasswordGroups].WeakPassword = $true
@@ -353,6 +376,17 @@
                             $DuplicateGroups[$User.DuplicatePasswordGroups].UsersBySamAccountName.Add($User.SamAccountName)
                         }
                         $DuplicateGroups[$User.DuplicatePasswordGroups].Country.Add($User.Country)
+
+                        foreach ($Property in $ReplacementProperties) {
+                            if (-not [string]::IsNullOrEmpty($User.$Property)) {
+                                $DuplicateGroups[$User.DuplicatePasswordGroups].$Property.Add($User.$Property)
+                            }
+                        }
+                        foreach ($Property in $GroupBy | Sort-Object -Unique) {
+                            if (-not [string]::IsNullOrEmpty($User.$Property)) {
+                                $DuplicateGroups[$User.DuplicatePasswordGroups].$Property.Add($User.$Property)
+                            }
+                        }
                     }
                 }
 
