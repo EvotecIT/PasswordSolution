@@ -186,7 +186,7 @@
                                     New-HTMLListItem -Text "Rule ", $Rule.Name, " is ", "disabled" -FontWeight normal, bold, normal, bold, normal, normal -Color None, None, None, Red
                                 }
                                 New-HTMLList {
-                                    New-HTMLListItem -Text "Notify till expiry on ", $($Rule.Reminders -join ","), " day " -FontWeight normal, bold, normal
+                                    New-HTMLListItem -Text "Notify till expiry on ", $(Format-ReminderDays -Days $Rule.Reminders), " day" -FontWeight normal, bold, normal
                                     if ($Rule.IncludeExpiring) {
                                         New-HTMLListItem -Text "Include expiring accounts is ", "enabled" -FontWeight bold, bold -Color None, Green
                                     } else {
@@ -231,9 +231,9 @@
                                                             New-HTMLList {
                                                                 if ($Rule.SendToManager.Manager.Reminders.Default.Enable) {
                                                                     if ($Rule.SendToManager.Manager.Reminders.Default.Reminder) {
-                                                                        New-HTMLListItem -Text "Default ", "is enabled", " sent on ", $($Rule.SendToManager.Manager.Reminders.Default.Reminder -join ", "), " days to expiry of user." -FontWeight normal, bold, normal, bold, normal -Color None, Green, None, Green
+                                                                        New-HTMLListItem -Text "Default ", "is enabled", " sent on ", $(Format-ReminderDays -Days $Rule.SendToManager.Manager.Reminders.Default.Reminder), " days to expiry of user." -FontWeight normal, bold, normal, bold, normal -Color None, Green, None, Green
                                                                     } else {
-                                                                        New-HTMLListItem -Text "Default ", "is enabled", " sent on ", $($Rule.Reminders -join ", "), " days to expiry of user." -FontWeight normal, bold, normal, bold, normal -Color None, Green, None, Green
+                                                                        New-HTMLListItem -Text "Default ", "is enabled", " sent on ", $(Format-ReminderDays -Days $Rule.Reminders), " days to expiry of user." -FontWeight normal, bold, normal, bold, normal -Color None, Green, None, Green
                                                                     }
                                                                 } else {
                                                                     New-HTMLListItem -Text "Default rule is ", "disabled" -FontWeight bold, bold -Color None, Red
@@ -276,9 +276,9 @@
                                                             New-HTMLList {
                                                                 if ($Rule.SendToManager.ManagerNotCompliant.Reminders.Default.Enable) {
                                                                     if ($Rule.SendToManager.ManagerNotCompliant.Reminders.Default.Reminder) {
-                                                                        New-HTMLListItem -Text "Default ", "is enabled", " sent on ", $($Rule.SendToManager.ManagerNotCompliant.Reminders.Default.Reminder -join ", "), " days to expiry of user." -FontWeight normal, bold, normal, bold, normal -Color None, Green, None, Green
+                                                                        New-HTMLListItem -Text "Default ", "is enabled", " sent on ", $(Format-ReminderDays -Days $Rule.SendToManager.ManagerNotCompliant.Reminders.Default.Reminder), " days to expiry of user." -FontWeight normal, bold, normal, bold, normal -Color None, Green, None, Green
                                                                     } else {
-                                                                        New-HTMLListItem -Text "Default ", "is enabled", " sent on ", $($Rule.Reminders -join ", "), " days to expiry of user." -FontWeight normal, bold, normal, bold, normal -Color None, Green, None, Green
+                                                                        New-HTMLListItem -Text "Default ", "is enabled", " sent on ", $(Format-ReminderDays -Days $Rule.Reminders), " days to expiry of user." -FontWeight normal, bold, normal, bold, normal -Color None, Green, None, Green
                                                                     }
                                                                 } else {
                                                                     New-HTMLListItem -Text "Default rule is ", "disabled" -FontWeight bold, bold -Color None, Red
@@ -328,9 +328,9 @@
                                                                         #>
                                                                 if ($Rule.SendToManager.SecurityEscalation.Reminders.Default.Enable) {
                                                                     if ($Rule.SendToManager.SecurityEscalation.Reminders.Default.Reminder) {
-                                                                        New-HTMLListItem -Text "Default ", "is enabled", " sent on ", $($Rule.SendToManager.SecurityEscalation.Reminders.Default.Reminder -join ", "), " days to expiry of user." -FontWeight normal, bold, normal, bold, normal -Color None, Green, None, Green
+                                                                        New-HTMLListItem -Text "Default ", "is enabled", " sent on ", $(Format-ReminderDays -Days $Rule.SendToManager.SecurityEscalation.Reminders.Default.Reminder), " days to expiry of user." -FontWeight normal, bold, normal, bold, normal -Color None, Green, None, Green
                                                                     } else {
-                                                                        New-HTMLListItem -Text "Default ", "is enabled", " sent on ", $($Rule.Reminders -join ", "), " days to expiry of user." -FontWeight normal, bold, normal, bold, normal -Color None, Green, None, Green
+                                                                        New-HTMLListItem -Text "Default ", "is enabled", " sent on ", $(Format-ReminderDays -Days $Rule.Reminders), " days to expiry of user." -FontWeight normal, bold, normal, bold, normal -Color None, Green, None, Green
                                                                     }
                                                                 } else {
                                                                     New-HTMLListItem -Text "Default rule is ", "disabled" -FontWeight bold, bold -Color None, Red
