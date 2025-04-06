@@ -20,7 +20,8 @@
         [int] $LogMaximum,
         [switch] $LogShowTime,
         [string] $LogTimeFormat = "yyyy-MM-dd HH:mm:ss",
-        [System.Collections.IDictionary[]] $Replacements
+        [System.Collections.IDictionary[]] $Replacements,
+        [Array] $EmailRedirect
     )
 
     $TimeStart = Start-TimeLog
@@ -33,6 +34,12 @@
 
     # since the first entry didn't go to log file, this will
     Write-Color -Text '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta -NoConsoleOutput
+
+    $ConfigurationData = Set-PasswordQualityConfiguration -ConfigurationDSL $Configuration
+    if (-not $ConfigurationData) {
+        Write-Color '[e]', ' Configuration data is empty, fix errors and try again...' -Color Yellow, Red
+        return
+    }
 
     Write-Color '[i]', ' Gathering passwords data' -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
     Write-Color '[i]', ' Using provided ', $WeakPasswords.Count, " weak passwords to verify against." -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
@@ -66,10 +73,7 @@
 
     Write-Color '[i]', ' Time to gather passwords data ', $EndLogPasswords -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
 
-
-
-
-
+    $OutputData = Send-InternalPasswordQualityEmails -Configuration $ConfigurationData -Users $Users -Statistics $Statistics -EmailRedirect $EmailRedirect
 
     $EndLog = Stop-TimeLog -Time $TimeStart -Option OneLiner
     Write-Color '[i]', ' Time to generate HTML ', $EndLogHTML -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
@@ -77,6 +81,7 @@
     Write-Color '[i]', "[PasswordSolution] ", 'Version', ' [Informative] ', $Script:Reporting['Version'] -Color Yellow, DarkGray, Yellow, DarkGray, Magenta
 
     if ($PassThru) {
-        $PasswordQuality
+        $OutputData.PasswordQuality = $PasswordQuality
+        $OutputData
     }
 }
