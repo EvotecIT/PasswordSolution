@@ -4,7 +4,8 @@
         [System.Collections.IDictionary] $Configuration,
         [Array] $Users,
         [System.Collections.IDictionary] $Statistics,
-        [Array] $EmailRedirect
+        [Array] $EmailRedirect,
+        [int] $EmailLimit
     )
 
     $EmailParameters = $Configuration['EmailConfiguration']
@@ -18,6 +19,7 @@
         'EmailSent'     = [System.Collections.Generic.List[PSCustomObject]]::new()
     }
 
+    $Count = 0
     [Array] $UsersProcessed = foreach ($User in $Users) {
         foreach ($Email in $EmailInformation) {
             $Matched = $false
@@ -256,6 +258,12 @@
                     #ManagerSamAccountName      = if ($null -ne $Email['ManagerSamAccountName']) { ($Email['ManagerSamAccountName'] | ForEach-Object { $_.SamAccountName }) } else { @() }
                 }
 
+                if ($EmailLimit -gt 0) {
+                    $Count++
+                    if ($Count -ge $EmailLimit) {
+                        break
+                    }
+                }
             }
         }
     }
