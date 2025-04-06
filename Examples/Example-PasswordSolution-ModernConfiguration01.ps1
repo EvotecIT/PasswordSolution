@@ -136,7 +136,7 @@ Start-PasswordSolution {
 
     New-PasswordConfigurationRule @newPasswordConfigurationRuleSplat
 
-    New-PasswordConfigurationRule -Name 'All others' -Enable -ReminderDays @(500..-500), 60, 59, 30, 15, 7, 3, 2, 1, 0, -7, -15, -30, -45 {
+    New-PasswordConfigurationRule -Name 'All others' -Enable -ReminderDays @(500..-500), 60, 59, 30, 15, 7, 3, 2, 1, 0, -7, -15, -30, -45, 600, -505 {
         # follow expiration days of a user, you need to enable ManagerReminder for this functionality to work
         New-PasswordConfigurationRuleReminder -Type 'Manager' -ExpirationDays -45, -30, -15, -7, 0, 1, 2, 3, 7, 15, 30, 60 -ComparisonType 'in'
         # use a custom expiration days, and send only on specific days 1st, 10th and 15th of a month
