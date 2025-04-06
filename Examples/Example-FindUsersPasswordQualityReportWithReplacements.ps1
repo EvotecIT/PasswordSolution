@@ -15,7 +15,8 @@ $showPasswordQualitySplat = @{
         'AT'      = 'Austria'
         'IT'      = 'Italy'
         'Unknown' = 'Not specified in AD'
-    } #-OverwritePropertyName 'AddMe'
+    } -OverwritePropertyName 'CountriesByExtension'
+    GroupBy                 = 'DelegatableAdmins'
 }
 
 Show-PasswordQuality @showPasswordQualitySplat -Verbose
