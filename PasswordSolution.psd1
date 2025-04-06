@@ -1,14 +1,14 @@
 ﻿@{
-    AliasesToExport      = @()
+    AliasesToExport      = @('New-PasswordQualityEmailConfiguration')
     Author               = 'Przemyslaw Klys'
     CmdletsToExport      = @()
     CompanyName          = 'Evotec'
     CompatiblePSEditions = @('Desktop', 'Core')
     Copyright            = '(c) 2011 - 2025 Przemyslaw Klys @ Evotec. All rights reserved.'
     Description          = 'This module allows the creation of password expiry emails for users, managers, administrators, and security according to defined templates. It''s able to work with different rules allowing to fully customize who gets the email and when.'
-    FunctionsToExport    = @('Find-Password', 'Find-PasswordEntra', 'Find-PasswordNotification', 'Find-PasswordQuality', 'New-PasswordConfigurationEmail', 'New-PasswordConfigurationEntra', 'New-PasswordConfigurationExternalUsers', 'New-PasswordConfigurationOption', 'New-PasswordConfigurationReplacement', 'New-PasswordConfigurationReport', 'New-PasswordConfigurationRule', 'New-PasswordConfigurationRuleReminder', 'New-PasswordConfigurationTemplate', 'New-PasswordConfigurationType', 'Show-PasswordQuality', 'Start-PasswordSolution')
+    FunctionsToExport    = @('Find-Password', 'Find-PasswordEntra', 'Find-PasswordNotification', 'Find-PasswordQuality', 'New-PasswordConfigurationEmail', 'New-PasswordConfigurationEntra', 'New-PasswordConfigurationExternalUsers', 'New-PasswordConfigurationOption', 'New-PasswordConfigurationReplacement', 'New-PasswordConfigurationReport', 'New-PasswordConfigurationRule', 'New-PasswordConfigurationRuleReminder', 'New-PasswordConfigurationTemplate', 'New-PasswordConfigurationType', 'New-PasswordQualityNegative', 'New-PasswordQualityPositive', 'New-PasswordQualitySummary', 'New-PasswordQualityTemplate', 'Send-PasswordQuality', 'Show-PasswordQuality', 'Start-PasswordSolution')
     GUID                 = 'c58ff818-1de6-4500-961c-a243c2043255'
-    ModuleVersion        = '2.1.0'
+    ModuleVersion        = '2.2.0'
     PowerShellVersion    = '5.1'
     PrivateData          = @{
         PSData = @{
