@@ -1,4 +1,5 @@
 ﻿function New-PasswordConfigurationEmail {
+    [Alias('New-PasswordQualityEmailConfiguration')]
     [cmdletBinding(DefaultParameterSetName = 'Compatibility', SupportsShouldProcess)]
     param(
         [Parameter(ParameterSetName = 'SecureString')]
