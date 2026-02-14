@@ -1,6 +1,6 @@
 ﻿<p align="center">
   <a href="https://www.powershellgallery.com/packages/PasswordSolution"><img src="https://img.shields.io/powershellgallery/v/PasswordSolution.svg"></a>
-  <a href="https://www.powershellgallery.com/packages/PasswordSolution"><img src="https://img.shields.io/powershellgallery/vpre/PasswordSolution.svg?label=powershell%20gallery%20preview&colorB=yellow"></a>
+  <a href="https://www.powershellgallery.com/packages/PasswordSolution"><img src="https://img.shields.io/powershellgallery/v/PasswordSolution.svg?label=powershell%20gallery%20preview&colorB=yellow&include_prereleases"></a>
   <a href="https://github.com/EvotecIT/PasswordSolution"><img src="https://img.shields.io/github/license/EvotecIT/PasswordSolution.svg"></a>
 </p>
 
