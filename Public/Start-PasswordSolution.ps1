@@ -261,7 +261,7 @@
         $FailedNotifications = @(Get-PasswordNotificationFailures -SummarySearch $SummarySearch)
         if (-not $IncludeUnknownDelivery) {
             foreach ($Unknown in @($FailedNotifications | Where-Object { $_.DeliveryUnknown })) {
-                Write-Warning "Delivery to $($Unknown.SentTo) for $($Unknown.UserPrincipalName) is uncertain. Verify acceptance before using RetryFailedOnly with IncludeUnknownDelivery."
+                Write-Color -Text "[w] Delivery to $($Unknown.SentTo) is uncertain. Verify acceptance before using -RetryFailedOnly with -IncludeUnknownDelivery." -Color DarkYellow
             }
             $FailedNotifications = @($FailedNotifications | Where-Object { -not $_.DeliveryUnknown })
         }

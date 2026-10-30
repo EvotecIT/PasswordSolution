@@ -169,7 +169,15 @@
                 }
             }
             if ($EmailResult.Status -ne $true) {
-                Write-Color -Text '[e] Notification failed for ', $Notify.User.UserPrincipalName, ' to ', $EmailSplat.EmailParameters.To, ': ', $EmailResult.Error -Color Red, Yellow, White, Yellow, White, Red
+                $UserLabel = $Notify.User.UserPrincipalName
+                if ($Notify.User.DisplayName) {
+                    $UserLabel = "$($Notify.User.DisplayName) ($UserLabel)"
+                }
+                $Recipient = $EmailSplat.EmailParameters.To -join ', '
+                if ($Recipient -and $Recipient -ne $Notify.User.UserPrincipalName) {
+                    $UserLabel += " to $Recipient"
+                }
+                Write-Color -Text '[e] Notification failed for ', $UserLabel, ': ', $EmailResult.Error -Color Red, Yellow, White, Red
             } elseif ($Logging.NotifyOnUserSend) {
                 if ($EmailResult.SentTo) {
                     if ($EmailResult.Error) {
@@ -191,6 +199,19 @@
         $SentCount = @($SummaryUsersEmails | Where-Object { $_.Status -eq $true }).Count
         $FailedCount = @($SummaryUsersEmails | Where-Object { $_.Status -ne $true }).Count
         Write-Color -Text '[i] User notifications: sent ', $SentCount, ', failed ', $FailedCount, ', selected ', $Summary['Notify'].Values.Count -Color White, Green, White, Red, White, Yellow
+        if ($FailedCount -gt 0) {
+            $UncertainCount = @($SummaryUsersEmails | Where-Object { $_.Status -ne $true -and $_.DeliveryUnknown }).Count
+            $RetryCount = $FailedCount - $UncertainCount
+            $RecoveryHints = @(
+                if ($RetryCount -gt 0) {
+                    "Failed deliveries to retry with -RetryFailedOnly: $RetryCount"
+                }
+                if ($UncertainCount -gt 0) {
+                    "Uncertain deliveries to verify first (Find-PasswordNotification -FailedOnly): $UncertainCount"
+                }
+            )
+            Write-Color -Text '[i] ', ($RecoveryHints -join '; ') -Color Yellow, White
+        }
         $SummaryUsersEmails
         } finally {
             if ($OwnedDeliverySession) {

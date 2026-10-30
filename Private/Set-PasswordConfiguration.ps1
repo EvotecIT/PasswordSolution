@@ -110,8 +110,10 @@
         }
     }
 
+    $BuiltInTemplateCount = 0
     if (-not $TemplatePreExpiry) {
-        Write-Color -Text "[i]", " TemplatePreExpiry not defined. Using default template (built-in)" -Color Yellow, Red
+        $BuiltInTemplateCount++
+        Write-Verbose 'TemplatePreExpiry not defined. Using default template (built-in)'
         $TemplatePreExpiry = {
             EmailText -LineBreak
             EmailText -Text "Dear ", "$DisplayName," -LineBreak
@@ -140,12 +142,14 @@
         }
     }
     if (-not $TemplatePreExpirySubject) {
-        Write-Color -Text "[i]", " TemplatePreExpirySubject not defined. Using default template (built-in)" -Color Yellow, Red
+        $BuiltInTemplateCount++
+        Write-Verbose 'TemplatePreExpirySubject not defined. Using default template (built-in)'
         $TemplatePreExpirySubject = '[Password Expiring] Your password will expire on $DateExpiry ($DaysToExpire days)'
     }
 
     if (-not $TemplatePostExpiry) {
-        Write-Color -Text "[i]", " TemplatePostExpiry not defined. Using default template (built-in)" -Color Yellow, Red
+        $BuiltInTemplateCount++
+        Write-Verbose 'TemplatePostExpiry not defined. Using default template (built-in)'
         # Template to user when sending email to user after password expires
         $TemplatePostExpiry = {
             EmailText -LineBreak
@@ -175,12 +179,14 @@
         }
     }
     if (-not $TemplatePostExpirySubject) {
-        Write-Color -Text "[i]", " TemplatePostExpirySubject not defined. Using default template (built-in)" -Color Yellow, Red
+        $BuiltInTemplateCount++
+        Write-Verbose 'TemplatePostExpirySubject not defined. Using default template (built-in)'
         $TemplatePostExpirySubject = '[Password Expired] Your password expired on $DateExpiry ($DaysToExpire days ago)'
     }
     # Template to security team with all service accounts that have expired passwords and password never expires set to true
     if (-not $TemplateSecurity) {
-        Write-Color -Text "[i]", " TemplateSecurity not defined. Using default template (built-in)" -Color Yellow, Red
+        $BuiltInTemplateCount++
+        Write-Verbose 'TemplateSecurity not defined. Using default template (built-in)'
         $TemplateSecurity = {
             EmailText -LineBreak
             EmailText -Text "Hello ", "$ManagerDisplayName", "," -LineBreak -FontWeight normal, bold, normal
@@ -206,11 +212,13 @@
         }
     }
     if (-not $TemplateSecuritySubject) {
-        Write-Color -Text "[i]", " TemplateSecuritySubject not defined. Using default template (built-in)" -Color Yellow, Red
+        $BuiltInTemplateCount++
+        Write-Verbose 'TemplateSecuritySubject not defined. Using default template (built-in)'
         $TemplateSecuritySubject = "[Passsword Expired] Following accounts are expired!"
     }
     if (-not $TemplateManager) {
-        Write-Color -Text "[i]", " TemplateManager not defined. Using default template (built-in)" -Color Yellow, Red
+        $BuiltInTemplateCount++
+        Write-Verbose 'TemplateManager not defined. Using default template (built-in)'
 
         $TemplateManager = {
             EmailText -LineBreak
@@ -257,8 +265,13 @@
         }
     }
     if (-not $TemplateManagerSubject) {
-        Write-Color -Text "[i]", " TemplateManagerSubject not defined. Using default template (built-in)" -Color Yellow, Red
+        $BuiltInTemplateCount++
+        Write-Verbose 'TemplateManagerSubject not defined. Using default template (built-in)'
         $TemplateManagerSubject = "[Passsword Expiring] Accounts you manage/own are expiring or already expired"
+    }
+
+    if ($BuiltInTemplateCount -gt 0) {
+        Write-Color -Text '[i]', " Using built-in templates for $BuiltInTemplateCount notification types." -Color Yellow, White
     }
 
     # Template to Service Desk with information about manager missing, disabled, last logon >90 days, missing email for service accounts
