@@ -16,7 +16,10 @@
         [switch] $EmailDateFormatUTCConversion
     )
 
-    if ($Template) {
+    try {
+        if (-not $Template) {
+            throw 'The notification template is not configured.'
+        }
         if ($User.PasswordLastSet) {
             if ($EmailDateFormat) {
                 if ($EmailDateFormatUTCConversion) {
@@ -126,38 +129,36 @@
         } else {
             $EmailParameters.Attachment = @()
         }
-        try {
-            $SendParameters = @{}
-            foreach ($Key in $EmailParameters.Keys) {
-                $SendParameters[$Key] = $EmailParameters[$Key]
-            }
-            $null = $SendParameters.Remove('Suppress')
-            $null = $SendParameters.Remove('ErrorAction')
-            $null = $SendParameters.Remove('WarningAction')
-            $Result = Send-EmailMessage @SendParameters -ErrorAction Stop -WarningAction SilentlyContinue
-            if ($null -eq $Result) {
-                throw 'The mail provider returned no delivery result.'
-            }
-            $Result
-        } catch {
-            $Recipient = @($EmailParameters.To) -join ', '
-            if ([string]::IsNullOrWhiteSpace($Recipient)) {
-                $Recipient = '(no recipient configured)'
-            }
-            if ($_.Exception.Message -like "*Credential*") {
-                Write-Color -Text "[e] " , "Failed to send email to $Recipient because error: $($_.Exception.Message)" -Color Yellow, White, Red
-                Write-Color -Text "[i] " , "Please make sure you have valid credentials in your configuration file (graph encryption issue?)" -Color Yellow, White, Red
-            } else {
-                Write-Color -Text "[e] " , "Failed to send email to $Recipient because error: $($_.Exception.Message)" -Color Yellow, White, Red
-            }
-            [pscustomobject] @{
-                Status = $false
-                SentTo = $Recipient
-                Error = $_.Exception.Message
-                Server = $null
-                Attempts = @()
-                DeliveryUnknown = $false
-            }
+        $SendParameters = @{}
+        foreach ($Key in $EmailParameters.Keys) {
+            $SendParameters[$Key] = $EmailParameters[$Key]
+        }
+        $null = $SendParameters.Remove('Suppress')
+        $null = $SendParameters.Remove('ErrorAction')
+        $null = $SendParameters.Remove('WarningAction')
+        $Result = Send-EmailMessage @SendParameters -ErrorAction Stop -WarningAction SilentlyContinue
+        if ($null -eq $Result) {
+            throw 'The mail provider returned no delivery result.'
+        }
+        $Result
+    } catch {
+        $Recipient = @($EmailParameters.To) -join ', '
+        if ([string]::IsNullOrWhiteSpace($Recipient)) {
+            $Recipient = '(no recipient configured)'
+        }
+        if ($_.Exception.Message -like "*Credential*") {
+            Write-Color -Text "[e] " , "Failed to send email to $Recipient because error: $($_.Exception.Message)" -Color Yellow, White, Red
+            Write-Color -Text "[i] " , "Please make sure you have valid credentials in your configuration file (graph encryption issue?)" -Color Yellow, White, Red
+        } else {
+            Write-Color -Text "[e] " , "Failed to send email to $Recipient because error: $($_.Exception.Message)" -Color Yellow, White, Red
+        }
+        [pscustomobject] @{
+            Status = $false
+            SentTo = $Recipient
+            Error = $_.Exception.Message
+            Server = $null
+            Attempts = @()
+            DeliveryUnknown = $false
         }
     }
 }
