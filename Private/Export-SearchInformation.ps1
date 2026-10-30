@@ -24,6 +24,7 @@
             $SummarySearch | Export-Clixml -LiteralPath $SearchPath -ErrorAction Stop
         } catch {
             Write-Color -Text "[e]", " Couldn't save to file $SearchPath", ". Error: ", $_.Exception.Message -Color White, Yellow, White, Yellow, White, Yellow, White
+            throw
         }
         Write-Color -Text "[i]" , " Saving Search report ", "Done" -Color White, Yellow, Green
     }

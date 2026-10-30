@@ -1,7 +1,12 @@
-Clear-Host
+param(
+    [ValidateSet('Manifest', 'Documentation', 'Build', 'Publish')]
+    [string] $RunMode = 'Build',
+    [switch] $NoSign
+)
+
 Import-Module "PSPublishModule" -Force
 
-Invoke-ModuleBuild -ModuleName 'PasswordSolution' {
+Invoke-ModuleBuild -ModuleName 'PasswordSolution' -RunMode $RunMode -NoInteractive {
     # Usual defaults as per standard module
     $Manifest = [ordered] @{
         # Version number of this module.
@@ -31,7 +36,7 @@ Invoke-ModuleBuild -ModuleName 'PasswordSolution' {
     New-ConfigurationManifest @Manifest
 
     New-ConfigurationModule -Type RequiredModule -Name 'PSSharedGoods', 'PSWriteHTML', 'PSWriteColor' -Guid Auto -Version Latest
-    New-ConfigurationModule -Type RequiredModule -Name 'Mailozaurr' -Guid Auto -Version 1.0.0
+    New-ConfigurationModule -Type RequiredModule -Name 'Mailozaurr' -Guid Auto -Version 3.0.6
     New-ConfigurationModule -Type ExternalModule -Name @(
         #"Microsoft.PowerShell.Management"
         #"Microsoft.PowerShell.Utility"
@@ -99,11 +104,11 @@ Invoke-ModuleBuild -ModuleName 'PasswordSolution' {
     # when creating PSD1 use special style without comments and with only required parameters
     New-ConfigurationFormat -ApplyTo 'DefaultPSD1', 'OnMergePSD1' -PSD1Style 'Minimal'
     # configuration for documentation, at the same time it enables documentation processing
-    New-ConfigurationDocumentation -Enable:$false -StartClean -UpdateWhenNew -PathReadme 'Docs\Readme.md' -Path 'Docs'
+    New-ConfigurationDocumentation -Enable:($RunMode -eq 'Documentation') -UpdateWhenNew -PathReadme 'Docs\Readme.md' -Path 'Docs'
 
     New-ConfigurationImportModule -ImportSelf
 
-    New-ConfigurationBuild -Enable:$true -SignModule -MergeModuleOnBuild -MergeFunctionsFromApprovedModules -CertificateThumbprint '483292C9E317AA13B07BB7A96AE9D1A5ED9E7703'
+    New-ConfigurationBuild -Enable:$true -SignModule:(-not $NoSign) -MergeModuleOnBuild -MergeFunctionsFromApprovedModules -CertificateThumbprint '483292C9E317AA13B07BB7A96AE9D1A5ED9E7703'
 
     #New-ConfigurationTest -TestsPath "$PSScriptRoot\..\Tests" -Enable
 
