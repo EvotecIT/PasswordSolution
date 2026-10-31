@@ -136,7 +136,7 @@
         [Parameter(ParameterSetName = 'SecureString')]
         [Parameter(ParameterSetName = 'oAuth')]
         [Parameter(ParameterSetName = 'Compatibility')]
-        [MailKit.Net.Smtp.DeliveryStatusNotificationType] $DeliveryStatusNotificationType,
+        [ValidateSet('Unspecified', 'Full', 'HeadersOnly')][string] $DeliveryStatusNotificationType,
 
         [Parameter(ParameterSetName = 'oAuth')]
         [Parameter(Mandatory, ParameterSetName = 'Graph')]
@@ -153,7 +153,7 @@
         [Parameter(ParameterSetName = 'SecureString')]
         [Parameter(ParameterSetName = 'oAuth')]
         [Parameter(ParameterSetName = 'Compatibility')]
-        [MailKit.Security.SecureSocketOptions] $SecureSocketOptions,
+        [ValidateSet('None', 'Auto', 'SslOnConnect', 'StartTls', 'StartTlsWhenAvailable')][string] $SecureSocketOptions,
 
         [Parameter(ParameterSetName = 'SecureString')]
         [Parameter(ParameterSetName = 'oAuth')]

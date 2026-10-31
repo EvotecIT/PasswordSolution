@@ -1,19 +1,17 @@
 ---
 external help file: PasswordSolution-help.xml
 Module Name: PasswordSolution
-online version:
+online version: https://github.com/EvotecIT/PasswordSolution
 schema: 2.0.0
 ---
-
 # Find-PasswordNotification
-
 ## SYNOPSIS
 Searches thru XML logs created by Password Solution
 
 ## SYNTAX
-
-```
-Find-PasswordNotification [-SearchPath] <String> [-Manager] [<CommonParameters>]
+### __AllParameterSets
+```powershell
+Find-PasswordNotification [-SearchPath] <string> [-Manager] [-FailedOnly] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -22,28 +20,32 @@ Searches thru XML logs created by Password Solution
 ## EXAMPLES
 
 ### EXAMPLE 1
-```
-Find-PasswordNotification -SearchPath $PSScriptRoot\Search\SearchLog.xml | Format-Table
+```powershell
+PS > Find-PasswordNotification -SearchPath $PSScriptRoot\Search\SearchLog.xml | Format-Table
 ```
 
+
 ### EXAMPLE 2
+```powershell
+PS > Find-PasswordNotification -SearchPath "$PSScriptRoot\Search\SearchLog_2021-06.xml" -Manager | Format-Table
 ```
-Find-PasswordNotification -SearchPath "$PSScriptRoot\Search\SearchLog_2021-06.xml" -Manager | Format-Table
-```
+
 
 ## PARAMETERS
 
-### -SearchPath
-Path to file where the XML log is located
+### -FailedOnly
+Return the latest failed user/rule deliveries, excluding failures resolved by a later successful send.
+Legacy entries with empty status are included. This option cannot be combined with Manager.
 
 ```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
+Type: SwitchParameter
+Parameter Sets: __AllParameterSets
+Aliases: None
+Possible values:
 
-Required: True
-Position: 1
-Default value: None
+Required: False
+Position: named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -53,12 +55,29 @@ Search thru manager escalations
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
+Parameter Sets: __AllParameterSets
+Aliases: None
+Possible values:
 
 Required: False
-Position: Named
+Position: named
 Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SearchPath
+Path to file where the XML log is located
+
+```yaml
+Type: String
+Parameter Sets: __AllParameterSets
+Aliases: None
+Possible values:
+
+Required: True
+Position: 0
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -68,9 +87,12 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
+- `None`
+
 ## OUTPUTS
 
-## NOTES
-General notes
+- `Notification history records, including recipient, status and error details.`
 
 ## RELATED LINKS
+
+- None

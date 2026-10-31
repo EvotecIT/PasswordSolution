@@ -9,6 +9,7 @@ BeforeAll {
     . "$RepositoryRoot/Private/Invoke-PasswordRuleProcessing.ps1"
     . "$RepositoryRoot/Private/Import-SearchInformation.ps1"
     . "$RepositoryRoot/Private/Export-SearchInformation.ps1"
+    . "$RepositoryRoot/Public/New-PasswordConfigurationEmail.ps1"
 
     function Write-Color { param($Text, $Color, [switch] $NoConsoleOutput) }
     function EmailBody { param($EmailBody, $Parameter) 'Synthetic notification' }
@@ -27,6 +28,7 @@ BeforeAll {
     function Stop-TimeLog { param($Time, $Option) 'Synthetic duration' }
     function Get-GitHubVersion { param($Cmdlet, $RepositoryOwner, $RepositoryName) 'Synthetic version' }
     function Set-LoggingCapabilities { }
+    function Remove-EmptyValue { param($Hashtable) }
     function Set-PasswordConfiguration { throw 'A test must provide its synthetic configuration.' }
     function Find-Password { throw 'Live directory discovery is prohibited in these tests.' }
     function Find-PasswordEntra { throw 'Live directory discovery is prohibited in these tests.' }
@@ -38,6 +40,17 @@ BeforeAll {
 Describe 'Notification delivery recovery' {
     BeforeEach {
         Mock Write-Color {}
+    }
+
+    It 'Builds SMTP failover settings with the published mail module in either PowerShell runtime' {
+        $Settings = New-PasswordConfigurationEmail -From 'sender@example.com' `
+            -Server 'relay-a.example.com', 'relay-b.example.com' -Strategy Failover `
+            -SecureSocketOptions StartTls -DeliveryStatusNotificationType HeadersOnly
+
+        $Settings.Settings.Server | Should -Be @('relay-a.example.com', 'relay-b.example.com')
+        $Settings.Settings.Strategy | Should -Be 'Failover'
+        $Settings.Settings.SecureSocketOptions | Should -Be 'StartTls'
+        $Settings.Settings.DeliveryStatusNotificationType | Should -Be 'HeadersOnly'
     }
 
     It 'Reports the failed recipient and continues to the next selected user' {
