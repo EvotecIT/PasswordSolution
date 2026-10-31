@@ -8,11 +8,23 @@
         [string] $TemplatePreExpirySubject,
         [scriptBlock] $TemplatePostExpiry,
         [string] $TemplatePostExpirySubject,
-        [System.Collections.IDictionary] $EmailParameters
+        [System.Collections.IDictionary] $EmailParameters,
+        [switch] $RetryFailedOnly
     )
     if ($UserSection.Enable) {
         Write-Color -Text "[i] Sending notifications to users " -Color White, Yellow, White, Yellow, White, Yellow, White
         $CountUsers = 0
+        $BatchParameters = @{}
+        foreach ($Key in $EmailParameters.Keys) {
+            $BatchParameters[$Key] = $EmailParameters[$Key]
+        }
+        $OwnedDeliverySession = $null
+        if ($BatchParameters.Server -and -not $BatchParameters.DeliverySession) {
+            $SessionType = (Get-Command -Name 'Mailozaurr\Send-EmailMessage' -ErrorAction Stop).Parameters['DeliverySession'].ParameterType
+            $OwnedDeliverySession = [Activator]::CreateInstance($SessionType)
+            $BatchParameters.DeliverySession = $OwnedDeliverySession
+        }
+        try {
         [Array] $SummaryUsersEmails = foreach ($Notify in $Summary['Notify'].Values) {
             $CountUsers++
             $User = $Notify.User
@@ -67,7 +79,7 @@
                 }
             }
             $EmailSplat.User = $Notify.User
-            $EmailSplat.EmailParameters = $EmailParameters
+            $EmailSplat.EmailParameters = $BatchParameters
 
             $EmailSplat.EmailDateFormat = $Logging.EmailDateFormat
             $EmailSplat.EmailDateFormatUTCConversion = $Logging.EmailDateFormatUTCConversion
@@ -80,7 +92,7 @@
 
             $Disabled = $null
             $DisabledError = $null
-            if ($null -ne $Rule.DisableDays) {
+            if (-not $RetryFailedOnly -and $null -ne $Rule.DisableDays) {
                 if ($User.DaysToExpire -in $Rule.DisableDays) {
                     Write-Color -Text "[i]", " Disabling User (DisableDays - $($Rule.Name)) ", $User.DisplayName, " (", $User.UserPrincipalName, ")", " days to expire: ", $User.DaysToExpire -Color Yellow, White, Magenta, White, Magenta, White, White, Blue
                     if ($Rule.DisableWhatIf) {
@@ -119,6 +131,9 @@
                     StatusWhen           = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
                     StatusError          = $EmailResult.Error
                     SentTo               = $EmailResult.SentTo
+                    Server               = $EmailResult.Server
+                    Attempts             = @($EmailResult.Attempts)
+                    DeliveryUnknown      = $EmailResult.DeliveryUnknown
                     DateExpiry           = $EmailSplat.User.DateExpiry
                     DaysToExpire         = $EmailSplat.User.DaysToExpire
                     PasswordExpired      = $EmailSplat.User.PasswordExpired
@@ -154,7 +169,17 @@
                     DisabledError        = $DisabledError
                 }
             }
-            if ($Logging.NotifyOnUserSend) {
+            if ($EmailResult.Status -ne $true) {
+                $UserLabel = $Notify.User.UserPrincipalName
+                if ($Notify.User.DisplayName) {
+                    $UserLabel = "$($Notify.User.DisplayName) ($UserLabel)"
+                }
+                $Recipient = $EmailSplat.EmailParameters.To -join ', '
+                if ($Recipient -and $Recipient -ne $Notify.User.UserPrincipalName) {
+                    $UserLabel += " to $Recipient"
+                }
+                Write-Color -Text '[e] Notification failed for ', $UserLabel, ': ', $EmailResult.Error -Color Red, Yellow, White, Red
+            } elseif ($Logging.NotifyOnUserSend) {
                 if ($EmailResult.SentTo) {
                     if ($EmailResult.Error) {
                         Write-Color -Text "[i]", " Sending notifications to user ", $Notify.User.DisplayName, " (", $Notify.User.EmailAddress, ")", " status: ", $EmailResult.Status, " sent to: ", $EmailResult.SentTo, ", details: ", $EmailResult.Error -Color Yellow, White, Yellow, White, Yellow, White, White, Blue, White, Blue
@@ -172,8 +197,28 @@
                 }
             }
         }
-        Write-Color -Text "[i] Sending notifications to users (sent: ", $SummaryUsersEmails.Count, " out of ", $Summary['Notify'].Values.Count, ")" -Color White, Yellow, White, Yellow, White, Yellow, White
+        $SentCount = @($SummaryUsersEmails | Where-Object { $_.Status -eq $true }).Count
+        $FailedCount = @($SummaryUsersEmails | Where-Object { $_.Status -ne $true }).Count
+        Write-Color -Text '[i] User notifications: sent ', $SentCount, ', failed ', $FailedCount, ', selected ', $Summary['Notify'].Values.Count -Color White, Green, White, Red, White, Yellow
+        if ($FailedCount -gt 0) {
+            $UncertainCount = @($SummaryUsersEmails | Where-Object { $_.Status -ne $true -and $_.DeliveryUnknown }).Count
+            $RetryCount = $FailedCount - $UncertainCount
+            $RecoveryHints = @(
+                if ($RetryCount -gt 0) {
+                    "Failed deliveries to retry with -RetryFailedOnly: $RetryCount"
+                }
+                if ($UncertainCount -gt 0) {
+                    "Uncertain deliveries to verify first (Find-PasswordNotification -FailedOnly): $UncertainCount"
+                }
+            )
+            Write-Color -Text '[i] ', ($RecoveryHints -join '; ') -Color Yellow, White
+        }
         $SummaryUsersEmails
+        } finally {
+            if ($OwnedDeliverySession) {
+                $OwnedDeliverySession.Dispose()
+            }
+        }
     } else {
         Write-Color -Text "[i] Sending notifications to users is ", "disabled!" -Color White, Yellow, DarkRed
     }

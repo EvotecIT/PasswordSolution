@@ -1,11 +1,101 @@
 ﻿function New-PasswordConfigurationEmail {
+    <#
+    .SYNOPSIS
+    Defines mail delivery settings for a PasswordSolution configuration.
+    .DESCRIPTION
+    Passes the selected settings to Mailozaurr. Multiple SMTP servers default to ordered
+    failover. Permanent rejections and uncertain delivery are reported without automatic resend.
+    .PARAMETER Server
+    Hosts or endpoint URIs: smtp:// for plaintext, smtps:// for implicit TLS,
+    and smtp+starttls:// for required STARTTLS. Bare hosts use Port and SecureSocketOptions.
+    .PARAMETER Strategy
+    Failover, RoundRobin or Random starting-server selection across a notification batch.
+    .PARAMETER CircuitBreakMinutes
+    Host cooldown after a transient failure. Zero disables cooldown.
+    .PARAMETER RetryCount
+    Additional attempts. The total budget is at least the number of configured servers.
+    .PARAMETER RetryDelayMilliseconds
+    Initial retry delay; Mailozaurr applies bounded exponential backoff.
+    .PARAMETER Port
+    Default SMTP port for bare hosts.
+    .PARAMETER From
+    Sender address or named sender object accepted by Mailozaurr.
+    .PARAMETER ReplyTo
+    Reply address for notifications.
+    .PARAMETER Priority
+    Message priority: Low, Normal or High.
+    .PARAMETER DeliveryNotificationOption
+    SMTP delivery status notification conditions.
+    .PARAMETER DeliveryStatusNotificationType
+    MailKit delivery status notification format.
+    .PARAMETER Credential
+    Credentials for the selected SMTP, Graph or SendGrid provider.
+    .PARAMETER Username
+    SMTP authentication username.
+    .PARAMETER Password
+    SMTP password, optionally protected with AsSecureString.
+    .PARAMETER SecureSocketOptions
+    TLS mode for bare SMTP hosts.
+    .PARAMETER UseSsl
+    Require STARTTLS when the TLS mode is Auto.
+    .PARAMETER SkipCertificateRevocation
+    Disable SMTP certificate revocation checks.
+    .PARAMETER SkipCertificateValidation
+    Disable SMTP certificate validation.
+    .PARAMETER Timeout
+    SMTP operation timeout in milliseconds.
+    .PARAMETER oAuth2
+    Authenticate SMTP with an OAuth access token.
+    .PARAMETER RequestReadReceipt
+    Request a read receipt through Graph.
+    .PARAMETER RequestDeliveryReceipt
+    Request a delivery receipt through Graph.
+    .PARAMETER Graph
+    Deliver through Mailozaurr's Graph provider.
+    .PARAMETER MgGraphRequest
+    Deliver through Invoke-MgGraphRequest.
+    .PARAMETER AsSecureString
+    Interpret Password as a protected string.
+    .PARAMETER SendGrid
+    Deliver through SendGrid.
+    .PARAMETER SeparateTo
+    Send separate recipient messages through SendGrid.
+    .PARAMETER DoNotSaveToSentItems
+    Disable saving Graph messages to Sent Items.
+    .PARAMETER LocalDomain
+    SMTP client domain setting.
+    .EXAMPLE
+    New-PasswordConfigurationEmail -From 'notifications@example.com' -Server 'relay-a.example.com', 'relay-b.example.com' -Port 25 -Strategy Failover
+    .OUTPUTS
+    A PasswordConfigurationEmail record consumed by Start-PasswordSolution.
+    #>
     [cmdletBinding(DefaultParameterSetName = 'Compatibility', SupportsShouldProcess)]
     param(
         [Parameter(ParameterSetName = 'SecureString')]
 
         [Parameter(ParameterSetName = 'oAuth')]
         [Parameter(ParameterSetName = 'Compatibility')]
-        [alias('SmtpServer')][string] $Server,
+        [alias('SmtpServer')][string[]] $Server,
+
+        [Parameter(ParameterSetName = 'SecureString')]
+        [Parameter(ParameterSetName = 'oAuth')]
+        [Parameter(ParameterSetName = 'Compatibility')]
+        [ValidateSet('Failover', 'RoundRobin', 'Random')][string] $Strategy,
+
+        [Parameter(ParameterSetName = 'SecureString')]
+        [Parameter(ParameterSetName = 'oAuth')]
+        [Parameter(ParameterSetName = 'Compatibility')]
+        [ValidateRange(0, 1440)][int] $CircuitBreakMinutes,
+
+        [Parameter(ParameterSetName = 'SecureString')]
+        [Parameter(ParameterSetName = 'oAuth')]
+        [Parameter(ParameterSetName = 'Compatibility')]
+        [ValidateRange(0, 100)][int] $RetryCount,
+
+        [Parameter(ParameterSetName = 'SecureString')]
+        [Parameter(ParameterSetName = 'oAuth')]
+        [Parameter(ParameterSetName = 'Compatibility')]
+        [ValidateRange(0, 60000)][int] $RetryDelayMilliseconds,
 
         [Parameter(ParameterSetName = 'SecureString')]
 
@@ -46,7 +136,7 @@
         [Parameter(ParameterSetName = 'SecureString')]
         [Parameter(ParameterSetName = 'oAuth')]
         [Parameter(ParameterSetName = 'Compatibility')]
-        [MailKit.Net.Smtp.DeliveryStatusNotificationType] $DeliveryStatusNotificationType,
+        [ValidateSet('Unspecified', 'Full', 'HeadersOnly')][string] $DeliveryStatusNotificationType,
 
         [Parameter(ParameterSetName = 'oAuth')]
         [Parameter(Mandatory, ParameterSetName = 'Graph')]
@@ -63,7 +153,7 @@
         [Parameter(ParameterSetName = 'SecureString')]
         [Parameter(ParameterSetName = 'oAuth')]
         [Parameter(ParameterSetName = 'Compatibility')]
-        [MailKit.Security.SecureSocketOptions] $SecureSocketOptions,
+        [ValidateSet('None', 'Auto', 'SslOnConnect', 'StartTls', 'StartTlsWhenAvailable')][string] $SecureSocketOptions,
 
         [Parameter(ParameterSetName = 'SecureString')]
         [Parameter(ParameterSetName = 'oAuth')]
@@ -126,6 +216,10 @@
         Type     = 'PasswordConfigurationEmail'
         Settings = [ordered] @{
             Server                         = if ($PSBoundParameters.ContainsKey('Server')) { $Server } else { $null }
+            Strategy                       = if ($PSBoundParameters.ContainsKey('Strategy')) { $Strategy } else { $null }
+            CircuitBreakMinutes            = if ($PSBoundParameters.ContainsKey('CircuitBreakMinutes')) { $CircuitBreakMinutes } else { $null }
+            RetryCount                     = if ($PSBoundParameters.ContainsKey('RetryCount')) { $RetryCount } else { $null }
+            RetryDelayMilliseconds         = if ($PSBoundParameters.ContainsKey('RetryDelayMilliseconds')) { $RetryDelayMilliseconds } else { $null }
             Port                           = if ($PSBoundParameters.ContainsKey('Port')) { $Port } else { $null }
             From                           = if ($PSBoundParameters.ContainsKey('From')) { $From } else { $null }
             ReplyTo                        = if ($PSBoundParameters.ContainsKey('ReplyTo')) { $ReplyTo } else { $null }

@@ -1,0 +1,38 @@
+name: Notification tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: notification-tests-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  notification-tests:
+    name: PowerShell notification recovery
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force
+          Install-Module Mailozaurr -RequiredVersion 3.0.6 -Scope CurrentUser -Force
+          Import-Module Pester -RequiredVersion 5.7.1
+          Invoke-Pester -Path Tests -CI
+      - name: Test PowerShell 7
+        shell: pwsh
+        run: |
+          Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force
+          Install-Module Mailozaurr -RequiredVersion 3.0.6 -Scope CurrentUser -Force
+          Import-Module Pester -RequiredVersion 5.7.1
+          Invoke-Pester -Path Tests -CI
