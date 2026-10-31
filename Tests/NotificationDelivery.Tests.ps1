@@ -1,4 +1,5 @@
 BeforeAll {
+    Import-Module Mailozaurr -RequiredVersion 3.0.6 -ErrorAction Stop
     $RepositoryRoot = Split-Path $PSScriptRoot -Parent
     . "$RepositoryRoot/Private/Send-PasswordEmail.ps1"
     . "$RepositoryRoot/Private/Send-PasswordUserNotifications.ps1"
@@ -19,7 +20,7 @@ BeforeAll {
     }
     function Send-EmailMessage {
         [CmdletBinding()]
-        param($To, $From, $Subject, $Body, $Attachment)
+        param($To, $From, $Subject, $Body, $Attachment, $Server, $DeliverySession)
         throw 'A test must provide its synthetic mail result.'
     }
     function Start-TimeLog { Get-Date }
@@ -71,7 +72,7 @@ Describe 'Notification delivery recovery' {
         }
 
         $Results = @(Send-PasswordUserNofifications -Summary @{ Notify = $Notifications } `
-            -UserSection @{ Enable = $true } -Logging @{} -EmailParameters @{ From = 'sender@example.com' } `
+            -UserSection @{ Enable = $true } -Logging @{} -EmailParameters @{ From = 'sender@example.com'; Server = @('relay.example.com') } `
             -TemplatePreExpiry { 'Synthetic notification' } -RetryFailedOnly)
 
         $Results.Count | Should -Be 2

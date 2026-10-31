@@ -26,11 +26,13 @@ jobs:
         run: |
           [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
           Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force
+          Install-Module Mailozaurr -RequiredVersion 3.0.6 -Scope CurrentUser -Force
           Import-Module Pester -RequiredVersion 5.7.1
           Invoke-Pester -Path Tests -CI
       - name: Test PowerShell 7
         shell: pwsh
         run: |
           Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force
+          Install-Module Mailozaurr -RequiredVersion 3.0.6 -Scope CurrentUser -Force
           Import-Module Pester -RequiredVersion 5.7.1
           Invoke-Pester -Path Tests -CI

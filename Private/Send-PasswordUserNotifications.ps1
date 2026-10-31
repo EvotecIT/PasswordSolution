@@ -20,7 +20,8 @@
         }
         $OwnedDeliverySession = $null
         if ($BatchParameters.Server -and -not $BatchParameters.DeliverySession) {
-            $OwnedDeliverySession = [Mailozaurr.SmtpDeliverySession]::new()
+            $SessionType = (Get-Command -Name 'Mailozaurr\Send-EmailMessage' -ErrorAction Stop).Parameters['DeliverySession'].ParameterType
+            $OwnedDeliverySession = [Activator]::CreateInstance($SessionType)
             $BatchParameters.DeliverySession = $OwnedDeliverySession
         }
         try {
