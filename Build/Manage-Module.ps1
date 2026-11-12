@@ -29,6 +29,7 @@ Invoke-ModuleBuild -ModuleName 'PasswordSolution' -RunMode $RunMode -NoInteracti
         Tags                 = 'password', 'passwordexpiry', 'activedirectory', 'windows'
         # A URL to the main website for this project.
         ProjectUri           = 'https://github.com/EvotecIT/PasswordSolution'
+        LicenseUri           = 'https://github.com/EvotecIT/PasswordSolution/blob/master/LICENSE'
 
         # A URL to an icon representing this module.
         IconUri              = 'https://evotec.xyz/wp-content/uploads/2022/08/PasswordSolution.png'
